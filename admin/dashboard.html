@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Redline Electric</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+<header class="admin-header">
+  <img src="../assets/redline-electric-logo.png" alt="Redline Electric" class="admin-logo-sm">
+  <h1 class="display">Job Photos</h1>
+  <button type="button" class="btn-ghost" id="logout-btn">Log Out</button>
+</header>
+
+<main class="admin-main">
+  <section class="admin-upload">
+    <h2 class="display">Upload New Photo</h2>
+    <form id="upload-form" class="admin-form">
+      <label>Title
+        <input type="text" id="title" required>
+      </label>
+      <label>Description
+        <textarea id="description" rows="3"></textarea>
+      </label>
+      <label>Category
+        <input type="text" id="category">
+      </label>
+      <label>Photo
+        <input type="file" id="file" accept="image/*" required>
+      </label>
+      <button type="submit" class="btn-primary" id="upload-btn">Upload</button>
+      <p id="upload-error" class="admin-error" hidden></p>
+      <p id="upload-success" class="admin-success" hidden>Uploaded.</p>
+    </form>
+  </section>
+
+  <section class="admin-list">
+    <h2 class="display">Existing Photos</h2>
+    <div id="projects-grid" class="admin-grid"></div>
+    <p id="empty-msg" class="admin-empty" hidden></p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../assets/js/supabase-client.js"></script>
+<script>
+(function () {
+  var grid = document.getElementById('projects-grid');
+  var emptyMsg = document.getElementById('empty-msg');
+  var uploadForm = document.getElementById('upload-form');
+  var uploadBtn = document.getElementById('upload-btn');
+  var uploadError = document.getElementById('upload-error');
+  var uploadSuccess = document.getElementById('upload-success');
+  var logoutBtn = document.getElementById('logout-btn');
+
+  var BUCKET = 'job-photos';
+  var PUBLIC_URL_MARKER = '/storage/v1/object/public/' + BUCKET + '/';
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function pathFromPublicUrl(url) {
+    var idx = url.indexOf(PUBLIC_URL_MARKER);
+    if (idx === -1) return null;
+    return decodeURIComponent(url.slice(idx + PUBLIC_URL_MARKER.length));
+  }
+
+  async function requireSession() {
+    var res = await supabaseClient.auth.getSession();
+    if (!res.data.session) {
+      window.location.replace('login.html');
+      return null;
+    }
+    return res.data.session;
+  }
+
+  async function loadProjects() {
+    var res = await supabaseClient
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    grid.innerHTML = '';
+
+    if (res.error) {
+      emptyMsg.textContent = 'Could not load photos: ' + res.error.message;
+      emptyMsg.hidden = false;
+      return;
+    }
+
+    if (!res.data || res.data.length === 0) {
+      emptyMsg.textContent = 'No photos yet. Upload your first one above.';
+      emptyMsg.hidden = false;
+      return;
+    }
+
+    emptyMsg.hidden = true;
+
+    res.data.forEach(function (project) {
+      var path = pathFromPublicUrl(project.image_url) || '';
+      var card = document.createElement('div');
+      card.className = 'admin-card';
+      card.innerHTML =
+        '<img src="' + project.image_url + '" alt="' + escapeHtml(project.title) + '">' +
+        '<div class="admin-card-body">' +
+          '<h3>' + escapeHtml(project.title) + '</h3>' +
+          (project.category ? '<span class="admin-card-category">' + escapeHtml(project.category) + '</span>' : '') +
+          (project.description ? '<p>' + escapeHtml(project.description) + '</p>' : '') +
+          '<button type="button" class="admin-delete-btn" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '">Delete</button>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+  }
+
+  uploadForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    uploadError.hidden = true;
+    uploadSuccess.hidden = true;
+
+    var title = document.getElementById('title').value.trim();
+    var description = document.getElementById('description').value.trim();
+    var category = document.getElementById('category').value.trim();
+    var fileInput = document.getElementById('file');
+    var file = fileInput.files[0];
+
+    if (!title || !file) {
+      uploadError.textContent = 'Title and photo are required.';
+      uploadError.hidden = false;
+      return;
+    }
+
+    uploadBtn.disabled = true;
+
+    var ext = file.name.indexOf('.') !== -1 ? file.name.split('.').pop() : 'jpg';
+    var path = Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+
+    var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, file);
+    if (uploadRes.error) {
+      uploadError.textContent = uploadRes.error.message;
+      uploadError.hidden = false;
+      uploadBtn.disabled = false;
+      return;
+    }
+
+    var publicUrlRes = supabaseClient.storage.from(BUCKET).getPublicUrl(path);
+    var imageUrl = publicUrlRes.data.publicUrl;
+
+    var insertRes = await supabaseClient.from('projects').insert({
+      title: title,
+      description: description || null,
+      category: category || null,
+      image_url: imageUrl
+    });
+
+    uploadBtn.disabled = false;
+
+    if (insertRes.error) {
+      uploadError.textContent = insertRes.error.message;
+      uploadError.hidden = false;
+      return;
+    }
+
+    uploadSuccess.hidden = false;
+    uploadForm.reset();
+    loadProjects();
+  });
+
+  grid.addEventListener('click', async function (e) {
+    var btn = e.target.closest('.admin-delete-btn');
+    if (!btn) return;
+    if (!window.confirm('Delete this photo? This cannot be undone.')) return;
+
+    var id = btn.getAttribute('data-id');
+    var path = btn.getAttribute('data-path');
+    btn.disabled = true;
+
+    if (path) {
+      await supabaseClient.storage.from(BUCKET).remove([path]);
+    }
+
+    var delRes = await supabaseClient.from('projects').delete().eq('id', id);
+    if (delRes.error) {
+      window.alert('Could not delete: ' + delRes.error.message);
+      btn.disabled = false;
+      return;
+    }
+
+    loadProjects();
+  });
+
+  logoutBtn.addEventListener('click', async function () {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'login.html';
+  });
+
+  (async function init() {
+    var session = await requireSession();
+    if (!session) return;
+    loadProjects();
+  })();
+})();
+</script>
+
+</body>
+</html>

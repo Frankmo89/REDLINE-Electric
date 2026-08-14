@@ -1,0 +1,170 @@
+/* Redline Electric — Admin (reuses tokens from css/styles.css) */
+
+.admin-body {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* ---- Login ---- */
+.admin-auth-wrap {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 88px 20px;
+}
+.admin-logo {
+  display: block;
+  max-height: 52px;
+  width: auto;
+  margin: 0 auto 32px;
+}
+.admin-auth-wrap h1 {
+  color: var(--ink);
+  font-size: 26px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* ---- Shared form styling ---- */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+}
+.admin-form input,
+.admin-form textarea {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 12px 14px;
+}
+.admin-form input:focus,
+.admin-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.admin-form button[type="submit"] {
+  margin-top: 8px;
+}
+.admin-error {
+  color: var(--accent);
+  font-size: 13px;
+}
+.admin-success {
+  color: #4CAF6D;
+  font-size: 13px;
+}
+
+/* ---- Dashboard header ---- */
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 20px;
+}
+.admin-logo-sm {
+  max-height: 40px;
+  width: auto;
+}
+.admin-header h1 {
+  color: var(--ink);
+  font-size: 18px;
+  flex: 1;
+}
+
+/* ---- Dashboard main ---- */
+.admin-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+.admin-upload,
+.admin-list {
+  margin-bottom: 56px;
+}
+.admin-upload h2,
+.admin-list h2 {
+  color: var(--ink);
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+.admin-upload .admin-form {
+  max-width: 480px;
+}
+
+/* ---- Existing photos grid ---- */
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.admin-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.admin-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+.admin-card-body {
+  padding: 14px;
+}
+.admin-card-body h3 {
+  color: var(--ink);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.admin-card-category {
+  display: inline-block;
+  color: var(--accent);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.admin-card-body p {
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.admin-delete-btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.admin-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.admin-empty {
+  color: var(--ink-dim);
+  font-size: 14px;
+}

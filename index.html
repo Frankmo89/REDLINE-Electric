@@ -128,19 +128,8 @@
     <h2 class="display">Our Work</h2>
     <!-- TODO: replace with real content -->
     <p class="sub">Placeholder intro text goes here.</p>
-    <div class="work-grid">
-      <!-- TODO: replace with real photo -->
-      <div class="work-item"><span>Photo</span></div>
-      <!-- TODO: replace with real photo -->
-      <div class="work-item"><span>Photo</span></div>
-      <!-- TODO: replace with real photo -->
-      <div class="work-item"><span>Photo</span></div>
-      <!-- TODO: replace with real photo -->
-      <div class="work-item"><span>Photo</span></div>
-      <!-- TODO: replace with real photo -->
-      <div class="work-item"><span>Photo</span></div>
-      <!-- TODO: replace with real photo -->
-      <div class="work-item"><span>Photo</span></div>
+    <div class="work-grid" id="work-grid">
+      <p class="work-empty" id="work-empty" hidden>Photos coming soon.</p>
     </div>
   </div>
 </section>
@@ -206,6 +195,56 @@
   navLinks.forEach(function (link) {
     link.addEventListener('click', closeNav);
   });
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script>
+(function () {
+  var grid = document.getElementById('work-grid');
+  var emptyMsg = document.getElementById('work-empty');
+  if (!grid || typeof supabaseClient === 'undefined') return;
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function showEmpty(message) {
+    grid.innerHTML = '';
+    emptyMsg.textContent = message;
+    emptyMsg.hidden = false;
+    grid.appendChild(emptyMsg);
+  }
+
+  supabaseClient
+    .from('projects')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .then(function (res) {
+      if (res.error || !res.data || res.data.length === 0) {
+        showEmpty('Photos coming soon.');
+        return;
+      }
+
+      grid.innerHTML = '';
+      res.data.forEach(function (project) {
+        var item = document.createElement('div');
+        item.className = 'work-photo';
+        item.innerHTML =
+          '<img src="' + project.image_url + '" alt="' + escapeHtml(project.title) + '" loading="lazy">' +
+          '<div class="work-caption">' +
+            '<strong>' + escapeHtml(project.title) + '</strong>' +
+            (project.category ? '<span>' + escapeHtml(project.category) + '</span>' : '') +
+          '</div>';
+        grid.appendChild(item);
+      });
+    })
+    .catch(function () {
+      showEmpty('Photos coming soon.');
+    });
 })();
 </script>
 

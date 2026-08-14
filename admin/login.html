@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — Redline Electric</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-auth-wrap">
+  <img src="../assets/redline-electric-logo.png" alt="Redline Electric" class="admin-logo">
+  <h1 class="display">Admin Login</h1>
+  <form id="login-form" class="admin-form">
+    <label>Email
+      <input type="email" id="email" required autocomplete="username">
+    </label>
+    <label>Password
+      <input type="password" id="password" required autocomplete="current-password">
+    </label>
+    <button type="submit" class="btn-primary" id="login-btn">Log In</button>
+    <p id="login-error" class="admin-error" hidden></p>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../assets/js/supabase-client.js"></script>
+<script>
+(function () {
+  var form = document.getElementById('login-form');
+  var errorMsg = document.getElementById('login-error');
+  var loginBtn = document.getElementById('login-btn');
+
+  supabaseClient.auth.getSession().then(function (res) {
+    if (res.data.session) {
+      window.location.replace('dashboard.html');
+    }
+  });
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errorMsg.hidden = true;
+    loginBtn.disabled = true;
+
+    var email = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+
+    var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+
+    if (result.error) {
+      errorMsg.textContent = result.error.message;
+      errorMsg.hidden = false;
+      loginBtn.disabled = false;
+      return;
+    }
+
+    window.location.href = 'dashboard.html';
+  });
+})();
+</script>
+
+</body>
+</html>
