@@ -284,4 +284,6 @@ section { padding: 56px 20px; }
   }
   .nav-close,
   .hamburger { display: none; }
+
+  .services-grid { grid-template-columns: repeat(3, 1fr); }
 }
