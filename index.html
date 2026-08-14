@@ -11,13 +11,34 @@
 </head>
 <body>
 
-<header class="site-header">
-  <div class="wrap">
-    <img src="assets/redline-electric-logo.jpg" alt="Redline Electric">
+<header class="site-header" id="site-header">
+  <div class="wrap header-inner">
+    <a href="#home" class="logo-link" aria-label="Redline Electric — Home">
+      <img src="assets/redline-electric-logo.png" alt="Redline Electric">
+    </a>
+
+    <nav class="main-nav" id="main-nav">
+      <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
+      <ul>
+        <li><a href="#home" class="nav-link">Inicio</a></li>
+        <li><a href="#services" class="nav-link">Servicios</a></li>
+        <li><a href="#why-us" class="nav-link">Por qué elegirnos</a></li>
+        <li><a href="#work" class="nav-link">Trabajos</a></li>
+        <li><a href="#contact" class="nav-link">Contacto</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <!-- TODO: replace with real phone number -->
+      <a href="tel:" class="btn-primary btn-header-cta">Call Now</a>
+      <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 </header>
 
-<section class="hero">
+<section class="hero" id="home">
   <div class="wrap">
     <!-- TODO: replace with real license # -->
     <span class="eyebrow">San Diego · Licencia C-10</span>
@@ -30,7 +51,7 @@
   </div>
 </section>
 
-<section class="services">
+<section class="services" id="services">
   <div class="wrap">
     <h2 class="display">Services</h2>
     <p class="sub">Residential, commercial, and emergency work, done by a licensed and insured contractor.</p>
@@ -59,7 +80,63 @@
   </div>
 </section>
 
-<section class="trust" style="padding: 40px 24px;">
+<section class="why-us" id="why-us">
+  <div class="wrap">
+    <h2 class="display">Por qué elegirnos</h2>
+    <!-- TODO: replace with real content -->
+    <p class="sub">Placeholder intro text goes here.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="num">01</div>
+        <!-- TODO: replace with real content -->
+        <h3 class="display">Placeholder benefit</h3>
+        <p>Placeholder description text.</p>
+      </div>
+      <div class="card">
+        <div class="num">02</div>
+        <!-- TODO: replace with real content -->
+        <h3 class="display">Placeholder benefit</h3>
+        <p>Placeholder description text.</p>
+      </div>
+      <div class="card">
+        <div class="num">03</div>
+        <!-- TODO: replace with real content -->
+        <h3 class="display">Placeholder benefit</h3>
+        <p>Placeholder description text.</p>
+      </div>
+      <div class="card">
+        <div class="num">04</div>
+        <!-- TODO: replace with real content -->
+        <h3 class="display">Placeholder benefit</h3>
+        <p>Placeholder description text.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="work" id="work">
+  <div class="wrap">
+    <h2 class="display">Trabajos</h2>
+    <!-- TODO: replace with real content -->
+    <p class="sub">Placeholder intro text goes here.</p>
+    <div class="work-grid">
+      <!-- TODO: replace with real photo -->
+      <div class="work-item"><span>Foto</span></div>
+      <!-- TODO: replace with real photo -->
+      <div class="work-item"><span>Foto</span></div>
+      <!-- TODO: replace with real photo -->
+      <div class="work-item"><span>Foto</span></div>
+      <!-- TODO: replace with real photo -->
+      <div class="work-item"><span>Foto</span></div>
+      <!-- TODO: replace with real photo -->
+      <div class="work-item"><span>Foto</span></div>
+      <!-- TODO: replace with real photo -->
+      <div class="work-item"><span>Foto</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="trust" id="contact" style="padding: 40px 24px;">
   <div class="wrap">
     <div class="badge">
       <div class="swatch">✓</div>
@@ -76,6 +153,53 @@
     </div>
   </div>
 </section>
+
+<script>
+(function () {
+  var header = document.getElementById('site-header');
+  var hero = document.getElementById('home');
+  var toggle = document.getElementById('nav-toggle');
+  var closeBtn = document.getElementById('nav-close');
+  var nav = document.getElementById('main-nav');
+  var navLinks = nav.querySelectorAll('a');
+
+  function updateScrolledState() {
+    var heroBottom = hero.offsetTop + hero.offsetHeight;
+    if (window.scrollY > heroBottom - header.offsetHeight) {
+      header.classList.add('is-scrolled');
+    } else {
+      header.classList.remove('is-scrolled');
+    }
+  }
+  window.addEventListener('scroll', updateScrolledState, { passive: true });
+  updateScrolledState();
+
+  function closeNav() {
+    nav.classList.remove('is-open');
+    toggle.classList.remove('is-active');
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('nav-locked');
+  }
+  function openNav() {
+    nav.classList.add('is-open');
+    toggle.classList.add('is-active');
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('nav-locked');
+  }
+
+  toggle.addEventListener('click', function () {
+    if (nav.classList.contains('is-open')) {
+      closeNav();
+    } else {
+      openNav();
+    }
+  });
+  closeBtn.addEventListener('click', closeNav);
+  navLinks.forEach(function (link) {
+    link.addEventListener('click', closeNav);
+  });
+})();
+</script>
 
 </body>
 </html>
