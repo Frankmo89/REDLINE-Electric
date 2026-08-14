@@ -1,0 +1,2 @@
+TODO: replace this folder's contents with real job-site photos from the client.
+Reference them from index.html once available, e.g. assets/photos/panel-upgrade-01.jpg
