@@ -172,6 +172,16 @@
   </div>
 </section>
 
+<section class="testimonials" id="testimonials">
+  <div class="wrap">
+    <h2 class="display">What Customers Say</h2>
+    <p class="sub">Real feedback from San Diego homeowners and businesses.</p>
+    <div class="grid" id="testimonials-grid">
+      <p class="testimonials-empty" id="testimonials-empty" hidden>Reviews coming soon.</p>
+    </div>
+  </div>
+</section>
+
 <section class="trust" id="contact">
   <div class="wrap">
     <h2 class="display">Request a Quote</h2>
@@ -364,6 +374,62 @@
     })
     .catch(function () {
       showEmpty('Photos coming soon.');
+    });
+})();
+</script>
+
+<script>
+(function () {
+  var grid = document.getElementById('testimonials-grid');
+  var emptyMsg = document.getElementById('testimonials-empty');
+  if (!grid || typeof supabaseClient === 'undefined') return;
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function starString(rating) {
+    var r = Math.max(1, Math.min(5, rating || 0));
+    return '★'.repeat(r) + '☆'.repeat(5 - r);
+  }
+
+  function showEmpty(message) {
+    grid.innerHTML = '';
+    emptyMsg.textContent = message;
+    emptyMsg.hidden = false;
+    grid.appendChild(emptyMsg);
+  }
+
+  supabaseClient
+    .from('reviews')
+    .select('*')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(6)
+    .then(function (res) {
+      if (res.error || !res.data || res.data.length === 0) {
+        showEmpty('Reviews coming soon.');
+        return;
+      }
+
+      grid.innerHTML = '';
+      res.data.forEach(function (review) {
+        var card = document.createElement('div');
+        card.className = 'card testimonial-card';
+        card.innerHTML =
+          '<div class="testimonial-stars">' + starString(review.rating) + '</div>' +
+          '<p class="testimonial-text">&ldquo;' + escapeHtml(review.review_text) + '&rdquo;</p>' +
+          '<div class="testimonial-author">' +
+            '<strong>' + escapeHtml(review.customer_name) + '</strong>' +
+            (review.location ? '<span>' + escapeHtml(review.location) + '</span>' : '') +
+          '</div>';
+        grid.appendChild(card);
+      });
+    })
+    .catch(function () {
+      showEmpty('Reviews coming soon.');
     });
 })();
 </script>

@@ -258,3 +258,11 @@
   object-fit: cover;
   border: 2px solid var(--accent);
 }
+
+/* ---- Reviews ---- */
+.admin-review-stars {
+  color: var(--accent);
+  font-size: 15px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}

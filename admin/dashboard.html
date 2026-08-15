@@ -24,6 +24,7 @@
     <button type="button" class="admin-tab-btn is-active" data-tab="photos">Job Photos</button>
     <button type="button" class="admin-tab-btn" data-tab="leads">Leads</button>
     <button type="button" class="admin-tab-btn" data-tab="business">Business Info</button>
+    <button type="button" class="admin-tab-btn" data-tab="reviews">Reviews</button>
   </div>
 
   <div id="tab-photos" class="admin-tab-panel">
@@ -110,6 +111,41 @@
         <p id="business-error" class="admin-error" hidden></p>
         <p id="business-success" class="admin-success" hidden>Saved.</p>
       </form>
+    </section>
+  </div>
+
+  <div id="tab-reviews" class="admin-tab-panel" hidden>
+    <section class="admin-upload">
+      <h2 class="display">Add Review</h2>
+      <form id="review-form" class="admin-form">
+        <label>Customer Name
+          <input type="text" id="review-name" required>
+        </label>
+        <label>Rating
+          <select id="review-rating" required>
+            <option value="5">★★★★★ (5)</option>
+            <option value="4">★★★★☆ (4)</option>
+            <option value="3">★★★☆☆ (3)</option>
+            <option value="2">★★☆☆☆ (2)</option>
+            <option value="1">★☆☆☆☆ (1)</option>
+          </select>
+        </label>
+        <label>Review Text
+          <textarea id="review-text" rows="4" required></textarea>
+        </label>
+        <label>Location (optional)
+          <input type="text" id="review-location" placeholder="e.g. La Jolla">
+        </label>
+        <button type="submit" class="btn-primary" id="review-submit-btn">Add Review</button>
+        <p id="review-form-error" class="admin-error" hidden></p>
+        <p id="review-form-success" class="admin-success" hidden>Added.</p>
+      </form>
+    </section>
+
+    <section class="admin-list">
+      <h2 class="display">Existing Reviews</h2>
+      <div id="reviews-grid" class="admin-grid"></div>
+      <p id="reviews-empty-msg" class="admin-empty" hidden></p>
     </section>
   </div>
 </main>
@@ -302,7 +338,8 @@
   var tabPanels = {
     photos: document.getElementById('tab-photos'),
     leads: document.getElementById('tab-leads'),
-    business: document.getElementById('tab-business')
+    business: document.getElementById('tab-business'),
+    reviews: document.getElementById('tab-reviews')
   };
   tabBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -486,12 +523,147 @@
     businessSuccess.hidden = false;
   });
 
+  // ---- Reviews ----
+  var reviewForm = document.getElementById('review-form');
+  var reviewSubmitBtn = document.getElementById('review-submit-btn');
+  var reviewFormError = document.getElementById('review-form-error');
+  var reviewFormSuccess = document.getElementById('review-form-success');
+  var reviewsGrid = document.getElementById('reviews-grid');
+  var reviewsEmptyMsg = document.getElementById('reviews-empty-msg');
+
+  function starString(rating) {
+    var r = Math.max(1, Math.min(5, rating || 0));
+    return '★'.repeat(r) + '☆'.repeat(5 - r);
+  }
+
+  async function loadReviews() {
+    var res = await supabaseClient
+      .from('reviews')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    reviewsGrid.innerHTML = '';
+
+    if (res.error) {
+      reviewsEmptyMsg.textContent = 'Could not load reviews: ' + res.error.message;
+      reviewsEmptyMsg.hidden = false;
+      return;
+    }
+
+    if (!res.data || res.data.length === 0) {
+      reviewsEmptyMsg.textContent = 'No reviews yet. Add your first one above.';
+      reviewsEmptyMsg.hidden = false;
+      return;
+    }
+
+    reviewsEmptyMsg.hidden = true;
+
+    res.data.forEach(function (review) {
+      var published = !!review.is_published;
+      var card = document.createElement('div');
+      card.className = 'admin-card';
+      card.innerHTML =
+        '<div class="admin-card-body">' +
+          '<div class="admin-review-stars">' + starString(review.rating) + '</div>' +
+          '<h3>' + escapeHtml(review.customer_name) + '</h3>' +
+          (review.location ? '<span class="admin-card-category">' + escapeHtml(review.location) + '</span>' : '') +
+          '<p>' + escapeHtml(review.review_text) + '</p>' +
+          '<div class="admin-card-actions">' +
+            '<button type="button" class="admin-feature-btn' + (published ? ' is-featured' : '') + '" data-id="' + review.id + '" data-published="' + published + '">' +
+              (published ? '★ Published' : '☆ Unpublished') +
+            '</button>' +
+            '<button type="button" class="admin-delete-btn" data-id="' + review.id + '">Delete</button>' +
+          '</div>' +
+        '</div>';
+      reviewsGrid.appendChild(card);
+    });
+  }
+
+  reviewForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    reviewFormError.hidden = true;
+    reviewFormSuccess.hidden = true;
+
+    var name = document.getElementById('review-name').value.trim();
+    var rating = parseInt(document.getElementById('review-rating').value, 10);
+    var text = document.getElementById('review-text').value.trim();
+    var location = document.getElementById('review-location').value.trim();
+
+    if (!name || !text) {
+      reviewFormError.textContent = 'Customer name and review text are required.';
+      reviewFormError.hidden = false;
+      return;
+    }
+
+    reviewSubmitBtn.disabled = true;
+
+    var res = await supabaseClient.from('reviews').insert({
+      customer_name: name,
+      rating: rating,
+      review_text: text,
+      location: location || null
+    });
+
+    reviewSubmitBtn.disabled = false;
+
+    if (res.error) {
+      reviewFormError.textContent = res.error.message;
+      reviewFormError.hidden = false;
+      return;
+    }
+
+    reviewFormSuccess.hidden = false;
+    reviewForm.reset();
+    loadReviews();
+  });
+
+  reviewsGrid.addEventListener('click', async function (e) {
+    var toggleBtn = e.target.closest('.admin-feature-btn');
+    if (toggleBtn) {
+      var toggleId = toggleBtn.getAttribute('data-id');
+      var wasPublished = toggleBtn.getAttribute('data-published') === 'true';
+      toggleBtn.disabled = true;
+
+      var toggleRes = await supabaseClient
+        .from('reviews')
+        .update({ is_published: !wasPublished })
+        .eq('id', toggleId);
+
+      toggleBtn.disabled = false;
+
+      if (toggleRes.error) {
+        window.alert('Could not update review: ' + toggleRes.error.message);
+        return;
+      }
+
+      loadReviews();
+      return;
+    }
+
+    var delBtn = e.target.closest('.admin-delete-btn');
+    if (!delBtn) return;
+    if (!window.confirm('Delete this review? This cannot be undone.')) return;
+
+    var delId = delBtn.getAttribute('data-id');
+    delBtn.disabled = true;
+
+    var delRes = await supabaseClient.from('reviews').delete().eq('id', delId);
+    if (delRes.error) {
+      window.alert('Could not delete: ' + delRes.error.message);
+      delBtn.disabled = false;
+      return;
+    }
+
+    loadReviews();
+  });
+
   (async function init() {
     var session = await requireSession();
     if (!session) return;
     loadProjects();
     loadLeads();
     loadBusinessInfo();
+    loadReviews();
   })();
 })();
 </script>
