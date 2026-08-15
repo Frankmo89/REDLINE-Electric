@@ -23,7 +23,7 @@
         <li><a href="#home" class="nav-link">Home</a></li>
         <li><a href="#services" class="nav-link">Services</a></li>
         <li><a href="#why-us" class="nav-link">Why Choose Us</a></li>
-        <li><a href="#work" class="nav-link">Our Work</a></li>
+        <li><a href="trabajos.html" class="nav-link">Our Work</a></li>
         <li><a href="#contact" class="nav-link">Contact</a></li>
       </ul>
     </nav>
@@ -130,6 +130,9 @@
     <p class="sub">Placeholder intro text goes here.</p>
     <div class="work-grid" id="work-grid">
       <p class="work-empty" id="work-empty" hidden>Photos coming soon.</p>
+    </div>
+    <div class="work-cta">
+      <a href="trabajos.html" class="btn-primary">See All Work</a>
     </div>
   </div>
 </section>
@@ -265,8 +268,12 @@
         return;
       }
 
+      var all = res.data;
+      var featured = all.filter(function (p) { return p.is_featured; });
+      var chosen = featured.length >= 6 ? featured.slice(0, 6) : all.slice(0, 6);
+
       grid.innerHTML = '';
-      res.data.forEach(function (project) {
+      chosen.forEach(function (project) {
         var item = document.createElement('div');
         item.className = 'work-photo';
         item.innerHTML =
@@ -331,6 +338,84 @@
     successMsg.hidden = false;
     form.reset();
   });
+})();
+</script>
+
+<script>
+(function () {
+  var hero = document.getElementById('home');
+  if (!hero || typeof supabaseClient === 'undefined') return;
+
+  var HERO_CYCLE_MS = 6000;
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  supabaseClient
+    .from('projects')
+    .select('image_url, title')
+    .eq('is_featured', true)
+    .order('created_at', { ascending: false })
+    .limit(6)
+    .then(function (res) {
+      if (res.error || !res.data || res.data.length === 0) return;
+
+      var photos = res.data;
+
+      var bgWrap = document.createElement('div');
+      bgWrap.className = 'hero-bg';
+      bgWrap.setAttribute('aria-hidden', 'true');
+
+      var overlay = document.createElement('div');
+      overlay.className = 'hero-overlay';
+      overlay.setAttribute('aria-hidden', 'true');
+
+      var slides = photos.map(function (photo, i) {
+        var img = document.createElement('img');
+        img.className = 'hero-bg-img';
+        img.alt = '';
+        img.decoding = 'async';
+        if (i === 0) {
+          img.loading = 'eager';
+          img.setAttribute('fetchpriority', 'high');
+          img.src = photo.image_url;
+        } else {
+          img.loading = 'lazy';
+        }
+        bgWrap.appendChild(img);
+        return { el: img, url: photo.image_url, loaded: i === 0 };
+      });
+
+      hero.insertBefore(bgWrap, hero.firstChild);
+      hero.insertBefore(overlay, bgWrap.nextSibling);
+      hero.classList.add('has-hero-bg');
+
+      slides[0].el.classList.add('is-active');
+
+      if (prefersReduced || slides.length === 1) {
+        return;
+      }
+
+      function preload(index) {
+        var slide = slides[index];
+        if (!slide.loaded) {
+          slide.el.src = slide.url;
+          slide.loaded = true;
+        }
+      }
+
+      preload(1 % slides.length);
+
+      var current = 0;
+      setInterval(function () {
+        var next = (current + 1) % slides.length;
+        preload((next + 1) % slides.length);
+        slides[current].el.classList.remove('is-active');
+        slides[next].el.classList.add('is-active');
+        current = next;
+      }, HERO_CYCLE_MS);
+    })
+    .catch(function () {
+      // Supabase unavailable — leave the existing solid hero background untouched.
+    });
 })();
 </script>
 

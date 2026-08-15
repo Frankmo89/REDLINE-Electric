@@ -213,7 +213,13 @@
   line-height: 1.4;
   margin-bottom: 12px;
 }
-.admin-delete-btn {
+.admin-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-delete-btn,
+.admin-feature-btn {
   background: transparent;
   color: var(--accent);
   border: 1px solid var(--accent);
@@ -224,7 +230,17 @@
   padding: 8px 14px;
   cursor: pointer;
 }
-.admin-delete-btn:disabled {
+.admin-feature-btn {
+  color: var(--ink-dim);
+  border-color: var(--line);
+}
+.admin-feature-btn.is-featured {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.admin-delete-btn:disabled,
+.admin-feature-btn:disabled {
   opacity: 0.5;
   cursor: default;
 }

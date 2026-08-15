@@ -140,13 +140,19 @@
       var path = pathFromPublicUrl(project.image_url) || '';
       var card = document.createElement('div');
       card.className = 'admin-card';
+      var featured = !!project.is_featured;
       card.innerHTML =
         '<img src="' + project.image_url + '" alt="' + escapeHtml(project.title) + '">' +
         '<div class="admin-card-body">' +
           '<h3>' + escapeHtml(project.title) + '</h3>' +
           (project.category ? '<span class="admin-card-category">' + escapeHtml(project.category) + '</span>' : '') +
           (project.description ? '<p>' + escapeHtml(project.description) + '</p>' : '') +
-          '<button type="button" class="admin-delete-btn" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '">Delete</button>' +
+          '<div class="admin-card-actions">' +
+            '<button type="button" class="admin-feature-btn' + (featured ? ' is-featured' : '') + '" data-id="' + project.id + '" data-featured="' + featured + '">' +
+              (featured ? '★ Featured' : '☆ Feature for Hero') +
+            '</button>' +
+            '<button type="button" class="admin-delete-btn" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '">Delete</button>' +
+          '</div>' +
         '</div>';
       grid.appendChild(card);
     });
@@ -206,6 +212,28 @@
   });
 
   grid.addEventListener('click', async function (e) {
+    var featureBtn = e.target.closest('.admin-feature-btn');
+    if (featureBtn) {
+      var featureId = featureBtn.getAttribute('data-id');
+      var wasFeatured = featureBtn.getAttribute('data-featured') === 'true';
+      featureBtn.disabled = true;
+
+      var featureRes = await supabaseClient
+        .from('projects')
+        .update({ is_featured: !wasFeatured })
+        .eq('id', featureId);
+
+      featureBtn.disabled = false;
+
+      if (featureRes.error) {
+        window.alert('Could not update featured status: ' + featureRes.error.message);
+        return;
+      }
+
+      loadProjects();
+      return;
+    }
+
     var btn = e.target.closest('.admin-delete-btn');
     if (!btn) return;
     if (!window.confirm('Delete this photo? This cannot be undone.')) return;
