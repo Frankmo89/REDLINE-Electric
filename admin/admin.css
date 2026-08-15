@@ -110,6 +110,7 @@
 /* ---- Tabs ---- */
 .admin-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 40px;
 }
@@ -247,4 +248,13 @@
 .admin-empty {
   color: var(--ink-dim);
   font-size: 14px;
+}
+
+/* ---- Business info ---- */
+.admin-profile-preview {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
 }

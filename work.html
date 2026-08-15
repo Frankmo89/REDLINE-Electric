@@ -23,14 +23,13 @@
         <li><a href="index.html#home" class="nav-link">Home</a></li>
         <li><a href="index.html#services" class="nav-link">Services</a></li>
         <li><a href="index.html#why-us" class="nav-link">Why Choose Us</a></li>
-        <li><a href="trabajos.html" class="nav-link">Our Work</a></li>
+        <li><a href="work.html" class="nav-link">Our Work</a></li>
         <li><a href="index.html#contact" class="nav-link">Contact</a></li>
       </ul>
     </nav>
 
     <div class="header-actions">
-      <!-- TODO: replace with real phone number -->
-      <a href="tel:" class="btn-primary btn-header-cta">Call Now</a>
+      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link>Call Now</a>
       <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
         <span></span><span></span><span></span>
       </button>
@@ -64,7 +63,7 @@
       </div>
       <div class="badge">
         <div class="swatch">SD</div>
-        <div><span>Service Area</span><strong>San Diego County</strong></div>
+        <div><span>Service Area</span><strong data-service-areas-text>San Diego County</strong></div>
       </div>
     </div>
   </div>
@@ -117,6 +116,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/business-info.js"></script>
 <script>
 (function () {
   var grid = document.getElementById('work-grid');

@@ -23,14 +23,13 @@
         <li><a href="#home" class="nav-link">Home</a></li>
         <li><a href="#services" class="nav-link">Services</a></li>
         <li><a href="#why-us" class="nav-link">Why Choose Us</a></li>
-        <li><a href="trabajos.html" class="nav-link">Our Work</a></li>
+        <li><a href="work.html" class="nav-link">Our Work</a></li>
         <li><a href="#contact" class="nav-link">Contact</a></li>
       </ul>
     </nav>
 
     <div class="header-actions">
-      <!-- TODO: replace with real phone number -->
-      <a href="tel:" class="btn-primary btn-header-cta">Call Now</a>
+      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link>Call Now</a>
       <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
         <span></span><span></span><span></span>
       </button>
@@ -44,8 +43,8 @@
     <h1 class="display">Power you can <span>trust.</span></h1>
     <p>Redline Electric — residential and commercial installation, repair, and maintenance across San Diego. Emergency service available.</p>
     <div class="cta-row">
-      <button class="btn-primary">Call Now</button>
-      <button class="btn-ghost">WhatsApp</button>
+      <a href="tel:+16193625347" class="btn-primary" data-phone-link>Call Now</a>
+      <a href="https://wa.me/16193625347" class="btn-ghost" data-whatsapp-link target="_blank" rel="noopener">WhatsApp</a>
     </div>
   </div>
 </section>
@@ -93,6 +92,12 @@
   <div class="wrap">
     <h2 class="display">Why Choose Us</h2>
     <p class="sub">Hiring an electrician means trusting someone with your home's safety. Here's what you get with Redline Electric.</p>
+
+    <div class="why-us-profile" data-profile-block hidden>
+      <img class="why-us-profile-photo" data-profile-photo alt="Redline Electric" hidden>
+      <p class="why-us-profile-text" data-about-text></p>
+    </div>
+
     <div class="grid">
       <div class="card">
         <div class="num">01</div>
@@ -127,7 +132,7 @@
       <p class="work-empty" id="work-empty" hidden>Photos coming soon.</p>
     </div>
     <div class="work-cta">
-      <a href="trabajos.html" class="btn-primary">See All Work</a>
+      <a href="work.html" class="btn-primary">See All Work</a>
     </div>
   </div>
 </section>
@@ -168,6 +173,21 @@
       <p id="quote-success" class="quote-success" hidden>Thanks — we've got your request and will be in touch soon.</p>
     </form>
 
+    <div class="contact-info">
+      <div class="contact-info-item">
+        <span class="contact-info-label">Call or Text</span>
+        <a href="tel:+16193625347" class="contact-info-value" data-phone-link data-phone-text>(619) 362-5347</a>
+      </div>
+      <div class="contact-info-item" data-email-item hidden>
+        <span class="contact-info-label">Email</span>
+        <a href="mailto:" class="contact-info-value" data-email-link></a>
+      </div>
+      <div class="contact-info-item" data-hours-item hidden>
+        <span class="contact-info-label">Hours</span>
+        <span class="contact-info-value" data-hours-text></span>
+      </div>
+    </div>
+
     <div class="trust-badges">
       <div class="badge">
         <div class="swatch">✓</div>
@@ -179,7 +199,7 @@
       </div>
       <div class="badge">
         <div class="swatch">SD</div>
-        <div><span>Service Area</span><strong>San Diego County</strong></div>
+        <div><span>Service Area</span><strong data-service-areas-text>San Diego County</strong></div>
       </div>
     </div>
   </div>
@@ -234,6 +254,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/business-info.js"></script>
 <script>
 (function () {
   var grid = document.getElementById('work-grid');

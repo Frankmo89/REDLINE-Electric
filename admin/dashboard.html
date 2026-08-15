@@ -23,6 +23,7 @@
   <div class="admin-tabs">
     <button type="button" class="admin-tab-btn is-active" data-tab="photos">Job Photos</button>
     <button type="button" class="admin-tab-btn" data-tab="leads">Leads</button>
+    <button type="button" class="admin-tab-btn" data-tab="business">Business Info</button>
   </div>
 
   <div id="tab-photos" class="admin-tab-panel">
@@ -74,6 +75,41 @@
         </table>
       </div>
       <p id="leads-empty-msg" class="admin-empty" hidden></p>
+    </section>
+  </div>
+
+  <div id="tab-business" class="admin-tab-panel" hidden>
+    <section class="admin-upload">
+      <h2 class="display">Business Info</h2>
+      <form id="business-form" class="admin-form">
+        <label>Phone
+          <input type="text" id="biz-phone" placeholder="619-362-5347">
+        </label>
+        <label>WhatsApp
+          <input type="text" id="biz-whatsapp" placeholder="619-362-5347">
+        </label>
+        <label>Email
+          <input type="email" id="biz-email">
+        </label>
+        <label>Hours
+          <input type="text" id="biz-hours" placeholder="e.g. Mon–Fri 8am–6pm">
+        </label>
+        <label>Service Areas
+          <input type="text" id="biz-service-areas" placeholder="e.g. San Diego County">
+        </label>
+        <label>About Text
+          <textarea id="biz-about" rows="4"></textarea>
+        </label>
+        <label>Profile Photo
+          <input type="file" id="biz-photo-file" accept="image/*">
+        </label>
+        <div id="biz-photo-preview-wrap" hidden>
+          <img id="biz-photo-preview" class="admin-profile-preview" alt="Profile photo preview">
+        </div>
+        <button type="submit" class="btn-primary" id="business-save-btn">Save Changes</button>
+        <p id="business-error" class="admin-error" hidden></p>
+        <p id="business-success" class="admin-success" hidden>Saved.</p>
+      </form>
     </section>
   </div>
 </main>
@@ -265,7 +301,8 @@
   var tabBtns = document.querySelectorAll('.admin-tab-btn');
   var tabPanels = {
     photos: document.getElementById('tab-photos'),
-    leads: document.getElementById('tab-leads')
+    leads: document.getElementById('tab-leads'),
+    business: document.getElementById('tab-business')
   };
   tabBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -345,11 +382,116 @@
     }
   });
 
+  // ---- Business Info ----
+  var businessForm = document.getElementById('business-form');
+  var businessSaveBtn = document.getElementById('business-save-btn');
+  var businessError = document.getElementById('business-error');
+  var businessSuccess = document.getElementById('business-success');
+  var bizPhotoPreviewWrap = document.getElementById('biz-photo-preview-wrap');
+  var bizPhotoPreview = document.getElementById('biz-photo-preview');
+  var currentBusinessInfo = null;
+
+  async function loadBusinessInfo() {
+    var res = await supabaseClient.from('business_info').select('*').limit(1).maybeSingle();
+    if (res.error || !res.data) {
+      businessError.textContent = res.error ? ('Could not load business info: ' + res.error.message) : 'No business info row found.';
+      businessError.hidden = false;
+      return;
+    }
+
+    currentBusinessInfo = res.data;
+    document.getElementById('biz-phone').value = res.data.phone || '';
+    document.getElementById('biz-whatsapp').value = res.data.whatsapp || '';
+    document.getElementById('biz-email').value = res.data.email || '';
+    document.getElementById('biz-hours').value = res.data.hours || '';
+    document.getElementById('biz-service-areas').value = res.data.service_areas || '';
+    document.getElementById('biz-about').value = res.data.about_text || '';
+
+    if (res.data.profile_photo_url) {
+      bizPhotoPreview.src = res.data.profile_photo_url;
+      bizPhotoPreviewWrap.hidden = false;
+    } else {
+      bizPhotoPreviewWrap.hidden = true;
+    }
+  }
+
+  businessForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    businessError.hidden = true;
+    businessSuccess.hidden = true;
+
+    if (!currentBusinessInfo) {
+      businessError.textContent = 'Business info has not loaded yet. Try again in a moment.';
+      businessError.hidden = false;
+      return;
+    }
+
+    businessSaveBtn.disabled = true;
+
+    var photoFile = document.getElementById('biz-photo-file').files[0];
+    var profilePhotoUrl = currentBusinessInfo.profile_photo_url || null;
+
+    if (photoFile) {
+      var ext = photoFile.name.indexOf('.') !== -1 ? photoFile.name.split('.').pop() : 'jpg';
+      var path = 'profile/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+
+      var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, photoFile);
+      if (uploadRes.error) {
+        businessError.textContent = uploadRes.error.message;
+        businessError.hidden = false;
+        businessSaveBtn.disabled = false;
+        return;
+      }
+
+      var publicUrlRes = supabaseClient.storage.from(BUCKET).getPublicUrl(path);
+      profilePhotoUrl = publicUrlRes.data.publicUrl;
+    }
+
+    var updates = {
+      phone: document.getElementById('biz-phone').value.trim() || null,
+      whatsapp: document.getElementById('biz-whatsapp').value.trim() || null,
+      email: document.getElementById('biz-email').value.trim() || null,
+      hours: document.getElementById('biz-hours').value.trim() || null,
+      service_areas: document.getElementById('biz-service-areas').value.trim() || null,
+      about_text: document.getElementById('biz-about').value.trim() || null,
+      profile_photo_url: profilePhotoUrl,
+      updated_at: new Date().toISOString()
+    };
+
+    var updateRes = await supabaseClient
+      .from('business_info')
+      .update(updates)
+      .eq('id', currentBusinessInfo.id)
+      .select()
+      .maybeSingle();
+
+    businessSaveBtn.disabled = false;
+
+    if (updateRes.error) {
+      businessError.textContent = updateRes.error.message;
+      businessError.hidden = false;
+      return;
+    }
+
+    currentBusinessInfo = updateRes.data || Object.assign({}, currentBusinessInfo, updates);
+    document.getElementById('biz-photo-file').value = '';
+
+    if (currentBusinessInfo.profile_photo_url) {
+      bizPhotoPreview.src = currentBusinessInfo.profile_photo_url;
+      bizPhotoPreviewWrap.hidden = false;
+    } else {
+      bizPhotoPreviewWrap.hidden = true;
+    }
+
+    businessSuccess.hidden = false;
+  });
+
   (async function init() {
     var session = await requireSession();
     if (!session) return;
     loadProjects();
     loadLeads();
+    loadBusinessInfo();
   })();
 })();
 </script>
