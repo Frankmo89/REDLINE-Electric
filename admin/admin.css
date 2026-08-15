@@ -107,6 +107,70 @@
   max-width: 480px;
 }
 
+/* ---- Tabs ---- */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+.admin-tab-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 13px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.admin-tab-btn.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.admin-tab-panel[hidden] { display: none; }
+
+/* ---- Leads table ---- */
+.admin-table-wrap {
+  overflow-x: auto;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink);
+  vertical-align: top;
+}
+.admin-table th {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+.admin-table-message {
+  max-width: 260px;
+  white-space: pre-wrap;
+  color: var(--ink-dim);
+}
+.admin-status-select {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 6px 10px;
+}
+
 /* ---- Existing photos grid ---- */
 .admin-grid {
   display: grid;

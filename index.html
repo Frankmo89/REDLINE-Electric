@@ -134,19 +134,55 @@
   </div>
 </section>
 
-<section class="trust" id="contact" style="padding: 40px 24px;">
+<section class="trust" id="contact">
   <div class="wrap">
-    <div class="badge">
-      <div class="swatch">✓</div>
-      <div><span>License</span><strong>C-10 #1153394</strong></div>
-    </div>
-    <div class="badge">
-      <div class="swatch">$</div>
-      <div><span>Insurance</span><strong>Fully covered</strong></div>
-    </div>
-    <div class="badge">
-      <div class="swatch">SD</div>
-      <div><span>Service Area</span><strong>San Diego County</strong></div>
+    <h2 class="display">Request a Quote</h2>
+    <p class="sub">Tell us about the job and we'll get back to you.</p>
+
+    <form id="quote-form" class="quote-form">
+      <div class="quote-form-grid">
+        <label>Name*
+          <input type="text" id="lead-name" required>
+        </label>
+        <label>Phone*
+          <input type="tel" id="lead-phone" required>
+        </label>
+        <label>Email
+          <input type="email" id="lead-email">
+        </label>
+        <label>Service Interested In
+          <select id="lead-service">
+            <option value="">Select a service</option>
+            <option value="New Construction">New Construction</option>
+            <option value="Remodels">Remodels</option>
+            <option value="Retrofits">Retrofits</option>
+            <option value="Art Lighting">Art Lighting</option>
+            <option value="EV Chargers">EV Chargers</option>
+            <option value="Service Calls">Service Calls</option>
+          </select>
+        </label>
+      </div>
+      <label class="quote-form-message">Message
+        <textarea id="lead-message" rows="4"></textarea>
+      </label>
+      <button type="submit" class="btn-primary" id="quote-submit-btn">Request a Quote</button>
+      <p id="quote-error" class="quote-error" hidden></p>
+      <p id="quote-success" class="quote-success" hidden>Thanks — we've got your request and will be in touch soon.</p>
+    </form>
+
+    <div class="trust-badges">
+      <div class="badge">
+        <div class="swatch">✓</div>
+        <div><span>License</span><strong>C-10 #1153394</strong></div>
+      </div>
+      <div class="badge">
+        <div class="swatch">$</div>
+        <div><span>Insurance</span><strong>Fully covered</strong></div>
+      </div>
+      <div class="badge">
+        <div class="swatch">SD</div>
+        <div><span>Service Area</span><strong>San Diego County</strong></div>
+      </div>
     </div>
   </div>
 </section>
@@ -245,6 +281,56 @@
     .catch(function () {
       showEmpty('Photos coming soon.');
     });
+})();
+</script>
+
+<script>
+(function () {
+  var form = document.getElementById('quote-form');
+  if (!form || typeof supabaseClient === 'undefined') return;
+
+  var submitBtn = document.getElementById('quote-submit-btn');
+  var errorMsg = document.getElementById('quote-error');
+  var successMsg = document.getElementById('quote-success');
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errorMsg.hidden = true;
+    successMsg.hidden = true;
+
+    var name = document.getElementById('lead-name').value.trim();
+    var phone = document.getElementById('lead-phone').value.trim();
+    var email = document.getElementById('lead-email').value.trim();
+    var service = document.getElementById('lead-service').value;
+    var message = document.getElementById('lead-message').value.trim();
+
+    if (!name || !phone) {
+      errorMsg.textContent = 'Name and phone are required.';
+      errorMsg.hidden = false;
+      return;
+    }
+
+    submitBtn.disabled = true;
+
+    var res = await supabaseClient.from('leads').insert({
+      name: name,
+      phone: phone,
+      email: email || null,
+      service_interest: service || null,
+      message: message || null
+    });
+
+    submitBtn.disabled = false;
+
+    if (res.error) {
+      errorMsg.textContent = 'Something went wrong submitting your request. Please try calling us instead.';
+      errorMsg.hidden = false;
+      return;
+    }
+
+    successMsg.hidden = false;
+    form.reset();
+  });
 })();
 </script>
 

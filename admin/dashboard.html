@@ -15,37 +15,67 @@
 
 <header class="admin-header">
   <img src="../assets/redline-electric-logo.png" alt="Redline Electric" class="admin-logo-sm">
-  <h1 class="display">Job Photos</h1>
+  <h1 class="display">Dashboard</h1>
   <button type="button" class="btn-ghost" id="logout-btn">Log Out</button>
 </header>
 
 <main class="admin-main">
-  <section class="admin-upload">
-    <h2 class="display">Upload New Photo</h2>
-    <form id="upload-form" class="admin-form">
-      <label>Title
-        <input type="text" id="title" required>
-      </label>
-      <label>Description
-        <textarea id="description" rows="3"></textarea>
-      </label>
-      <label>Category
-        <input type="text" id="category">
-      </label>
-      <label>Photo
-        <input type="file" id="file" accept="image/*" required>
-      </label>
-      <button type="submit" class="btn-primary" id="upload-btn">Upload</button>
-      <p id="upload-error" class="admin-error" hidden></p>
-      <p id="upload-success" class="admin-success" hidden>Uploaded.</p>
-    </form>
-  </section>
+  <div class="admin-tabs">
+    <button type="button" class="admin-tab-btn is-active" data-tab="photos">Job Photos</button>
+    <button type="button" class="admin-tab-btn" data-tab="leads">Leads</button>
+  </div>
 
-  <section class="admin-list">
-    <h2 class="display">Existing Photos</h2>
-    <div id="projects-grid" class="admin-grid"></div>
-    <p id="empty-msg" class="admin-empty" hidden></p>
-  </section>
+  <div id="tab-photos" class="admin-tab-panel">
+    <section class="admin-upload">
+      <h2 class="display">Upload New Photo</h2>
+      <form id="upload-form" class="admin-form">
+        <label>Title
+          <input type="text" id="title" required>
+        </label>
+        <label>Description
+          <textarea id="description" rows="3"></textarea>
+        </label>
+        <label>Category
+          <input type="text" id="category">
+        </label>
+        <label>Photo
+          <input type="file" id="file" accept="image/*" required>
+        </label>
+        <button type="submit" class="btn-primary" id="upload-btn">Upload</button>
+        <p id="upload-error" class="admin-error" hidden></p>
+        <p id="upload-success" class="admin-success" hidden>Uploaded.</p>
+      </form>
+    </section>
+
+    <section class="admin-list">
+      <h2 class="display">Existing Photos</h2>
+      <div id="projects-grid" class="admin-grid"></div>
+      <p id="empty-msg" class="admin-empty" hidden></p>
+    </section>
+  </div>
+
+  <div id="tab-leads" class="admin-tab-panel" hidden>
+    <section class="admin-list">
+      <h2 class="display">Leads</h2>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Service</th>
+              <th>Message</th>
+              <th>Status</th>
+              <th>Received</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody"></tbody>
+        </table>
+      </div>
+      <p id="leads-empty-msg" class="admin-empty" hidden></p>
+    </section>
+  </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -203,10 +233,95 @@
     window.location.href = 'login.html';
   });
 
+  // ---- Tabs ----
+  var tabBtns = document.querySelectorAll('.admin-tab-btn');
+  var tabPanels = {
+    photos: document.getElementById('tab-photos'),
+    leads: document.getElementById('tab-leads')
+  };
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var tab = btn.getAttribute('data-tab');
+      tabBtns.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+      Object.keys(tabPanels).forEach(function (key) {
+        tabPanels[key].hidden = key !== tab;
+      });
+    });
+  });
+
+  // ---- Leads ----
+  var leadsTbody = document.getElementById('leads-tbody');
+  var leadsEmptyMsg = document.getElementById('leads-empty-msg');
+  var STATUS_OPTIONS = ['new', 'contacted', 'quoted', 'won', 'lost'];
+  var STATUS_LABELS = { new: 'New', contacted: 'Contacted', quoted: 'Quoted', won: 'Won', lost: 'Lost' };
+
+  function formatDate(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function loadLeads() {
+    var res = await supabaseClient
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    leadsTbody.innerHTML = '';
+
+    if (res.error) {
+      leadsEmptyMsg.textContent = 'Could not load leads: ' + res.error.message;
+      leadsEmptyMsg.hidden = false;
+      return;
+    }
+
+    if (!res.data || res.data.length === 0) {
+      leadsEmptyMsg.textContent = 'No leads yet.';
+      leadsEmptyMsg.hidden = false;
+      return;
+    }
+
+    leadsEmptyMsg.hidden = true;
+
+    res.data.forEach(function (lead) {
+      var tr = document.createElement('tr');
+      var options = STATUS_OPTIONS.map(function (opt) {
+        var selected = opt === lead.status ? ' selected' : '';
+        return '<option value="' + opt + '"' + selected + '>' + STATUS_LABELS[opt] + '</option>';
+      }).join('');
+      tr.innerHTML =
+        '<td>' + escapeHtml(lead.name) + '</td>' +
+        '<td>' + escapeHtml(lead.phone) + '</td>' +
+        '<td>' + (lead.email ? escapeHtml(lead.email) : '—') + '</td>' +
+        '<td>' + (lead.service_interest ? escapeHtml(lead.service_interest) : '—') + '</td>' +
+        '<td class="admin-table-message">' + (lead.message ? escapeHtml(lead.message) : '—') + '</td>' +
+        '<td><select class="admin-status-select" data-id="' + lead.id + '">' + options + '</select></td>' +
+        '<td>' + formatDate(lead.created_at) + '</td>';
+      leadsTbody.appendChild(tr);
+    });
+  }
+
+  leadsTbody.addEventListener('change', async function (e) {
+    var select = e.target.closest('.admin-status-select');
+    if (!select) return;
+
+    var id = select.getAttribute('data-id');
+    var newStatus = select.value;
+    select.disabled = true;
+
+    var res = await supabaseClient.from('leads').update({ status: newStatus }).eq('id', id);
+
+    select.disabled = false;
+
+    if (res.error) {
+      window.alert('Could not update status: ' + res.error.message);
+    }
+  });
+
   (async function init() {
     var session = await requireSession();
     if (!session) return;
     loadProjects();
+    loadLeads();
   })();
 })();
 </script>
