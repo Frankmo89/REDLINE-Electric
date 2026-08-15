@@ -414,6 +414,36 @@ section { padding: 56px 20px; }
   text-decoration: none;
 }
 a.contact-info-value:hover { color: var(--accent); }
+.areas-served {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+.areas-served-title {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-bottom: 16px;
+}
+.areas-served-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+}
+.areas-served-list li {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 2px;
+}
 .trust-badges { display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 40px; border-top: 1px solid var(--line); }
 .badge { display: flex; align-items: center; gap: 12px; }
 .badge .swatch {
