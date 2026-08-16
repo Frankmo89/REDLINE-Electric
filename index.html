@@ -44,6 +44,79 @@
   }
 }
 </script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do I need a permit for electrical work in San Diego?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most electrical work in San Diego County requires a permit — including panel upgrades, new circuits, and EV charger installations. Skipping a permit can cause problems later, like issues with an insurance claim or when selling your home. Redline Electric pulls all required permits as part of the job — you're never asked to pull your own."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does an electrical panel upgrade cost?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cost depends on the panel size, your home's current electrical setup, and the scope of the work — there's no single number that applies to every home. We provide a free quote after seeing the job in person. Request a quote online or give us a call and we'll get you an accurate number."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does EV charger installation cost?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cost varies based on factors like your panel's available capacity and the distance from the panel to where the charger will be mounted. Because every home is different, we provide a free quote after assessing your site — request a quote or call us to get started."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I know if my panel needs to be upgraded?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A few common warning signs it's worth having your panel looked at: breakers that trip frequently, flickering lights, a panel cover that feels warm or looks discolored, a burning smell near the panel, or running out of open breaker slots when you want to add a circuit. If you're noticing any of these, it's worth having it assessed."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Redline Electric licensed and insured?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Redline Electric holds a C-10 electrical contractor license (#1153394) and is fully insured. You can verify our license directly with the California State License Board (CSLB)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What areas do you serve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We serve San Diego County, including San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, and Escondido."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you handle emergency calls?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — we handle emergency electrical calls, including sparking outlets, power outages, and exposed wiring. If you're facing an active electrical hazard, call us right away."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What's the difference between a retrofit and a remodel?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A retrofit upgrades the electrical system already in your home — most often the panel — without a full renovation, usually because the panel is outdated or undersized for today's loads. A remodel is electrical work done as part of a larger renovation, like a kitchen or bathroom update, where wiring and circuits change to match a new layout. The two can overlap: a remodel often triggers the same code-required upgrades as a retrofit."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -83,6 +156,7 @@
         </li>
         <li><a href="#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
         <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="#faq" class="nav-link" data-i18n="nav_faq">FAQ</a></li>
         <li><a href="#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
         <li class="nav-lang-item">
           <div class="lang-switch" role="group" aria-label="Language / Idioma">
@@ -222,6 +296,14 @@
   </div>
 </section>
 
+<section class="faq" id="faq">
+  <div class="wrap">
+    <h2 class="display" data-i18n="faq_heading">Frequently Asked Questions</h2>
+    <p class="sub" data-i18n="faq_subheading">Answers to the questions we hear most from homeowners and businesses in San Diego.</p>
+    <div class="faq-list" id="faq-list"></div>
+  </div>
+</section>
+
 <section class="trust" id="contact">
   <div class="wrap">
     <h2 class="display" data-i18n="quote_heading">Request a Quote</h2>
@@ -334,6 +416,7 @@
         <li><a href="#services" data-i18n="nav_services">Services</a></li>
         <li><a href="#why-us" data-i18n="nav_why_us">Why Choose Us</a></li>
         <li><a href="work.html" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="#faq" data-i18n="nav_faq">FAQ</a></li>
         <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
       </ul>
     </div>
@@ -359,6 +442,10 @@
 </script>
 
 <script src="assets/js/i18n.js"></script>
+<script src="assets/js/faq-data.js"></script>
+<script>
+  if (window.RedlineFAQ) window.RedlineFAQ.init('home');
+</script>
 
 <script>
 (function () {

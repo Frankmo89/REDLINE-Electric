@@ -130,6 +130,62 @@
     footer_license: { en: 'C-10 License #1153394', es: 'Licencia C-10 #1153394' },
     footer_rights: { en: 'All rights reserved.', es: 'Todos los derechos reservados.' },
 
+    nav_faq: { en: 'FAQ', es: 'Preguntas Frecuentes' },
+
+    faq_heading: { en: 'Frequently Asked Questions', es: 'Preguntas Frecuentes' },
+    faq_subheading: {
+      en: 'Answers to the questions we hear most from homeowners and businesses in San Diego.',
+      es: 'Respuestas a las preguntas que más escuchamos de propietarios y negocios en San Diego.'
+    },
+
+    faq_q_permit: { en: 'Do I need a permit for electrical work in San Diego?', es: '¿Necesito un permiso para trabajo eléctrico en San Diego?' },
+    faq_a_permit: {
+      en: "Most electrical work in San Diego County requires a permit — including panel upgrades, new circuits, and EV charger installations. Skipping a permit can cause problems later, like issues with an insurance claim or when selling your home. Redline Electric pulls all required permits as part of the job — you're never asked to pull your own.",
+      es: 'La mayoría del trabajo eléctrico en el Condado de San Diego requiere un permiso — incluyendo actualizaciones de panel, circuitos nuevos e instalaciones de cargadores para autos eléctricos. Omitir un permiso puede causar problemas más adelante, como inconvenientes con un reclamo de seguro o al vender su casa. Redline Electric tramita todos los permisos necesarios como parte del trabajo — usted nunca tiene que tramitar el suyo.'
+    },
+
+    faq_q_panel_cost: { en: 'How much does an electrical panel upgrade cost?', es: '¿Cuánto cuesta una actualización de panel eléctrico?' },
+    faq_a_panel_cost: {
+      en: "Cost depends on the panel size, your home's current electrical setup, and the scope of the work — there's no single number that applies to every home. We provide a free quote after seeing the job in person. Request a quote online or give us a call and we'll get you an accurate number.",
+      es: 'El costo depende del tamaño del panel, la instalación eléctrica actual de su casa y el alcance del trabajo — no hay un número único que aplique a todas las casas. Ofrecemos una cotización gratuita después de ver el trabajo en persona. Solicite una cotización en línea o llámenos y le daremos un número preciso.'
+    },
+
+    faq_q_ev_cost: { en: 'How much does EV charger installation cost?', es: '¿Cuánto cuesta la instalación de un cargador para auto eléctrico?' },
+    faq_a_ev_cost: {
+      en: "Cost varies based on factors like your panel's available capacity and the distance from the panel to where the charger will be mounted. Because every home is different, we provide a free quote after assessing your site — request a quote or call us to get started.",
+      es: 'El costo varía según factores como la capacidad disponible de su panel y la distancia entre el panel y el lugar donde se montará el cargador. Como cada casa es diferente, ofrecemos una cotización gratuita después de evaluar su propiedad — solicite una cotización o llámenos para comenzar.'
+    },
+
+    faq_q_panel_signs: { en: 'How do I know if my panel needs to be upgraded?', es: '¿Cómo sé si mi panel necesita una actualización?' },
+    faq_a_panel_signs: {
+      en: "A few common warning signs it's worth having your panel looked at: breakers that trip frequently, flickering lights, a panel cover that feels warm or looks discolored, a burning smell near the panel, or running out of open breaker slots when you want to add a circuit. If you're noticing any of these, it's worth having it assessed.",
+      es: 'Algunas señales comunes de que vale la pena revisar su panel: breakers que se disparan con frecuencia, luces que parpadean, una cubierta del panel que se siente caliente o se ve descolorida, olor a quemado cerca del panel, o quedarse sin espacios disponibles para breakers cuando quiere agregar un circuito. Si nota alguna de estas señales, vale la pena que lo evaluemos.'
+    },
+
+    faq_q_licensed: { en: 'Is Redline Electric licensed and insured?', es: '¿Redline Electric está licenciado y asegurado?' },
+    faq_a_licensed: {
+      en: 'Yes. Redline Electric holds a C-10 electrical contractor license (#1153394) and is fully insured. You can verify our license directly with the California State License Board (CSLB).',
+      es: 'Sí. Redline Electric tiene una licencia de contratista eléctrico C-10 (#1153394) y está totalmente asegurado. Puede verificar nuestra licencia directamente con el California State License Board (CSLB).'
+    },
+
+    faq_q_areas: { en: 'What areas do you serve?', es: '¿Qué áreas atienden?' },
+    faq_a_areas: {
+      en: 'We serve San Diego County, including San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, and Escondido.',
+      es: 'Atendemos el Condado de San Diego, incluyendo San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside y Escondido.'
+    },
+
+    faq_q_emergency: { en: 'Do you handle emergency calls?', es: '¿Atienden llamadas de emergencia?' },
+    faq_a_emergency: {
+      en: "Yes — we handle emergency electrical calls, including sparking outlets, power outages, and exposed wiring. If you're facing an active electrical hazard, call us right away.",
+      es: 'Sí — atendemos llamadas de emergencia eléctrica, incluyendo contactos chispeando, apagones y cables expuestos. Si enfrenta un peligro eléctrico activo, llámenos de inmediato.'
+    },
+
+    faq_q_retrofit_vs_remodel: { en: "What's the difference between a retrofit and a remodel?", es: '¿Cuál es la diferencia entre un retrofit y una remodelación?' },
+    faq_a_retrofit_vs_remodel: {
+      en: "A retrofit upgrades the electrical system already in your home — most often the panel — without a full renovation, usually because the panel is outdated or undersized for today's loads. A remodel is electrical work done as part of a larger renovation, like a kitchen or bathroom update, where wiring and circuits change to match a new layout. The two can overlap: a remodel often triggers the same code-required upgrades as a retrofit.",
+      es: 'Un retrofit actualiza el sistema eléctrico que ya existe en su casa — con mayor frecuencia el panel — sin una renovación completa, normalmente porque el panel está anticuado o es insuficiente para las cargas actuales. Una remodelación es trabajo eléctrico hecho como parte de una renovación más grande, como una actualización de cocina o baño, donde el cableado y los circuitos cambian para adaptarse a un nuevo diseño. Ambos pueden combinarse: una remodelación a menudo requiere las mismas actualizaciones de código que un retrofit.'
+    },
+
     notfound_eyebrow: { en: '404 · Page Not Found', es: '404 · Página No Encontrada' },
     notfound_heading: { en: 'This page took a wrong turn.', es: 'Esta página se perdió en el camino.' },
     notfound_text: {

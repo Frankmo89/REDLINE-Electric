@@ -37,6 +37,39 @@
   "url": "https://REPLACE-WITH-DOMAIN.com/services/remodels.html"
 }
 </script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What's the difference between a retrofit and a remodel?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A retrofit upgrades the electrical system already in your home — most often the panel — without a full renovation, usually because the panel is outdated or undersized for today's loads. A remodel is electrical work done as part of a larger renovation, like a kitchen or bathroom update, where wiring and circuits change to match a new layout. The two can overlap: a remodel often triggers the same code-required upgrades as a retrofit."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need a permit for electrical work in San Diego?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most electrical work in San Diego County requires a permit — including panel upgrades, new circuits, and EV charger installations. Skipping a permit can cause problems later, like issues with an insurance claim or when selling your home. Redline Electric pulls all required permits as part of the job — you're never asked to pull your own."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Redline Electric licensed and insured?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Redline Electric holds a C-10 electrical contractor license (#1153394) and is fully insured. You can verify our license directly with the California State License Board (CSLB)."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -263,6 +296,14 @@
   </div>
 </section>
 
+<section class="faq" id="faq">
+  <div class="wrap">
+    <h2 class="display" data-i18n="faq_heading">Frequently Asked Questions</h2>
+    <p class="sub" data-i18n="faq_subheading">Answers to the questions we hear most from homeowners and businesses in San Diego.</p>
+    <div class="faq-list" id="faq-list"></div>
+  </div>
+</section>
+
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
@@ -281,6 +322,7 @@
         <li><a href="../index.html#services" data-i18n="nav_services">Services</a></li>
         <li><a href="../index.html#why-us" data-i18n="nav_why_us">Why Choose Us</a></li>
         <li><a href="../work.html" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="../index.html#faq" data-i18n="nav_faq">FAQ</a></li>
         <li><a href="../index.html#contact" data-i18n="nav_contact">Contact</a></li>
       </ul>
     </div>
@@ -306,6 +348,10 @@
 </script>
 
 <script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/faq-data.js"></script>
+<script>
+  if (window.RedlineFAQ) window.RedlineFAQ.init('remodels');
+</script>
 
 <script>
 (function () {
