@@ -74,6 +74,10 @@
       es: 'Le damos el precio antes de empezar, no después. Llegamos cuando decimos que llegaremos, y dejamos el área de trabajo limpia.'
     },
 
+    about_heading: { en: "Who You're Working With", es: 'Con Quién Está Trabajando' },
+    about_credential_1: { en: 'Licensed & Insured (C-10 #1153394)', es: 'Licenciados y Asegurados (C-10 #1153394)' },
+    about_credential_2: { en: 'Serving San Diego County', es: 'Sirviendo al Condado de San Diego' },
+
     work_heading: { en: 'Our Work', es: 'Nuestros Trabajos' },
     work_teaser_sub: { en: 'Placeholder intro text goes here.', es: 'Aquí va el texto de introducción.' },
     work_page_sub: {

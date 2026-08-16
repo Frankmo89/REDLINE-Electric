@@ -284,28 +284,46 @@ section { padding: 56px 20px; }
 .why-us .sub { color: var(--ink-dim); margin-bottom: 40px; max-width: 500px; }
 .why-us .card { color: #23262F; }
 .why-us .card p { color: #5C6169; }
-.why-us-profile {
+/* ---- About ---- */
+.about-us { background: var(--panel); color: #23262F; }
+.about-us-inner {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 40px;
-  padding-bottom: 32px;
-  border-bottom: 1px solid var(--line);
+  gap: 32px;
 }
-.why-us-profile-photo {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
+.about-us-photo-wrap {
+  width: 100%;
+  max-width: 320px;
+}
+.about-us-photo {
+  width: 100%;
+  aspect-ratio: 4 / 5;
   object-fit: cover;
-  flex: none;
-  border: 2px solid var(--accent);
+  border-radius: 4px;
+  display: block;
 }
-.why-us-profile-text {
-  color: var(--ink-dim);
-  font-size: 15px;
-  line-height: 1.6;
-  max-width: 640px;
+.about-us-content { width: 100%; }
+.about-us-content h2 { font-size: clamp(24px, 5vw, 34px); font-weight: 700; margin-bottom: 16px; }
+.about-us-text {
+  color: #5C6169;
+  font-size: 16px;
+  line-height: 1.7;
+  margin-bottom: 24px;
+  max-width: 560px;
+}
+.about-us-credentials { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.about-us-credentials li { display: flex; align-items: center; gap: 12px; }
+.about-us-credentials li span:last-child {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 14px;
+}
+.about-us-credentials .check {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--accent);
+  color: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; flex: none;
 }
 
 /* ---- Work ---- */
@@ -951,6 +969,10 @@ a.contact-info-value:hover { color: var(--accent); }
   .nav-dropdown-menu a:hover { color: var(--accent); }
 
   .services-grid { grid-template-columns: repeat(3, 1fr); }
+
+  .about-us-inner { flex-direction: row; align-items: center; gap: 56px; }
+  .about-us-photo-wrap { flex: 0 0 320px; max-width: 320px; }
+  .about-us-content { flex: 1; }
 
   .quote-form-grid { grid-template-columns: 1fr 1fr; }
 
