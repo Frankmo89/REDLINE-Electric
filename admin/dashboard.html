@@ -44,6 +44,8 @@
           <input type="file" id="file" accept="image/*" required>
         </label>
         <button type="submit" class="btn-primary" id="upload-btn">Upload</button>
+        <p id="upload-status" class="admin-status" hidden>Optimizing image...</p>
+        <p id="upload-warning" class="admin-warning" hidden></p>
         <p id="upload-error" class="admin-error" hidden></p>
         <p id="upload-success" class="admin-success" hidden>Uploaded.</p>
       </form>
@@ -108,6 +110,8 @@
           <img id="biz-photo-preview" class="admin-profile-preview" alt="Profile photo preview">
         </div>
         <button type="submit" class="btn-primary" id="business-save-btn">Save Changes</button>
+        <p id="business-status" class="admin-status" hidden>Optimizing image...</p>
+        <p id="business-warning" class="admin-warning" hidden></p>
         <p id="business-error" class="admin-error" hidden></p>
         <p id="business-success" class="admin-success" hidden>Saved.</p>
       </form>
@@ -152,18 +156,31 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../assets/js/supabase-client.js"></script>
+<script src="../assets/js/image-compress.js"></script>
 <script>
 (function () {
   var grid = document.getElementById('projects-grid');
   var emptyMsg = document.getElementById('empty-msg');
   var uploadForm = document.getElementById('upload-form');
   var uploadBtn = document.getElementById('upload-btn');
+  var uploadStatus = document.getElementById('upload-status');
+  var uploadWarning = document.getElementById('upload-warning');
   var uploadError = document.getElementById('upload-error');
   var uploadSuccess = document.getElementById('upload-success');
   var logoutBtn = document.getElementById('logout-btn');
 
   var BUCKET = 'job-photos';
   var PUBLIC_URL_MARKER = '/storage/v1/object/public/' + BUCKET + '/';
+
+  // Chrome and Firefox can't decode HEIC/HEIF (the default iPhone photo
+  // format) via Canvas, so compression silently can't run for those files.
+  // Surface that instead of letting a multi-MB original upload unnoticed.
+  function skipReasonMessage(reason) {
+    if (reason === 'unsupported-type' || reason === 'decode-failed') {
+      return "Note: this photo's format couldn't be optimized in this browser (this happens with HEIC photos in Chrome/Firefox), so the original file was uploaded as-is — it may be larger than usual.";
+    }
+    return null;
+  }
 
   function escapeHtml(str) {
     var div = document.createElement('div');
@@ -234,6 +251,8 @@
     e.preventDefault();
     uploadError.hidden = true;
     uploadSuccess.hidden = true;
+    uploadStatus.hidden = true;
+    uploadWarning.hidden = true;
 
     var title = document.getElementById('title').value.trim();
     var description = document.getElementById('description').value.trim();
@@ -248,11 +267,25 @@
     }
 
     uploadBtn.disabled = true;
+    uploadStatus.hidden = false;
 
-    var ext = file.name.indexOf('.') !== -1 ? file.name.split('.').pop() : 'jpg';
+    var fileToUpload = file;
+    if (window.RedlineImageCompress) {
+      var compressResult = await window.RedlineImageCompress.compressImage(file);
+      fileToUpload = compressResult.file;
+      var warningMsg = skipReasonMessage(compressResult.reason);
+      if (warningMsg) {
+        uploadWarning.textContent = warningMsg;
+        uploadWarning.hidden = false;
+      }
+    }
+
+    uploadStatus.hidden = true;
+
+    var ext = fileToUpload.name.indexOf('.') !== -1 ? fileToUpload.name.split('.').pop() : 'jpg';
     var path = Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
 
-    var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, file);
+    var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, fileToUpload);
     if (uploadRes.error) {
       uploadError.textContent = uploadRes.error.message;
       uploadError.hidden = false;
@@ -422,6 +455,8 @@
   // ---- Business Info ----
   var businessForm = document.getElementById('business-form');
   var businessSaveBtn = document.getElementById('business-save-btn');
+  var businessStatus = document.getElementById('business-status');
+  var businessWarning = document.getElementById('business-warning');
   var businessError = document.getElementById('business-error');
   var businessSuccess = document.getElementById('business-success');
   var bizPhotoPreviewWrap = document.getElementById('biz-photo-preview-wrap');
@@ -456,6 +491,8 @@
     e.preventDefault();
     businessError.hidden = true;
     businessSuccess.hidden = true;
+    businessStatus.hidden = true;
+    businessWarning.hidden = true;
 
     if (!currentBusinessInfo) {
       businessError.textContent = 'Business info has not loaded yet. Try again in a moment.';
@@ -469,10 +506,25 @@
     var profilePhotoUrl = currentBusinessInfo.profile_photo_url || null;
 
     if (photoFile) {
-      var ext = photoFile.name.indexOf('.') !== -1 ? photoFile.name.split('.').pop() : 'jpg';
+      businessStatus.hidden = false;
+
+      var photoToUpload = photoFile;
+      if (window.RedlineImageCompress) {
+        var bizCompressResult = await window.RedlineImageCompress.compressImage(photoFile);
+        photoToUpload = bizCompressResult.file;
+        var bizWarningMsg = skipReasonMessage(bizCompressResult.reason);
+        if (bizWarningMsg) {
+          businessWarning.textContent = bizWarningMsg;
+          businessWarning.hidden = false;
+        }
+      }
+
+      businessStatus.hidden = true;
+
+      var ext = photoToUpload.name.indexOf('.') !== -1 ? photoToUpload.name.split('.').pop() : 'jpg';
       var path = 'profile/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
 
-      var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, photoFile);
+      var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, photoToUpload);
       if (uploadRes.error) {
         businessError.textContent = uploadRes.error.message;
         businessError.hidden = false;

@@ -58,6 +58,14 @@
 .admin-form button[type="submit"] {
   margin-top: 8px;
 }
+.admin-status {
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+.admin-warning {
+  color: #D99A2B;
+  font-size: 13px;
+}
 .admin-error {
   color: var(--accent);
   font-size: 13px;
