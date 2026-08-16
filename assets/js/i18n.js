@@ -186,6 +186,12 @@
       es: 'Un retrofit actualiza el sistema eléctrico que ya existe en su casa — con mayor frecuencia el panel — sin una renovación completa, normalmente porque el panel está anticuado o es insuficiente para las cargas actuales. Una remodelación es trabajo eléctrico hecho como parte de una renovación más grande, como una actualización de cocina o baño, donde el cableado y los circuitos cambian para adaptarse a un nuevo diseño. Ambos pueden combinarse: una remodelación a menudo requiere las mismas actualizaciones de código que un retrofit.'
     },
 
+    cookie_banner_text: {
+      en: 'We use analytics to improve this site.',
+      es: 'Usamos análisis para mejorar este sitio.'
+    },
+    cookie_banner_accept: { en: 'Accept', es: 'Aceptar' },
+
     notfound_eyebrow: { en: '404 · Page Not Found', es: '404 · Página No Encontrada' },
     notfound_heading: { en: 'This page took a wrong turn.', es: 'Esta página se perdió en el camino.' },
     notfound_text: {

@@ -628,6 +628,40 @@ a.contact-info-value:hover { color: var(--accent); }
 }
 .lang-banner-dismiss:hover { color: var(--ink); }
 
+/* ---- Cookie / analytics consent notice ---- */
+.cookie-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #1C1E25;
+  border-top: 1px solid var(--line);
+  padding: 16px 20px;
+  z-index: 400;
+}
+.cookie-banner-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 20px;
+  text-align: center;
+}
+.cookie-banner-text { font-size: 13px; color: var(--ink-dim); }
+.cookie-banner-accept {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  flex: none;
+}
+
 /* ---- Footer ---- */
 .site-footer { background: #1C1E25; color: var(--ink-dim); }
 .footer-grid {
