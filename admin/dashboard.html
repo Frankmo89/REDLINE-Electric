@@ -53,6 +53,11 @@
 
     <section class="admin-list">
       <h2 class="display">Existing Photos</h2>
+      <div class="admin-bulk-bar">
+        <label class="admin-select-all-label"><input type="checkbox" id="photos-select-all"> Select All</label>
+        <span id="photos-bulk-count" class="admin-bulk-count" hidden></span>
+        <button type="button" class="admin-bulk-delete-btn" id="photos-bulk-delete-btn" hidden>Delete Selected</button>
+      </div>
       <div id="projects-grid" class="admin-grid"></div>
       <p id="empty-msg" class="admin-empty" hidden></p>
     </section>
@@ -61,10 +66,15 @@
   <div id="tab-leads" class="admin-tab-panel" hidden>
     <section class="admin-list">
       <h2 class="display">Leads</h2>
+      <div class="admin-bulk-bar">
+        <span id="leads-bulk-count" class="admin-bulk-count" hidden></span>
+        <button type="button" class="admin-bulk-delete-btn" id="leads-bulk-delete-btn" hidden>Delete Selected</button>
+      </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
             <tr>
+              <th><input type="checkbox" id="leads-select-all" aria-label="Select all leads"></th>
               <th>Name</th>
               <th>Phone</th>
               <th>Email</th>
@@ -72,6 +82,7 @@
               <th>Message</th>
               <th>Status</th>
               <th>Received</th>
+              <th>Delete</th>
             </tr>
           </thead>
           <tbody id="leads-tbody"></tbody>
@@ -148,6 +159,11 @@
 
     <section class="admin-list">
       <h2 class="display">Existing Reviews</h2>
+      <div class="admin-bulk-bar">
+        <label class="admin-select-all-label"><input type="checkbox" id="reviews-select-all"> Select All</label>
+        <span id="reviews-bulk-count" class="admin-bulk-count" hidden></span>
+        <button type="button" class="admin-bulk-delete-btn" id="reviews-bulk-delete-btn" hidden>Delete Selected</button>
+      </div>
       <div id="reviews-grid" class="admin-grid"></div>
       <p id="reviews-empty-msg" class="admin-empty" hidden></p>
     </section>
@@ -161,6 +177,9 @@
 (function () {
   var grid = document.getElementById('projects-grid');
   var emptyMsg = document.getElementById('empty-msg');
+  var photosSelectAll = document.getElementById('photos-select-all');
+  var photosBulkCount = document.getElementById('photos-bulk-count');
+  var photosBulkDeleteBtn = document.getElementById('photos-bulk-delete-btn');
   var uploadForm = document.getElementById('upload-form');
   var uploadBtn = document.getElementById('upload-btn');
   var uploadStatus = document.getElementById('upload-status');
@@ -194,6 +213,46 @@
     return decodeURIComponent(url.slice(idx + PUBLIC_URL_MARKER.length));
   }
 
+  // Wires a "select all" checkbox + per-row .admin-row-check boxes inside
+  // containerEl to a bulk-count label and a bulk-delete button, showing/
+  // hiding them as selection changes. Reused across Photos, Leads, Reviews.
+  function setupBulkSelection(containerEl, selectAllEl, countEl, deleteBtnEl, itemNoun) {
+    function getCheckboxes() {
+      return Array.prototype.slice.call(containerEl.querySelectorAll('.admin-row-check'));
+    }
+    function getChecked() {
+      return getCheckboxes().filter(function (cb) { return cb.checked; });
+    }
+    function refresh() {
+      var all = getCheckboxes();
+      var checked = getChecked();
+      if (selectAllEl) {
+        selectAllEl.checked = all.length > 0 && checked.length === all.length;
+        selectAllEl.indeterminate = checked.length > 0 && checked.length < all.length;
+      }
+      if (checked.length > 0) {
+        countEl.textContent = checked.length + ' ' + itemNoun + (checked.length === 1 ? '' : 's') + ' selected';
+        countEl.hidden = false;
+        deleteBtnEl.hidden = false;
+      } else {
+        countEl.hidden = true;
+        deleteBtnEl.hidden = true;
+      }
+    }
+    containerEl.addEventListener('change', function (e) {
+      if (e.target.classList.contains('admin-row-check')) refresh();
+    });
+    if (selectAllEl) {
+      selectAllEl.addEventListener('change', function () {
+        getCheckboxes().forEach(function (cb) { cb.checked = selectAllEl.checked; });
+        refresh();
+      });
+    }
+    return { getChecked: getChecked, refresh: refresh };
+  }
+
+  var photosSelection = setupBulkSelection(grid, photosSelectAll, photosBulkCount, photosBulkDeleteBtn, 'photo');
+
   async function requireSession() {
     var res = await supabaseClient.auth.getSession();
     if (!res.data.session) {
@@ -210,6 +269,7 @@
       .order('created_at', { ascending: false });
 
     grid.innerHTML = '';
+    photosSelection.refresh();
 
     if (res.error) {
       emptyMsg.textContent = 'Could not load photos: ' + res.error.message;
@@ -233,6 +293,7 @@
       card.innerHTML =
         '<img src="' + project.image_url + '" alt="' + escapeHtml(project.title) + '">' +
         '<div class="admin-card-body">' +
+          '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '"> Select</label>' +
           '<h3>' + escapeHtml(project.title) + '</h3>' +
           (project.category ? '<span class="admin-card-category">' + escapeHtml(project.category) + '</span>' : '') +
           (project.description ? '<p>' + escapeHtml(project.description) + '</p>' : '') +
@@ -361,6 +422,30 @@
     loadProjects();
   });
 
+  photosBulkDeleteBtn.addEventListener('click', async function () {
+    var checked = photosSelection.getChecked();
+    if (checked.length === 0) return;
+    if (!window.confirm('Delete ' + checked.length + ' photo' + (checked.length === 1 ? '' : 's') + '?')) return;
+
+    photosBulkDeleteBtn.disabled = true;
+    var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
+    var paths = checked.map(function (cb) { return cb.getAttribute('data-path'); }).filter(Boolean);
+
+    if (paths.length) {
+      await supabaseClient.storage.from(BUCKET).remove(paths);
+    }
+
+    var bulkDelRes = await supabaseClient.from('projects').delete().in('id', ids);
+    photosBulkDeleteBtn.disabled = false;
+
+    if (bulkDelRes.error) {
+      window.alert('Could not delete: ' + bulkDelRes.error.message);
+      return;
+    }
+
+    loadProjects();
+  });
+
   logoutBtn.addEventListener('click', async function () {
     await supabaseClient.auth.signOut();
     window.location.href = 'login.html';
@@ -387,6 +472,10 @@
   // ---- Leads ----
   var leadsTbody = document.getElementById('leads-tbody');
   var leadsEmptyMsg = document.getElementById('leads-empty-msg');
+  var leadsSelectAll = document.getElementById('leads-select-all');
+  var leadsBulkCount = document.getElementById('leads-bulk-count');
+  var leadsBulkDeleteBtn = document.getElementById('leads-bulk-delete-btn');
+  var leadsSelection = setupBulkSelection(leadsTbody, leadsSelectAll, leadsBulkCount, leadsBulkDeleteBtn, 'lead');
   var STATUS_OPTIONS = ['new', 'contacted', 'quoted', 'won', 'lost'];
   var STATUS_LABELS = { new: 'New', contacted: 'Contacted', quoted: 'Quoted', won: 'Won', lost: 'Lost' };
 
@@ -402,6 +491,7 @@
       .order('created_at', { ascending: false });
 
     leadsTbody.innerHTML = '';
+    leadsSelection.refresh();
 
     if (res.error) {
       leadsEmptyMsg.textContent = 'Could not load leads: ' + res.error.message;
@@ -424,13 +514,15 @@
         return '<option value="' + opt + '"' + selected + '>' + STATUS_LABELS[opt] + '</option>';
       }).join('');
       tr.innerHTML =
+        '<td><input type="checkbox" class="admin-row-check" data-id="' + lead.id + '"></td>' +
         '<td>' + escapeHtml(lead.name) + '</td>' +
         '<td>' + escapeHtml(lead.phone) + '</td>' +
         '<td>' + (lead.email ? escapeHtml(lead.email) : '—') + '</td>' +
         '<td>' + (lead.service_interest ? escapeHtml(lead.service_interest) : '—') + '</td>' +
         '<td class="admin-table-message">' + (lead.message ? escapeHtml(lead.message) : '—') + '</td>' +
         '<td><select class="admin-status-select" data-id="' + lead.id + '">' + options + '</select></td>' +
-        '<td>' + formatDate(lead.created_at) + '</td>';
+        '<td>' + formatDate(lead.created_at) + '</td>' +
+        '<td><button type="button" class="admin-delete-btn admin-row-delete-btn" data-id="' + lead.id + '" data-name="' + escapeHtml(lead.name) + '">Delete</button></td>';
       leadsTbody.appendChild(tr);
     });
   }
@@ -450,6 +542,45 @@
     if (res.error) {
       window.alert('Could not update status: ' + res.error.message);
     }
+  });
+
+  leadsTbody.addEventListener('click', async function (e) {
+    var delBtn = e.target.closest('.admin-row-delete-btn');
+    if (!delBtn) return;
+
+    var name = delBtn.getAttribute('data-name');
+    if (!window.confirm('Delete this lead from ' + name + '?')) return;
+
+    var id = delBtn.getAttribute('data-id');
+    delBtn.disabled = true;
+
+    var delRes = await supabaseClient.from('leads').delete().eq('id', id);
+    if (delRes.error) {
+      window.alert('Could not delete: ' + delRes.error.message);
+      delBtn.disabled = false;
+      return;
+    }
+
+    loadLeads();
+  });
+
+  leadsBulkDeleteBtn.addEventListener('click', async function () {
+    var checked = leadsSelection.getChecked();
+    if (checked.length === 0) return;
+    if (!window.confirm('Delete ' + checked.length + ' lead' + (checked.length === 1 ? '' : 's') + '?')) return;
+
+    leadsBulkDeleteBtn.disabled = true;
+    var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
+
+    var bulkDelRes = await supabaseClient.from('leads').delete().in('id', ids);
+    leadsBulkDeleteBtn.disabled = false;
+
+    if (bulkDelRes.error) {
+      window.alert('Could not delete: ' + bulkDelRes.error.message);
+      return;
+    }
+
+    loadLeads();
   });
 
   // ---- Business Info ----
@@ -582,6 +713,10 @@
   var reviewFormSuccess = document.getElementById('review-form-success');
   var reviewsGrid = document.getElementById('reviews-grid');
   var reviewsEmptyMsg = document.getElementById('reviews-empty-msg');
+  var reviewsSelectAll = document.getElementById('reviews-select-all');
+  var reviewsBulkCount = document.getElementById('reviews-bulk-count');
+  var reviewsBulkDeleteBtn = document.getElementById('reviews-bulk-delete-btn');
+  var reviewsSelection = setupBulkSelection(reviewsGrid, reviewsSelectAll, reviewsBulkCount, reviewsBulkDeleteBtn, 'review');
 
   function starString(rating) {
     var r = Math.max(1, Math.min(5, rating || 0));
@@ -595,6 +730,7 @@
       .order('created_at', { ascending: false });
 
     reviewsGrid.innerHTML = '';
+    reviewsSelection.refresh();
 
     if (res.error) {
       reviewsEmptyMsg.textContent = 'Could not load reviews: ' + res.error.message;
@@ -616,6 +752,7 @@
       card.className = 'admin-card';
       card.innerHTML =
         '<div class="admin-card-body">' +
+          '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + review.id + '"> Select</label>' +
           '<div class="admin-review-stars">' + starString(review.rating) + '</div>' +
           '<h3>' + escapeHtml(review.customer_name) + '</h3>' +
           (review.location ? '<span class="admin-card-category">' + escapeHtml(review.location) + '</span>' : '') +
@@ -703,6 +840,25 @@
     if (delRes.error) {
       window.alert('Could not delete: ' + delRes.error.message);
       delBtn.disabled = false;
+      return;
+    }
+
+    loadReviews();
+  });
+
+  reviewsBulkDeleteBtn.addEventListener('click', async function () {
+    var checked = reviewsSelection.getChecked();
+    if (checked.length === 0) return;
+    if (!window.confirm('Delete ' + checked.length + ' review' + (checked.length === 1 ? '' : 's') + '?')) return;
+
+    reviewsBulkDeleteBtn.disabled = true;
+    var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
+
+    var bulkDelRes = await supabaseClient.from('reviews').delete().in('id', ids);
+    reviewsBulkDeleteBtn.disabled = false;
+
+    if (bulkDelRes.error) {
+      window.alert('Could not delete: ' + bulkDelRes.error.message);
       return;
     }
 

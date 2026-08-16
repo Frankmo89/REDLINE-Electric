@@ -321,7 +321,7 @@
   <div class="wrap">
     <h2 class="display" data-i18n="testimonials_heading">What Customers Say</h2>
     <p class="sub" data-i18n="testimonials_subheading">Real feedback from San Diego homeowners and businesses.</p>
-    <div class="grid" id="testimonials-grid">
+    <div class="testimonials-grid" id="testimonials-grid">
       <p class="testimonials-empty" id="testimonials-empty" data-i18n="testimonials_empty" hidden>Reviews coming soon.</p>
     </div>
   </div>
@@ -629,10 +629,10 @@
       grid.innerHTML = '';
       res.data.forEach(function (review) {
         var card = document.createElement('div');
-        card.className = 'card testimonial-card';
+        card.className = 'testimonial-card';
         card.innerHTML =
-          '<div class="testimonial-stars">' + starString(review.rating) + '</div>' +
-          '<p class="testimonial-text">&ldquo;' + escapeHtml(review.review_text) + '&rdquo;</p>' +
+          '<div class="testimonial-stars" aria-label="' + review.rating + ' out of 5 stars">' + starString(review.rating) + '</div>' +
+          '<p class="testimonial-text">' + escapeHtml(review.review_text) + '</p>' +
           '<div class="testimonial-author">' +
             '<strong>' + escapeHtml(review.customer_name) + '</strong>' +
             (review.location ? '<span>' + escapeHtml(review.location) + '</span>' : '') +

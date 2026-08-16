@@ -140,6 +140,61 @@
 }
 .admin-tab-panel[hidden] { display: none; }
 
+/* ---- Bulk selection ---- */
+.admin-body input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.admin-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  min-height: 36px;
+}
+.admin-select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+.admin-bulk-count {
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+.admin-bulk-delete-btn {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.admin-bulk-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.admin-card-select {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-dim);
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
 /* ---- Leads table ---- */
 .admin-table-wrap {
   overflow-x: auto;
