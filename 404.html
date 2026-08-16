@@ -32,7 +32,20 @@
       <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
       <ul>
         <li><a href="index.html#home" class="nav-link" data-i18n="nav_home">Home</a></li>
-        <li><a href="index.html#services" class="nav-link" data-i18n="nav_services">Services</a></li>
+        <li class="nav-dropdown" id="nav-services-dropdown">
+          <div class="nav-dropdown-inner">
+            <a href="index.html#services" class="nav-link" data-i18n="nav_services">Services</a>
+            <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-label="Toggle services menu">&#9662;</button>
+          </div>
+          <ul class="nav-dropdown-menu">
+            <li><a href="services/new-construction.html" data-i18n="service_1_title">New Construction</a></li>
+            <li><a href="services/remodels.html" data-i18n="service_2_title">Remodels</a></li>
+            <li><a href="services/retrofits.html" data-i18n="service_3_title">Retrofits</a></li>
+            <li><a href="services/art-lighting.html" data-i18n="service_4_title">Art Lighting</a></li>
+            <li><a href="services/ev-chargers.html" data-i18n="service_5_title">EV Chargers</a></li>
+            <li><a href="services/service-calls.html" data-i18n="service_6_title">Service Calls</a></li>
+          </ul>
+        </li>
         <li><a href="index.html#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
         <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
         <li><a href="index.html#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
@@ -158,6 +171,15 @@
   navLinks.forEach(function (link) {
     link.addEventListener('click', closeNav);
   });
+
+  var dropdown = document.getElementById('nav-services-dropdown');
+  var dropdownToggle = dropdown && dropdown.querySelector('.nav-dropdown-toggle');
+  if (dropdownToggle) {
+    dropdownToggle.addEventListener('click', function () {
+      var isOpen = dropdown.classList.toggle('is-open');
+      dropdownToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
 })();
 </script>
 

@@ -22,6 +22,7 @@
 {
   "@context": "https://schema.org",
   "@type": "Electrician",
+  "@id": "https://REPLACE-WITH-DOMAIN.com/#business",
   "name": "Redline Electric",
   "telephone": "+16193625347",
   "identifier": "C-10 #1153394",
@@ -66,7 +67,20 @@
       <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
       <ul>
         <li><a href="#home" class="nav-link" data-i18n="nav_home">Home</a></li>
-        <li><a href="#services" class="nav-link" data-i18n="nav_services">Services</a></li>
+        <li class="nav-dropdown" id="nav-services-dropdown">
+          <div class="nav-dropdown-inner">
+            <a href="#services" class="nav-link" data-i18n="nav_services">Services</a>
+            <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-label="Toggle services menu">&#9662;</button>
+          </div>
+          <ul class="nav-dropdown-menu">
+            <li><a href="services/new-construction.html" data-i18n="service_1_title">New Construction</a></li>
+            <li><a href="services/remodels.html" data-i18n="service_2_title">Remodels</a></li>
+            <li><a href="services/retrofits.html" data-i18n="service_3_title">Retrofits</a></li>
+            <li><a href="services/art-lighting.html" data-i18n="service_4_title">Art Lighting</a></li>
+            <li><a href="services/ev-chargers.html" data-i18n="service_5_title">EV Chargers</a></li>
+            <li><a href="services/service-calls.html" data-i18n="service_6_title">Service Calls</a></li>
+          </ul>
+        </li>
         <li><a href="#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
         <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
         <li><a href="#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
@@ -105,36 +119,36 @@
     <h2 class="display" data-i18n="services_heading">Services</h2>
     <p class="sub" data-i18n="services_subheading">Residential, commercial, and emergency work, done by a licensed and insured contractor.</p>
     <div class="grid services-grid">
-      <div class="card">
+      <a class="card" href="services/new-construction.html">
         <div class="num">01</div>
         <h3 class="display" data-i18n="service_1_title">New Construction</h3>
         <p data-i18n="service_1_desc">Electrical wiring for new builds from the ground up.</p>
-      </div>
-      <div class="card">
+      </a>
+      <a class="card" href="services/remodels.html">
         <div class="num">02</div>
         <h3 class="display" data-i18n="service_2_title">Remodels</h3>
         <p data-i18n="service_2_desc">Updating electrical systems as part of a home or business renovation.</p>
-      </div>
-      <div class="card">
+      </a>
+      <a class="card" href="services/retrofits.html">
         <div class="num">03</div>
         <h3 class="display" data-i18n="service_3_title">Retrofits</h3>
         <p data-i18n="service_3_desc">Upgrading older electrical systems to meet current standards.</p>
-      </div>
-      <div class="card">
+      </a>
+      <a class="card" href="services/art-lighting.html">
         <div class="num">04</div>
         <h3 class="display" data-i18n="service_4_title">Art Lighting</h3>
         <p data-i18n="service_4_desc">Custom lighting design to highlight art and architectural features.</p>
-      </div>
-      <div class="card">
+      </a>
+      <a class="card" href="services/ev-chargers.html">
         <div class="num">05</div>
         <h3 class="display" data-i18n="service_5_title">EV Chargers</h3>
         <p data-i18n="service_5_desc">Electric vehicle charger installation at home or on-site.</p>
-      </div>
-      <div class="card">
+      </a>
+      <a class="card" href="services/service-calls.html">
         <div class="num">06</div>
         <h3 class="display" data-i18n="service_6_title">Service Calls</h3>
         <p data-i18n="service_6_desc">Diagnosis and repair for electrical issues at your property.</p>
-      </div>
+      </a>
     </div>
   </div>
 </section>
@@ -390,6 +404,15 @@
   navLinks.forEach(function (link) {
     link.addEventListener('click', closeNav);
   });
+
+  var dropdown = document.getElementById('nav-services-dropdown');
+  var dropdownToggle = dropdown && dropdown.querySelector('.nav-dropdown-toggle');
+  if (dropdownToggle) {
+    dropdownToggle.addEventListener('click', function () {
+      var isOpen = dropdown.classList.toggle('is-open');
+      dropdownToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
 })();
 </script>
 
