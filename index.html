@@ -46,6 +46,16 @@
 </head>
 <body>
 
+<div class="lang-banner" id="lang-banner" hidden>
+  <div class="wrap lang-banner-inner">
+    <p class="lang-banner-text">Parece que prefieres español. ¿Quieres ver este sitio en español?</p>
+    <div class="lang-banner-actions">
+      <button type="button" class="lang-banner-switch" data-lang-banner-switch>Sí, cambiar</button>
+      <button type="button" class="lang-banner-dismiss" data-lang-banner-dismiss aria-label="Cerrar">&times;</button>
+    </div>
+  </div>
+</div>
+
 <header class="site-header" id="site-header">
   <div class="wrap header-inner">
     <a href="#home" class="logo-link" aria-label="Redline Electric — Home">
@@ -55,16 +65,22 @@
     <nav class="main-nav" id="main-nav">
       <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
       <ul>
-        <li><a href="#home" class="nav-link">Home</a></li>
-        <li><a href="#services" class="nav-link">Services</a></li>
-        <li><a href="#why-us" class="nav-link">Why Choose Us</a></li>
-        <li><a href="work.html" class="nav-link">Our Work</a></li>
-        <li><a href="#contact" class="nav-link">Contact</a></li>
+        <li><a href="#home" class="nav-link" data-i18n="nav_home">Home</a></li>
+        <li><a href="#services" class="nav-link" data-i18n="nav_services">Services</a></li>
+        <li><a href="#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+        <li class="nav-lang-item">
+          <div class="lang-switch" role="group" aria-label="Language / Idioma">
+            <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+            <button type="button" class="lang-btn" data-lang-btn="es">ES</button>
+          </div>
+        </li>
       </ul>
     </nav>
 
     <div class="header-actions">
-      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link>Call Now</a>
+      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link data-i18n="cta_call_now">Call Now</a>
       <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
         <span></span><span></span><span></span>
       </button>
@@ -74,11 +90,11 @@
 
 <section class="hero" id="home">
   <div class="wrap">
-    <span class="eyebrow">San Diego · License C-10 #1153394</span>
-    <h1 class="display">Power you can <span>trust.</span></h1>
-    <p>Redline Electric — residential and commercial installation, repair, and maintenance across San Diego. Emergency service available.</p>
+    <span class="eyebrow" data-i18n="hero_eyebrow">San Diego · License C-10 #1153394</span>
+    <h1 class="display" data-i18n-html="hero_title">Power you can <span>trust.</span></h1>
+    <p data-i18n="hero_subtitle">Redline Electric — residential and commercial installation, repair, and maintenance across San Diego. Emergency service available.</p>
     <div class="cta-row">
-      <a href="tel:+16193625347" class="btn-primary" data-phone-link>Call Now</a>
+      <a href="tel:+16193625347" class="btn-primary" data-phone-link data-i18n="cta_call_now">Call Now</a>
       <a href="https://wa.me/16193625347" class="btn-ghost" data-whatsapp-link target="_blank" rel="noopener">WhatsApp</a>
     </div>
   </div>
@@ -86,38 +102,38 @@
 
 <section class="services" id="services">
   <div class="wrap">
-    <h2 class="display">Services</h2>
-    <p class="sub">Residential, commercial, and emergency work, done by a licensed and insured contractor.</p>
+    <h2 class="display" data-i18n="services_heading">Services</h2>
+    <p class="sub" data-i18n="services_subheading">Residential, commercial, and emergency work, done by a licensed and insured contractor.</p>
     <div class="grid services-grid">
       <div class="card">
         <div class="num">01</div>
-        <h3 class="display">New Construction</h3>
-        <p>Electrical wiring for new builds from the ground up.</p>
+        <h3 class="display" data-i18n="service_1_title">New Construction</h3>
+        <p data-i18n="service_1_desc">Electrical wiring for new builds from the ground up.</p>
       </div>
       <div class="card">
         <div class="num">02</div>
-        <h3 class="display">Remodels</h3>
-        <p>Updating electrical systems as part of a home or business renovation.</p>
+        <h3 class="display" data-i18n="service_2_title">Remodels</h3>
+        <p data-i18n="service_2_desc">Updating electrical systems as part of a home or business renovation.</p>
       </div>
       <div class="card">
         <div class="num">03</div>
-        <h3 class="display">Retrofits</h3>
-        <p>Upgrading older electrical systems to meet current standards.</p>
+        <h3 class="display" data-i18n="service_3_title">Retrofits</h3>
+        <p data-i18n="service_3_desc">Upgrading older electrical systems to meet current standards.</p>
       </div>
       <div class="card">
         <div class="num">04</div>
-        <h3 class="display">Art Lighting</h3>
-        <p>Custom lighting design to highlight art and architectural features.</p>
+        <h3 class="display" data-i18n="service_4_title">Art Lighting</h3>
+        <p data-i18n="service_4_desc">Custom lighting design to highlight art and architectural features.</p>
       </div>
       <div class="card">
         <div class="num">05</div>
-        <h3 class="display">EV Chargers</h3>
-        <p>Electric vehicle charger installation at home or on-site.</p>
+        <h3 class="display" data-i18n="service_5_title">EV Chargers</h3>
+        <p data-i18n="service_5_desc">Electric vehicle charger installation at home or on-site.</p>
       </div>
       <div class="card">
         <div class="num">06</div>
-        <h3 class="display">Service Calls</h3>
-        <p>Diagnosis and repair for electrical issues at your property.</p>
+        <h3 class="display" data-i18n="service_6_title">Service Calls</h3>
+        <p data-i18n="service_6_desc">Diagnosis and repair for electrical issues at your property.</p>
       </div>
     </div>
   </div>
@@ -126,17 +142,17 @@
 <section class="emergency-band">
   <div class="wrap emergency-band-inner">
     <div class="emergency-band-text">
-      <strong>Electrical Emergency?</strong>
-      <span>We handle emergency electrical calls — sparking outlets, power outages, exposed wiring, and more.</span>
+      <strong data-i18n="emergency_heading">Electrical Emergency?</strong>
+      <span data-i18n="emergency_text">We handle emergency electrical calls — sparking outlets, power outages, exposed wiring, and more.</span>
     </div>
-    <a href="tel:+16193625347" class="btn-primary emergency-band-cta" data-phone-link>Call Now</a>
+    <a href="tel:+16193625347" class="btn-primary emergency-band-cta" data-phone-link data-i18n="cta_call_now">Call Now</a>
   </div>
 </section>
 
 <section class="why-us" id="why-us">
   <div class="wrap">
-    <h2 class="display">Why Choose Us</h2>
-    <p class="sub">Hiring an electrician means trusting someone with your home's safety. Here's what you get with Redline Electric.</p>
+    <h2 class="display" data-i18n="why_us_heading">Why Choose Us</h2>
+    <p class="sub" data-i18n="why_us_subheading">Hiring an electrician means trusting someone with your home's safety. Here's what you get with Redline Electric.</p>
 
     <div class="why-us-profile" data-profile-block hidden>
       <img class="why-us-profile-photo" data-profile-photo alt="Redline Electric" hidden>
@@ -146,23 +162,23 @@
     <div class="grid">
       <div class="card">
         <div class="num">01</div>
-        <h3 class="display">Licensed &amp; Insured</h3>
-        <p>C-10 license #1153394, verifiable with the California State License Board. Fully insured, so you're protected if anything goes wrong on your property.</p>
+        <h3 class="display" data-i18n="why_1_title">Licensed &amp; Insured</h3>
+        <p data-i18n="why_1_desc">C-10 license #1153394, verifiable with the California State License Board. Fully insured, so you're protected if anything goes wrong on your property.</p>
       </div>
       <div class="card">
         <div class="num">02</div>
-        <h3 class="display">We Pull the Permits</h3>
-        <p>Panel upgrades and major work need permits in San Diego. We handle that paperwork ourselves — you should never be asked to pull your own permit.</p>
+        <h3 class="display" data-i18n="why_2_title">We Pull the Permits</h3>
+        <p data-i18n="why_2_desc">Panel upgrades and major work need permits in San Diego. We handle that paperwork ourselves — you should never be asked to pull your own permit.</p>
       </div>
       <div class="card">
         <div class="num">03</div>
-        <h3 class="display">Up to Current Code</h3>
-        <p>California runs on the 2023 NEC. Every job is done to current code — GFCI and AFCI placement, surge protection, tamper-resistant receptacles — so it passes inspection and stays safe.</p>
+        <h3 class="display" data-i18n="why_3_title">Up to Current Code</h3>
+        <p data-i18n="why_3_desc">California runs on the 2023 NEC. Every job is done to current code — GFCI and AFCI placement, surge protection, tamper-resistant receptacles — so it passes inspection and stays safe.</p>
       </div>
       <div class="card">
         <div class="num">04</div>
-        <h3 class="display">Clear Pricing, On Time</h3>
-        <p>You get the price before we start, not after. We show up when we say we will, and leave the work site clean.</p>
+        <h3 class="display" data-i18n="why_4_title">Clear Pricing, On Time</h3>
+        <p data-i18n="why_4_desc">You get the price before we start, not after. We show up when we say we will, and leave the work site clean.</p>
       </div>
     </div>
   </div>
@@ -170,81 +186,81 @@
 
 <section class="work" id="work">
   <div class="wrap">
-    <h2 class="display">Our Work</h2>
+    <h2 class="display" data-i18n="work_heading">Our Work</h2>
     <!-- TODO: replace with real content -->
-    <p class="sub">Placeholder intro text goes here.</p>
+    <p class="sub" data-i18n="work_teaser_sub">Placeholder intro text goes here.</p>
     <div class="work-grid" id="work-grid">
-      <p class="work-empty" id="work-empty" hidden>Photos coming soon.</p>
+      <p class="work-empty" id="work-empty" data-i18n="work_empty" hidden>Photos coming soon.</p>
     </div>
     <div class="work-cta">
-      <a href="work.html" class="btn-primary">See All Work</a>
+      <a href="work.html" class="btn-primary" data-i18n="cta_see_all_work">See All Work</a>
     </div>
   </div>
 </section>
 
 <section class="testimonials" id="testimonials">
   <div class="wrap">
-    <h2 class="display">What Customers Say</h2>
-    <p class="sub">Real feedback from San Diego homeowners and businesses.</p>
+    <h2 class="display" data-i18n="testimonials_heading">What Customers Say</h2>
+    <p class="sub" data-i18n="testimonials_subheading">Real feedback from San Diego homeowners and businesses.</p>
     <div class="grid" id="testimonials-grid">
-      <p class="testimonials-empty" id="testimonials-empty" hidden>Reviews coming soon.</p>
+      <p class="testimonials-empty" id="testimonials-empty" data-i18n="testimonials_empty" hidden>Reviews coming soon.</p>
     </div>
   </div>
 </section>
 
 <section class="trust" id="contact">
   <div class="wrap">
-    <h2 class="display">Request a Quote</h2>
-    <p class="sub">Tell us about the job and we'll get back to you.</p>
+    <h2 class="display" data-i18n="quote_heading">Request a Quote</h2>
+    <p class="sub" data-i18n="quote_subheading">Tell us about the job and we'll get back to you.</p>
 
     <form id="quote-form" class="quote-form">
       <div class="quote-form-grid">
-        <label>Name*
+        <label><span data-i18n="form_label_name">Name*</span>
           <input type="text" id="lead-name" required>
         </label>
-        <label>Phone*
+        <label><span data-i18n="form_label_phone">Phone*</span>
           <input type="tel" id="lead-phone" required>
         </label>
-        <label>Email
+        <label><span data-i18n="form_label_email">Email</span>
           <input type="email" id="lead-email">
         </label>
-        <label>Service Interested In
+        <label><span data-i18n="form_label_service">Service Interested In</span>
           <select id="lead-service">
-            <option value="">Select a service</option>
-            <option value="New Construction">New Construction</option>
-            <option value="Remodels">Remodels</option>
-            <option value="Retrofits">Retrofits</option>
-            <option value="Art Lighting">Art Lighting</option>
-            <option value="EV Chargers">EV Chargers</option>
-            <option value="Service Calls">Service Calls</option>
+            <option value="" data-i18n="form_option_select">Select a service</option>
+            <option value="New Construction" data-i18n="service_1_title">New Construction</option>
+            <option value="Remodels" data-i18n="service_2_title">Remodels</option>
+            <option value="Retrofits" data-i18n="service_3_title">Retrofits</option>
+            <option value="Art Lighting" data-i18n="service_4_title">Art Lighting</option>
+            <option value="EV Chargers" data-i18n="service_5_title">EV Chargers</option>
+            <option value="Service Calls" data-i18n="service_6_title">Service Calls</option>
           </select>
         </label>
       </div>
-      <label class="quote-form-message">Message
+      <label class="quote-form-message"><span data-i18n="form_label_message">Message</span>
         <textarea id="lead-message" rows="4"></textarea>
       </label>
-      <button type="submit" class="btn-primary" id="quote-submit-btn">Request a Quote</button>
+      <button type="submit" class="btn-primary" id="quote-submit-btn" data-i18n="form_submit">Request a Quote</button>
       <p id="quote-error" class="quote-error" hidden></p>
-      <p id="quote-success" class="quote-success" hidden>Thanks — we've got your request and will be in touch soon.</p>
+      <p id="quote-success" class="quote-success" data-i18n="form_success" hidden>Thanks — we've got your request and will be in touch soon.</p>
     </form>
 
     <div class="contact-info">
       <div class="contact-info-item">
-        <span class="contact-info-label">Call or Text</span>
+        <span class="contact-info-label" data-i18n="contact_call_or_text">Call or Text</span>
         <a href="tel:+16193625347" class="contact-info-value" data-phone-link data-phone-text>(619) 362-5347</a>
       </div>
       <div class="contact-info-item" data-email-item hidden>
-        <span class="contact-info-label">Email</span>
+        <span class="contact-info-label" data-i18n="contact_label_email">Email</span>
         <a href="mailto:" class="contact-info-value" data-email-link></a>
       </div>
       <div class="contact-info-item" data-hours-item hidden>
-        <span class="contact-info-label">Hours</span>
+        <span class="contact-info-label" data-i18n="contact_label_hours">Hours</span>
         <span class="contact-info-value" data-hours-text></span>
       </div>
     </div>
 
     <div class="areas-served">
-      <h3 class="areas-served-title">Areas We Serve</h3>
+      <h3 class="areas-served-title" data-i18n="areas_served_heading">Areas We Serve</h3>
       <ul class="areas-served-list">
         <li>San Diego</li>
         <li>La Jolla</li>
@@ -272,15 +288,15 @@
     <div class="trust-badges">
       <div class="badge">
         <div class="swatch">✓</div>
-        <div><span>License</span><strong>C-10 #1153394</strong></div>
+        <div><span data-i18n="badge_license">License</span><strong>C-10 #1153394</strong></div>
       </div>
       <div class="badge">
         <div class="swatch">$</div>
-        <div><span>Insurance</span><strong>Fully covered</strong></div>
+        <div><span data-i18n="badge_insurance">Insurance</span><strong data-i18n="badge_insurance_value">Fully covered</strong></div>
       </div>
       <div class="badge">
         <div class="swatch">SD</div>
-        <div><span>Service Area</span><strong data-service-areas-text>San Diego County</strong></div>
+        <div><span data-i18n="badge_service_area">Service Area</span><strong data-service-areas-text>San Diego County</strong></div>
       </div>
     </div>
   </div>
@@ -290,7 +306,7 @@
   <div class="wrap footer-grid">
     <div class="footer-brand">
       <img src="assets/redline-electric-logo.png" alt="Redline Electric" class="footer-logo">
-      <p class="footer-tagline">Licensed and insured electrical contractor serving San Diego County.</p>
+      <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
       <div class="footer-contact">
         <a href="tel:+16193625347" data-phone-link data-phone-text>(619) 362-5347</a>
         <a href="https://wa.me/16193625347" data-whatsapp-link target="_blank" rel="noopener">WhatsApp</a>
@@ -298,26 +314,26 @@
     </div>
 
     <div class="footer-links">
-      <h3 class="footer-heading">Quick Links</h3>
+      <h3 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h3>
       <ul>
-        <li><a href="#home">Home</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#why-us">Why Choose Us</a></li>
-        <li><a href="work.html">Our Work</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a href="#home" data-i18n="nav_home">Home</a></li>
+        <li><a href="#services" data-i18n="nav_services">Services</a></li>
+        <li><a href="#why-us" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
       </ul>
     </div>
 
     <div class="footer-info">
-      <h3 class="footer-heading">Credentials</h3>
-      <p>C-10 License #1153394</p>
+      <h3 class="footer-heading" data-i18n="footer_credentials">Credentials</h3>
+      <p data-i18n="footer_license">C-10 License #1153394</p>
       <p data-service-areas-text>San Diego County</p>
     </div>
   </div>
 
   <div class="footer-bottom">
     <div class="wrap">
-      <p>&copy; <span id="footer-year"></span> Redline Electric. All rights reserved.</p>
+      <p>&copy; <span id="footer-year"></span> Redline Electric. <span data-i18n="footer_rights">All rights reserved.</span></p>
     </div>
   </div>
 </footer>
@@ -327,6 +343,8 @@
   document.getElementById('footer-year').textContent = new Date().getFullYear();
 })();
 </script>
+
+<script src="assets/js/i18n.js"></script>
 
 <script>
 (function () {
@@ -390,9 +408,9 @@
     return div.innerHTML;
   }
 
-  function showEmpty(message) {
+  function showEmpty() {
     grid.innerHTML = '';
-    emptyMsg.textContent = message;
+    emptyMsg.textContent = (window.i18n && window.i18n.t('work_empty')) || 'Photos coming soon.';
     emptyMsg.hidden = false;
     grid.appendChild(emptyMsg);
   }
@@ -403,7 +421,7 @@
     .order('created_at', { ascending: false })
     .then(function (res) {
       if (res.error || !res.data || res.data.length === 0) {
-        showEmpty('Photos coming soon.');
+        showEmpty();
         return;
       }
 
@@ -425,7 +443,7 @@
       });
     })
     .catch(function () {
-      showEmpty('Photos coming soon.');
+      showEmpty();
     });
 })();
 </script>
@@ -447,9 +465,9 @@
     return '★'.repeat(r) + '☆'.repeat(5 - r);
   }
 
-  function showEmpty(message) {
+  function showEmpty() {
     grid.innerHTML = '';
-    emptyMsg.textContent = message;
+    emptyMsg.textContent = (window.i18n && window.i18n.t('testimonials_empty')) || 'Reviews coming soon.';
     emptyMsg.hidden = false;
     grid.appendChild(emptyMsg);
   }
@@ -462,7 +480,7 @@
     .limit(6)
     .then(function (res) {
       if (res.error || !res.data || res.data.length === 0) {
-        showEmpty('Reviews coming soon.');
+        showEmpty();
         return;
       }
 
@@ -481,7 +499,7 @@
       });
     })
     .catch(function () {
-      showEmpty('Reviews coming soon.');
+      showEmpty();
     });
 })();
 </script>
@@ -507,7 +525,7 @@
     var message = document.getElementById('lead-message').value.trim();
 
     if (!name || !phone) {
-      errorMsg.textContent = 'Name and phone are required.';
+      errorMsg.textContent = (window.i18n && window.i18n.t('form_error_required')) || 'Name and phone are required.';
       errorMsg.hidden = false;
       return;
     }
@@ -525,7 +543,7 @@
     submitBtn.disabled = false;
 
     if (res.error) {
-      errorMsg.textContent = 'Something went wrong submitting your request. Please try calling us instead.';
+      errorMsg.textContent = (window.i18n && window.i18n.t('form_error_generic')) || 'Something went wrong submitting your request. Please try calling us instead.';
       errorMsg.hidden = false;
       return;
     }

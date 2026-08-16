@@ -11,6 +11,16 @@
 </head>
 <body>
 
+<div class="lang-banner" id="lang-banner" hidden>
+  <div class="wrap lang-banner-inner">
+    <p class="lang-banner-text">Parece que prefieres español. ¿Quieres ver este sitio en español?</p>
+    <div class="lang-banner-actions">
+      <button type="button" class="lang-banner-switch" data-lang-banner-switch>Sí, cambiar</button>
+      <button type="button" class="lang-banner-dismiss" data-lang-banner-dismiss aria-label="Cerrar">&times;</button>
+    </div>
+  </div>
+</div>
+
 <header class="site-header" id="site-header">
   <div class="wrap header-inner">
     <a href="index.html#home" class="logo-link" aria-label="Redline Electric — Home">
@@ -20,16 +30,22 @@
     <nav class="main-nav" id="main-nav">
       <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
       <ul>
-        <li><a href="index.html#home" class="nav-link">Home</a></li>
-        <li><a href="index.html#services" class="nav-link">Services</a></li>
-        <li><a href="index.html#why-us" class="nav-link">Why Choose Us</a></li>
-        <li><a href="work.html" class="nav-link">Our Work</a></li>
-        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+        <li><a href="index.html#home" class="nav-link" data-i18n="nav_home">Home</a></li>
+        <li><a href="index.html#services" class="nav-link" data-i18n="nav_services">Services</a></li>
+        <li><a href="index.html#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+        <li class="nav-lang-item">
+          <div class="lang-switch" role="group" aria-label="Language / Idioma">
+            <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+            <button type="button" class="lang-btn" data-lang-btn="es">ES</button>
+          </div>
+        </li>
       </ul>
     </nav>
 
     <div class="header-actions">
-      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link>Call Now</a>
+      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link data-i18n="cta_call_now">Call Now</a>
       <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
         <span></span><span></span><span></span>
       </button>
@@ -39,13 +55,13 @@
 
 <section class="work">
   <div class="wrap">
-    <h1 class="display">Our Work</h1>
-    <p class="sub">A look at recent electrical projects across San Diego.</p>
+    <h1 class="display" data-i18n="work_heading">Our Work</h1>
+    <p class="sub" data-i18n="work_page_sub">A look at recent electrical projects across San Diego.</p>
 
     <div class="filter-pills" id="filter-pills"></div>
 
     <div class="work-grid" id="work-grid">
-      <p class="work-empty" id="work-empty" hidden>Photos coming soon.</p>
+      <p class="work-empty" id="work-empty" data-i18n="work_empty" hidden>Photos coming soon.</p>
     </div>
   </div>
 </section>
@@ -55,15 +71,15 @@
     <div class="trust-badges" style="margin-top: 0; padding-top: 0; border-top: none;">
       <div class="badge">
         <div class="swatch">✓</div>
-        <div><span>License</span><strong>C-10 #1153394</strong></div>
+        <div><span data-i18n="badge_license">License</span><strong>C-10 #1153394</strong></div>
       </div>
       <div class="badge">
         <div class="swatch">$</div>
-        <div><span>Insurance</span><strong>Fully covered</strong></div>
+        <div><span data-i18n="badge_insurance">Insurance</span><strong data-i18n="badge_insurance_value">Fully covered</strong></div>
       </div>
       <div class="badge">
         <div class="swatch">SD</div>
-        <div><span>Service Area</span><strong data-service-areas-text>San Diego County</strong></div>
+        <div><span data-i18n="badge_service_area">Service Area</span><strong data-service-areas-text>San Diego County</strong></div>
       </div>
     </div>
   </div>
@@ -73,7 +89,7 @@
   <div class="wrap footer-grid">
     <div class="footer-brand">
       <img src="assets/redline-electric-logo.png" alt="Redline Electric" class="footer-logo">
-      <p class="footer-tagline">Licensed and insured electrical contractor serving San Diego County.</p>
+      <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
       <div class="footer-contact">
         <a href="tel:+16193625347" data-phone-link data-phone-text>(619) 362-5347</a>
         <a href="https://wa.me/16193625347" data-whatsapp-link target="_blank" rel="noopener">WhatsApp</a>
@@ -81,26 +97,26 @@
     </div>
 
     <div class="footer-links">
-      <h3 class="footer-heading">Quick Links</h3>
+      <h3 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h3>
       <ul>
-        <li><a href="index.html#home">Home</a></li>
-        <li><a href="index.html#services">Services</a></li>
-        <li><a href="index.html#why-us">Why Choose Us</a></li>
-        <li><a href="work.html">Our Work</a></li>
-        <li><a href="index.html#contact">Contact</a></li>
+        <li><a href="index.html#home" data-i18n="nav_home">Home</a></li>
+        <li><a href="index.html#services" data-i18n="nav_services">Services</a></li>
+        <li><a href="index.html#why-us" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" data-i18n="nav_contact">Contact</a></li>
       </ul>
     </div>
 
     <div class="footer-info">
-      <h3 class="footer-heading">Credentials</h3>
-      <p>C-10 License #1153394</p>
+      <h3 class="footer-heading" data-i18n="footer_credentials">Credentials</h3>
+      <p data-i18n="footer_license">C-10 License #1153394</p>
       <p data-service-areas-text>San Diego County</p>
     </div>
   </div>
 
   <div class="footer-bottom">
     <div class="wrap">
-      <p>&copy; <span id="footer-year"></span> Redline Electric. All rights reserved.</p>
+      <p>&copy; <span id="footer-year"></span> Redline Electric. <span data-i18n="footer_rights">All rights reserved.</span></p>
     </div>
   </div>
 </footer>
@@ -110,6 +126,8 @@
   document.getElementById('footer-year').textContent = new Date().getFullYear();
 })();
 </script>
+
+<script src="assets/js/i18n.js"></script>
 
 <script>
 (function () {
@@ -175,9 +193,13 @@
     return div.innerHTML;
   }
 
-  function showEmpty(message) {
+  function tr(key, fallback) {
+    return (window.i18n && window.i18n.t(key)) || fallback;
+  }
+
+  function showEmpty(key, fallback) {
     grid.innerHTML = '';
-    emptyMsg.textContent = message;
+    emptyMsg.textContent = tr(key, fallback);
     emptyMsg.hidden = false;
     grid.appendChild(emptyMsg);
   }
@@ -198,7 +220,7 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'filter-pill' + (label === activeCategory ? ' is-active' : '');
-      btn.textContent = label;
+      btn.textContent = label === 'All' ? tr('work_filter_all', 'All') : label;
       btn.setAttribute('data-category', label);
       pillsWrap.appendChild(btn);
     });
@@ -212,7 +234,7 @@
     grid.innerHTML = '';
 
     if (filtered.length === 0) {
-      showEmpty('No photos in this category yet.');
+      showEmpty('work_empty_filtered', 'No photos in this category yet.');
       return;
     }
 
@@ -239,13 +261,22 @@
     renderGrid();
   });
 
+  document.addEventListener('redline:languagechange', function () {
+    if (allProjects.length) {
+      renderPills();
+      renderGrid();
+    } else if (!grid.querySelector('.work-photo')) {
+      showEmpty('work_empty', 'Photos coming soon.');
+    }
+  });
+
   supabaseClient
     .from('projects')
     .select('*')
     .order('created_at', { ascending: false })
     .then(function (res) {
       if (res.error || !res.data || res.data.length === 0) {
-        showEmpty('Photos coming soon.');
+        showEmpty('work_empty', 'Photos coming soon.');
         return;
       }
 
@@ -254,7 +285,7 @@
       renderGrid();
     })
     .catch(function () {
-      showEmpty('Photos coming soon.');
+      showEmpty('work_empty', 'Photos coming soon.');
     });
 })();
 </script>

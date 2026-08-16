@@ -12,6 +12,16 @@
 </head>
 <body>
 
+<div class="lang-banner" id="lang-banner" hidden>
+  <div class="wrap lang-banner-inner">
+    <p class="lang-banner-text">Parece que prefieres español. ¿Quieres ver este sitio en español?</p>
+    <div class="lang-banner-actions">
+      <button type="button" class="lang-banner-switch" data-lang-banner-switch>Sí, cambiar</button>
+      <button type="button" class="lang-banner-dismiss" data-lang-banner-dismiss aria-label="Cerrar">&times;</button>
+    </div>
+  </div>
+</div>
+
 <header class="site-header" id="site-header">
   <div class="wrap header-inner">
     <a href="index.html#home" class="logo-link" aria-label="Redline Electric — Home">
@@ -21,16 +31,22 @@
     <nav class="main-nav" id="main-nav">
       <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
       <ul>
-        <li><a href="index.html#home" class="nav-link">Home</a></li>
-        <li><a href="index.html#services" class="nav-link">Services</a></li>
-        <li><a href="index.html#why-us" class="nav-link">Why Choose Us</a></li>
-        <li><a href="work.html" class="nav-link">Our Work</a></li>
-        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+        <li><a href="index.html#home" class="nav-link" data-i18n="nav_home">Home</a></li>
+        <li><a href="index.html#services" class="nav-link" data-i18n="nav_services">Services</a></li>
+        <li><a href="index.html#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+        <li class="nav-lang-item">
+          <div class="lang-switch" role="group" aria-label="Language / Idioma">
+            <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+            <button type="button" class="lang-btn" data-lang-btn="es">ES</button>
+          </div>
+        </li>
       </ul>
     </nav>
 
     <div class="header-actions">
-      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link>Call Now</a>
+      <a href="tel:+16193625347" class="btn-primary btn-header-cta" data-phone-link data-i18n="cta_call_now">Call Now</a>
       <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
         <span></span><span></span><span></span>
       </button>
@@ -40,18 +56,18 @@
 
 <section class="not-found">
   <div class="wrap">
-    <span class="eyebrow">404 · Page Not Found</span>
-    <h1 class="display">This page took a wrong turn.</h1>
-    <p>The page you're looking for doesn't exist or may have moved. Here's how to get back on track.</p>
+    <span class="eyebrow" data-i18n="notfound_eyebrow">404 · Page Not Found</span>
+    <h1 class="display" data-i18n="notfound_heading">This page took a wrong turn.</h1>
+    <p data-i18n="notfound_text">The page you're looking for doesn't exist or may have moved. Here's how to get back on track.</p>
     <div class="cta-row">
-      <a href="tel:+16193625347" class="btn-primary" data-phone-link>Call Now</a>
-      <a href="index.html#home" class="btn-ghost">Back to Home</a>
+      <a href="tel:+16193625347" class="btn-primary" data-phone-link data-i18n="cta_call_now">Call Now</a>
+      <a href="index.html#home" class="btn-ghost" data-i18n="notfound_back_home">Back to Home</a>
     </div>
     <div class="not-found-links">
-      <a href="index.html#home">Home</a>
-      <a href="index.html#services">Services</a>
-      <a href="work.html">Our Work</a>
-      <a href="index.html#contact">Contact</a>
+      <a href="index.html#home" data-i18n="nav_home">Home</a>
+      <a href="index.html#services" data-i18n="nav_services">Services</a>
+      <a href="work.html" data-i18n="nav_work">Our Work</a>
+      <a href="index.html#contact" data-i18n="nav_contact">Contact</a>
     </div>
   </div>
 </section>
@@ -60,7 +76,7 @@
   <div class="wrap footer-grid">
     <div class="footer-brand">
       <img src="assets/redline-electric-logo.png" alt="Redline Electric" class="footer-logo">
-      <p class="footer-tagline">Licensed and insured electrical contractor serving San Diego County.</p>
+      <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
       <div class="footer-contact">
         <a href="tel:+16193625347" data-phone-link data-phone-text>(619) 362-5347</a>
         <a href="https://wa.me/16193625347" data-whatsapp-link target="_blank" rel="noopener">WhatsApp</a>
@@ -68,26 +84,26 @@
     </div>
 
     <div class="footer-links">
-      <h3 class="footer-heading">Quick Links</h3>
+      <h3 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h3>
       <ul>
-        <li><a href="index.html#home">Home</a></li>
-        <li><a href="index.html#services">Services</a></li>
-        <li><a href="index.html#why-us">Why Choose Us</a></li>
-        <li><a href="work.html">Our Work</a></li>
-        <li><a href="index.html#contact">Contact</a></li>
+        <li><a href="index.html#home" data-i18n="nav_home">Home</a></li>
+        <li><a href="index.html#services" data-i18n="nav_services">Services</a></li>
+        <li><a href="index.html#why-us" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" data-i18n="nav_contact">Contact</a></li>
       </ul>
     </div>
 
     <div class="footer-info">
-      <h3 class="footer-heading">Credentials</h3>
-      <p>C-10 License #1153394</p>
+      <h3 class="footer-heading" data-i18n="footer_credentials">Credentials</h3>
+      <p data-i18n="footer_license">C-10 License #1153394</p>
       <p data-service-areas-text>San Diego County</p>
     </div>
   </div>
 
   <div class="footer-bottom">
     <div class="wrap">
-      <p>&copy; <span id="footer-year"></span> Redline Electric. All rights reserved.</p>
+      <p>&copy; <span id="footer-year"></span> Redline Electric. <span data-i18n="footer_rights">All rights reserved.</span></p>
     </div>
   </div>
 </footer>
@@ -97,6 +113,8 @@
   document.getElementById('footer-year').textContent = new Date().getFullYear();
 })();
 </script>
+
+<script src="assets/js/i18n.js"></script>
 
 <script>
 (function () {
