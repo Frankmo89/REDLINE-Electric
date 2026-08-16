@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Our Work — Redline Electric</title>
+<title>Page Not Found | Redline Electric</title>
+<meta name="robots" content="noindex, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,34 +38,20 @@
   </div>
 </header>
 
-<section class="work">
+<section class="not-found">
   <div class="wrap">
-    <h1 class="display">Our Work</h1>
-    <p class="sub">A look at recent electrical projects across San Diego.</p>
-
-    <div class="filter-pills" id="filter-pills"></div>
-
-    <div class="work-grid" id="work-grid">
-      <p class="work-empty" id="work-empty" hidden>Photos coming soon.</p>
+    <span class="eyebrow">404 · Page Not Found</span>
+    <h1 class="display">This page took a wrong turn.</h1>
+    <p>The page you're looking for doesn't exist or may have moved. Here's how to get back on track.</p>
+    <div class="cta-row">
+      <a href="tel:+16193625347" class="btn-primary" data-phone-link>Call Now</a>
+      <a href="index.html#home" class="btn-ghost">Back to Home</a>
     </div>
-  </div>
-</section>
-
-<section class="trust">
-  <div class="wrap">
-    <div class="trust-badges" style="margin-top: 0; padding-top: 0; border-top: none;">
-      <div class="badge">
-        <div class="swatch">✓</div>
-        <div><span>License</span><strong>C-10 #1153394</strong></div>
-      </div>
-      <div class="badge">
-        <div class="swatch">$</div>
-        <div><span>Insurance</span><strong>Fully covered</strong></div>
-      </div>
-      <div class="badge">
-        <div class="swatch">SD</div>
-        <div><span>Service Area</span><strong data-service-areas-text>San Diego County</strong></div>
-      </div>
+    <div class="not-found-links">
+      <a href="index.html#home">Home</a>
+      <a href="index.html#services">Services</a>
+      <a href="work.html">Our Work</a>
+      <a href="index.html#contact">Contact</a>
     </div>
   </div>
 </section>
@@ -159,105 +146,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/business-info.js"></script>
-<script>
-(function () {
-  var grid = document.getElementById('work-grid');
-  var emptyMsg = document.getElementById('work-empty');
-  var pillsWrap = document.getElementById('filter-pills');
-  if (!grid || typeof supabaseClient === 'undefined') return;
-
-  var allProjects = [];
-  var activeCategory = 'All';
-
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  function showEmpty(message) {
-    grid.innerHTML = '';
-    emptyMsg.textContent = message;
-    emptyMsg.hidden = false;
-    grid.appendChild(emptyMsg);
-  }
-
-  function renderPills() {
-    var categories = [];
-    allProjects.forEach(function (p) {
-      if (p.category && categories.indexOf(p.category) === -1) {
-        categories.push(p.category);
-      }
-    });
-    categories.sort();
-
-    var labels = ['All'].concat(categories);
-
-    pillsWrap.innerHTML = '';
-    labels.forEach(function (label) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'filter-pill' + (label === activeCategory ? ' is-active' : '');
-      btn.textContent = label;
-      btn.setAttribute('data-category', label);
-      pillsWrap.appendChild(btn);
-    });
-  }
-
-  function renderGrid() {
-    var filtered = activeCategory === 'All'
-      ? allProjects
-      : allProjects.filter(function (p) { return p.category === activeCategory; });
-
-    grid.innerHTML = '';
-
-    if (filtered.length === 0) {
-      showEmpty('No photos in this category yet.');
-      return;
-    }
-
-    emptyMsg.hidden = true;
-
-    filtered.forEach(function (project) {
-      var item = document.createElement('div');
-      item.className = 'work-photo';
-      item.innerHTML =
-        '<img src="' + project.image_url + '" alt="' + escapeHtml(project.title) + '" loading="lazy">' +
-        '<div class="work-caption">' +
-          '<strong>' + escapeHtml(project.title) + '</strong>' +
-          (project.category ? '<span>' + escapeHtml(project.category) + '</span>' : '') +
-        '</div>';
-      grid.appendChild(item);
-    });
-  }
-
-  pillsWrap.addEventListener('click', function (e) {
-    var btn = e.target.closest('.filter-pill');
-    if (!btn) return;
-    activeCategory = btn.getAttribute('data-category');
-    renderPills();
-    renderGrid();
-  });
-
-  supabaseClient
-    .from('projects')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .then(function (res) {
-      if (res.error || !res.data || res.data.length === 0) {
-        showEmpty('Photos coming soon.');
-        return;
-      }
-
-      allProjects = res.data;
-      renderPills();
-      renderGrid();
-    })
-    .catch(function () {
-      showEmpty('Photos coming soon.');
-    });
-})();
-</script>
 
 </body>
 </html>
