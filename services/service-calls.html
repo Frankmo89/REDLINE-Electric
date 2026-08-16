@@ -554,6 +554,10 @@
       window.RedlineAnalytics.track('quote_form_submit', { service_interest: service || 'not specified' });
     }
 
+    var successKey = email ? 'form_success_with_email' : 'form_success';
+    successMsg.textContent = (window.i18n && window.i18n.t(successKey)) || (email
+      ? "Thanks — we've got your request and will be in touch soon. Check your email for confirmation."
+      : "Thanks — we've got your request and will be in touch soon.");
     successMsg.hidden = false;
     form.reset();
     document.getElementById('lead-service').value = 'Service Calls';

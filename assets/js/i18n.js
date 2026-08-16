@@ -109,6 +109,10 @@
       en: "Thanks — we've got your request and will be in touch soon.",
       es: 'Gracias — recibimos su solicitud y nos pondremos en contacto pronto.'
     },
+    form_success_with_email: {
+      en: "Thanks — we've got your request and will be in touch soon. Check your email for confirmation.",
+      es: 'Gracias — recibimos su solicitud y nos pondremos en contacto pronto. Revise su correo electrónico para la confirmación.'
+    },
 
     contact_call_or_text: { en: 'Call or Text', es: 'Llame o Envíe un Mensaje' },
     contact_label_email: { en: 'Email', es: 'Correo Electrónico' },
