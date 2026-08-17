@@ -8,9 +8,26 @@
   --ink: #F5F5F0;
   --ink-dim: #A9AFB7;
   --accent: #CC2029;
+  --accent-hover: #B31A22;
   --accent-ink: #F5F5F0;
   --line: #3A3E48;
   --header-h: 106px;
+
+  /* Type scale — ~1.25 ratio anchored on a 16px body.
+     Fluid steps interpolate between a 360px and a 1280px viewport, so the
+     ratio between heading levels stays constant at every width instead of
+     collapsing on small screens. Every font-size below should reference one
+     of these; a one-off px value is a bug, not a decision. */
+  --fs-label: 0.75rem;    /* 12 — eyebrows, field labels, meta */
+  --fs-micro: 0.8125rem;  /* 13 — pills, badges, desktop nav */
+  --fs-small: 0.9375rem;  /* 15 — card body, captions, list items */
+  --fs-body: 1rem;        /* 16 — running text */
+  --fs-lead: 1.125rem;    /* 18 — section subheads, minor headings */
+  --fs-h4: 1.3125rem;     /* 21 — card titles */
+  --fs-h3: clamp(1.375rem, 1.23rem + 0.65vw, 1.75rem);  /* 22 → 28 */
+  --fs-h2: clamp(1.75rem, 1.36rem + 1.74vw, 2.75rem);   /* 28 → 44 */
+  --fs-h1-page: clamp(2.125rem, 1.49rem + 2.83vw, 3.75rem); /* 34 → 60 — interior page heroes */
+  --fs-h1: clamp(2.5rem, 1.62rem + 3.91vw, 4.75rem);    /* 40 → 76 — home hero only */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,12 +41,33 @@ html {
 
 body {
   font-family: 'Inter', sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.6;
   background: var(--bg);
   color: var(--ink);
   padding-bottom: 56px; /* reserves space for the sticky mobile call button; reset on desktop */
 }
 
 body.nav-locked { overflow: hidden; }
+
+/* ---- Focus ----
+   There was no :focus-visible rule anywhere in this file, so keyboard focus
+   fell back to the UA ring everywhere except the quote form, which explicitly
+   removed it. One accent ring, applied globally. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+/* Controls that sit on the accent red need a light ring instead — a red ring
+   on a red fill is invisible. */
+.emergency-band-cta:focus-visible,
+.cookie-banner-accept:focus-visible,
+.lang-banner-switch:focus-visible,
+.filter-pill.is-active:focus-visible,
+.lang-btn.is-active:focus-visible,
+.sticky-call-btn:focus-visible {
+  outline-color: var(--ink);
+}
 
 section { padding: 56px 20px; }
 .wrap { max-width: 1080px; margin: 0 auto; }
@@ -49,7 +87,7 @@ section { padding: 56px 20px; }
   position: sticky;
   top: 0;
   z-index: 300;
-  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease, padding 0.25s ease;
 }
 .site-header.is-scrolled {
   background: #1C1E25;
@@ -72,6 +110,7 @@ section { padding: 56px 20px; }
   max-width: 100%;
   object-fit: contain;
   display: block;
+  transition: max-height 0.25s ease;
 }
 
 /* ---- Nav ---- */
@@ -132,7 +171,7 @@ section { padding: 56px 20px; }
   display: inline-flex;
   align-items: center;
   padding: 10px 18px;
-  font-size: 13px;
+  font-size: var(--fs-micro);
   text-decoration: none;
 }
 .hamburger {
@@ -168,7 +207,14 @@ section { padding: 56px 20px; }
   isolation: isolate;
   padding-top: 64px;
   padding-bottom: 56px;
+  /* Grid + centred alignment so the copy sits in the optical middle once the
+     hero is given a real min-height below. The bg/overlay layers are
+     position:absolute so they never become grid items. */
+  display: grid;
+  align-items: center;
+  min-height: 480px;
 }
+.hero.has-hero-bg { min-height: min(78svh, 620px); }
 .hero::before {
   content: "";
   position: absolute; inset: 0;
@@ -179,6 +225,11 @@ section { padding: 56px 20px; }
 .hero .wrap {
   position: relative;
   z-index: 2;
+  /* Required now that .hero is a grid container. .wrap carries margin: 0 auto,
+     and auto margins suppress grid's default stretch — without an explicit
+     width the wrap shrink-wraps to its content and centres itself instead of
+     filling the 1080px measure and aligning left with the header. */
+  width: 100%;
 }
 
 /* ---- Hero photo background (crossfade + Ken Burns) ---- */
@@ -214,13 +265,23 @@ section { padding: 56px 20px; }
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(
-    115deg,
-    rgba(35, 38, 47, 0.72) 0%,
-    rgba(35, 38, 47, 0.58) 30%,
-    rgba(35, 38, 47, 0.38) 60%,
-    rgba(35, 38, 47, 0.18) 100%
-  );
+  /* Two layers rather than one diagonal sweep: a bottom-up scrim that anchors
+     the headline, subhead and CTA row, plus a left-to-right scrim for the copy
+     column. The old single 115deg gradient fell to 0.18 at the right edge,
+     which let bright frames (the bathroom window shot) wash out. */
+  background:
+    linear-gradient(
+      to top,
+      rgba(35, 38, 47, 0.70) 0%,
+      rgba(35, 38, 47, 0.20) 45%,
+      rgba(35, 38, 47, 0.10) 100%
+    ),
+    linear-gradient(
+      100deg,
+      rgba(35, 38, 47, 0.78) 0%,
+      rgba(35, 38, 47, 0.55) 42%,
+      rgba(35, 38, 47, 0.28) 100%
+    );
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-bg-img {
@@ -232,31 +293,42 @@ section { padding: 56px 20px; }
 }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
-  color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600;
+  color: var(--accent); font-family: 'Oswald', sans-serif; font-size: var(--fs-micro); font-weight: 600;
   letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 18px;
 }
 .eyebrow::before {
   content: ""; width: 22px; height: 2px; background: var(--accent);
 }
+/* Base is the interior-page hero: service headlines are long, functional
+   strings ("EV Charger Installation in San Diego, CA") that need a wider
+   measure and a smaller step than the home hero's short claim. */
 .hero h1 {
-  font-size: clamp(36px, 9vw, 68px); line-height: 1.02; font-weight: 700;
-  max-width: 780px; margin-bottom: 22px;
+  font-size: var(--fs-h1-page); line-height: 1.04; font-weight: 700;
+  max-width: 780px; margin-bottom: 22px; text-wrap: balance;
+}
+/* The home hero is the primary first impression, so it keeps the top step and
+   the tighter measure that stacks it into two strong lines. #home is the nav's
+   anchor target, so it's a stable hook. */
+#home h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.02;
+  max-width: 15ch;
 }
 .hero h1 span { color: var(--accent); }
-.hero p { color: var(--ink-dim); font-size: 16px; max-width: 520px; margin-bottom: 32px; }
+.hero p { color: var(--ink-dim); font-size: var(--fs-lead); max-width: 46ch; margin-bottom: 32px; }
 
 .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
 .btn-primary {
   background: var(--accent); color: var(--accent-ink); font-weight: 700;
   font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em;
-  padding: 15px 26px; border-radius: 2px; border: none; font-size: 15px; cursor: pointer;
+  padding: 15px 26px; border-radius: 2px; border: none; font-size: var(--fs-small); cursor: pointer;
   clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%);
   text-decoration: none; display: inline-block; text-align: center;
 }
 .btn-ghost {
   background: transparent; color: var(--ink); border: 1px solid var(--line);
   font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em;
-  padding: 15px 26px; font-size: 15px; cursor: pointer;
+  padding: 15px 26px; font-size: var(--fs-small); cursor: pointer;
   text-decoration: none; display: inline-block; text-align: center;
 }
 .hero .btn-ghost {
@@ -264,10 +336,27 @@ section { padding: 56px 20px; }
   border-color: rgba(255, 255, 255, 0.35);
 }
 
+/* Both primary buttons previously had no hover state at all — the two most
+   important controls on the site gave no feedback on pointer-over. */
+.btn-primary { transition: background-color 0.18s ease, transform 0.1s ease; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:active { transform: translateY(1px); }
+.btn-ghost { transition: background-color 0.18s ease, border-color 0.18s ease; }
+.btn-ghost:hover { background: rgba(245, 245, 240, 0.08); border-color: var(--accent); }
+.btn-ghost:active { transform: translateY(1px); }
+.hero .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.65);
+}
+/* The emergency band's CTA is a .btn-primary recoloured to sit on the red
+   band, so it needs its own hover — the generic red hover would make it
+   vanish into its own background. */
+.emergency-band-cta:hover { background: #12141A; }
+
 /* ---- Services ---- */
 .services { background: var(--panel); color: #23262F; }
-.services h2 { font-size: clamp(26px, 6vw, 40px); font-weight: 700; margin-bottom: 8px; }
-.services .sub { color: #5C6169; margin-bottom: 40px; max-width: 500px; }
+.services h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 8px; }
+.services .sub { color: #5C6169; font-size: var(--fs-lead); margin-bottom: 40px; max-width: 46ch; }
 .grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1px; background: #E2E1DB; border: 1px solid #E2E1DB;
@@ -276,14 +365,14 @@ section { padding: 56px 20px; }
 .services-grid a.card { text-decoration: none; color: inherit; display: block; transition: background-color 0.2s ease; }
 .services-grid a.card:hover { background: #EDECE5; }
 .services-grid a.card:hover h3 { color: var(--accent); }
-.card .num { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 0.1em; }
-.card h3 { font-family: 'Oswald', sans-serif; font-size: 19px; margin: 10px 0 8px; text-transform: uppercase; }
-.card p { color: #5C6169; font-size: 14px; line-height: 1.5; }
+.card .num { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.1em; }
+.card h3 { font-family: 'Oswald', sans-serif; font-size: var(--fs-h4); margin: 10px 0 8px; text-transform: uppercase; line-height: 1.15; }
+.card p { color: #5C6169; font-size: var(--fs-small); line-height: 1.55; }
 
 /* ---- Why Us ---- */
 .why-us { background: var(--bg2); color: var(--ink); }
-.why-us h2 { font-size: clamp(26px, 6vw, 40px); font-weight: 700; margin-bottom: 8px; }
-.why-us .sub { color: var(--ink-dim); margin-bottom: 40px; max-width: 500px; }
+.why-us h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 8px; }
+.why-us .sub { color: var(--ink-dim); font-size: var(--fs-lead); margin-bottom: 40px; max-width: 46ch; }
 .why-us .card { color: #23262F; }
 .why-us .card p { color: #5C6169; }
 /* ---- About ---- */
@@ -298,6 +387,12 @@ section { padding: 56px 20px; }
   width: 100%;
   max-width: 320px;
 }
+/* No profile photo set yet (business-info.js leaves the img hidden when
+   profile_photo_url is empty). Collapse the wrapper so the About section
+   doesn't reserve an empty 320px column beside the text. */
+.about-us-photo-wrap:not(:has(.about-us-photo:not([hidden]))) {
+  display: none;
+}
 .about-us-photo {
   width: 100%;
   aspect-ratio: 4 / 5;
@@ -306,13 +401,13 @@ section { padding: 56px 20px; }
   display: block;
 }
 .about-us-content { width: 100%; }
-.about-us-content h2 { font-size: clamp(24px, 5vw, 34px); font-weight: 700; margin-bottom: 16px; }
+.about-us-content h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 16px; }
 .about-us-text {
   color: #5C6169;
-  font-size: 16px;
+  font-size: var(--fs-lead);
   line-height: 1.7;
   margin-bottom: 24px;
-  max-width: 560px;
+  max-width: 58ch;
 }
 .about-us-credentials { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .about-us-credentials li { display: flex; align-items: center; gap: 12px; }
@@ -320,23 +415,34 @@ section { padding: 56px 20px; }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  font-size: 14px;
+  font-size: var(--fs-small);
 }
 .about-us-credentials .check {
   width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--accent);
   color: var(--accent); display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 13px; flex: none;
+  font-weight: 700; font-size: var(--fs-micro); flex: none;
 }
 
 /* ---- Work ---- */
 .work { background: var(--panel); color: #23262F; }
-.work h1, .work h2 { font-size: clamp(26px, 6vw, 40px); font-weight: 700; margin-bottom: 8px; }
-.work .sub { color: #5C6169; margin-bottom: 40px; max-width: 500px; }
+.work h1, .work h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 8px; }
+.work .sub { color: #5C6169; font-size: var(--fs-lead); margin-bottom: 40px; max-width: 46ch; }
 .work-cta { margin-top: 32px; }
+/* Explicit column counts instead of auto-fit. auto-fit resolved to 4 columns
+   at the 1080px wrap, which stranded the home teaser's 6 photos as 4 + 2 and
+   left a lone tile whenever a gallery count wasn't a multiple of 4. Three
+   columns divides the fixed 6-photo teaser evenly and gives every tile ~40%
+   more area, which the photography needed anyway. */
 .work-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 30px 20px;
+}
+@media (min-width: 520px) {
+  .work-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 760px) {
+  .work-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* ---- Category filter pills ---- */
@@ -353,7 +459,7 @@ section { padding: 56px 20px; }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 13px;
+  font-size: var(--fs-micro);
   padding: 9px 18px;
   border-radius: 2px;
   cursor: pointer;
@@ -363,40 +469,44 @@ section { padding: 56px 20px; }
   border-color: var(--accent);
   color: var(--accent-ink);
 }
+.filter-pill { transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease; }
+.filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+.filter-pill.is-active:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-ink); }
+/* Caption sits below the frame, not on it. The old absolutely-positioned
+   gradient overlay was unreadable on bright, saturated shots (the RGB mirror
+   and neon tiles), and its dark scrim read as a hover affordance on tiles that
+   aren't actually clickable. */
 .work-photo {
-  aspect-ratio: 4 / 3;
   position: relative;
-  overflow: hidden;
-  background: #E2E1DB;
 }
 .work-photo img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
+  background: #E2E1DB;
+  border-radius: 2px;
 }
 .work-photo .work-caption {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0));
-  padding: 28px 14px 10px;
+  padding: 12px 0 0;
 }
 .work-photo .work-caption strong {
   display: block;
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  font-size: 14px;
-  color: #F5F5F0;
+  font-size: var(--fs-small);
+  line-height: 1.25;
+  color: #23262F;
 }
 .work-photo .work-caption span {
   display: block;
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 11px;
-  color: #D8D7D0;
-  margin-top: 2px;
+  font-size: var(--fs-label);
+  color: #7A7F87;
+  margin-top: 3px;
 }
 .work-empty {
   grid-column: 1 / -1;
@@ -404,15 +514,15 @@ section { padding: 56px 20px; }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 14px;
+  font-size: var(--fs-small);
   color: #5C6169;
   padding: 40px 0;
 }
 
 /* ---- Testimonials ---- */
 .testimonials { background: var(--bg2); color: var(--ink); }
-.testimonials h2 { font-size: clamp(26px, 6vw, 40px); font-weight: 700; margin-bottom: 8px; }
-.testimonials .sub { color: var(--ink-dim); margin-bottom: 40px; max-width: 500px; }
+.testimonials h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 8px; }
+.testimonials .sub { color: var(--ink-dim); font-size: var(--fs-lead); margin-bottom: 40px; max-width: 46ch; }
 .testimonials-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -427,14 +537,14 @@ section { padding: 56px 20px; }
 }
 .testimonial-stars {
   color: var(--accent);
-  font-size: 14px;
+  font-size: var(--fs-small);
   letter-spacing: 3px;
   margin-bottom: 16px;
 }
 .testimonial-text {
   position: relative;
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--fs-small);
   line-height: 1.65;
   margin-bottom: 20px;
 }
@@ -457,12 +567,12 @@ section { padding: 56px 20px; }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  font-size: 13px;
+  font-size: var(--fs-micro);
   color: var(--ink);
 }
 .testimonial-author span {
   display: block;
-  font-size: 12px;
+  font-size: var(--fs-label);
   color: var(--ink-dim);
   margin-top: 2px;
 }
@@ -472,15 +582,17 @@ section { padding: 56px 20px; }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 14px;
+  font-size: var(--fs-small);
   color: var(--ink-dim);
   padding: 40px 0;
 }
 
 /* ---- Trust / Contact ---- */
 .trust { background: var(--bg2); color: var(--ink); }
-.trust h2 { font-size: clamp(26px, 6vw, 34px); font-weight: 700; margin-bottom: 8px; }
-.trust .sub { color: var(--ink-dim); margin-bottom: 32px; max-width: 500px; }
+/* Was clamp(26px, 6vw, 34px) — capped 6px below every other section heading
+   for no stated reason. Now on the same step as the rest. */
+.trust h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 8px; }
+.trust .sub { color: var(--ink-dim); font-size: var(--fs-lead); margin-bottom: 32px; max-width: 46ch; }
 .contact-info {
   display: flex;
   flex-wrap: wrap;
@@ -496,12 +608,12 @@ section { padding: 56px 20px; }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 12px;
+  font-size: var(--fs-label);
   color: var(--ink-dim);
 }
 .contact-info-value {
   font-family: 'Oswald', sans-serif;
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: var(--ink);
   text-decoration: none;
 }
@@ -515,7 +627,7 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 13px;
+  font-size: var(--fs-micro);
   color: var(--ink-dim);
   margin-bottom: 16px;
 }
@@ -532,7 +644,7 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 12px;
+  font-size: var(--fs-label);
   padding: 8px 14px;
   border-radius: 2px;
 }
@@ -543,8 +655,8 @@ a.contact-info-value:hover { color: var(--accent); }
   display: flex; align-items: center; justify-content: center;
   font-family: 'Oswald', sans-serif; color: var(--accent); font-weight: 700; flex: none;
 }
-.badge div span { display: block; font-size: 12px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
-.badge div strong { font-family: 'Oswald', sans-serif; font-size: 16px; }
+.badge div span { display: block; font-size: var(--fs-label); color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.badge div strong { font-family: 'Oswald', sans-serif; font-size: var(--fs-body); }
 
 /* ---- Quote form ---- */
 .quote-form {
@@ -564,7 +676,7 @@ a.contact-info-value:hover { color: var(--accent); }
   gap: 6px;
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.06em;
   color: var(--ink-dim);
 }
@@ -572,7 +684,7 @@ a.contact-info-value:hover { color: var(--accent); }
 .quote-form select,
 .quote-form textarea {
   font-family: 'Inter', sans-serif;
-  font-size: 15px;
+  font-size: var(--fs-small);
   color: var(--ink);
   background: var(--bg);
   border: 1px solid var(--line);
@@ -585,6 +697,18 @@ a.contact-info-value:hover { color: var(--accent); }
   outline: none;
   border-color: var(--accent);
 }
+/* Restores a real focus ring for keyboard users. The rule above strips the
+   UA outline for every focus, which left a 1px border-colour change as the
+   only indicator on the lead form — the highest-stakes control on the site.
+   Same specificity as the rule above, so declaration order decides; keep this
+   block after it. */
+.quote-form input:focus-visible,
+.quote-form select:focus-visible,
+.quote-form textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
 .quote-form select {
   appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
@@ -595,8 +719,8 @@ a.contact-info-value:hover { color: var(--accent); }
 .quote-form button[type="submit"] {
   align-self: flex-start;
 }
-.quote-error { color: var(--accent); font-size: 13px; }
-.quote-success { color: #4CAF6D; font-size: 13px; }
+.quote-error { color: var(--accent); font-size: var(--fs-micro); }
+.quote-success { color: #4CAF6D; font-size: var(--fs-micro); }
 
 /* ---- Emergency band ---- */
 .emergency-band { background: var(--accent); padding: 24px 20px; }
@@ -611,13 +735,13 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  font-size: 18px;
+  font-size: var(--fs-lead);
   color: var(--accent-ink);
   margin-bottom: 4px;
 }
 .emergency-band-text span {
   display: block;
-  font-size: 14px;
+  font-size: var(--fs-small);
   color: rgba(245, 245, 240, 0.9);
   max-width: 560px;
 }
@@ -643,7 +767,7 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 13px;
+  font-size: var(--fs-micro);
   color: var(--ink-dim);
   padding: 8px 16px;
   cursor: pointer;
@@ -661,7 +785,7 @@ a.contact-info-value:hover { color: var(--accent); }
   gap: 12px 16px;
   text-align: center;
 }
-.lang-banner-text { font-size: 14px; color: var(--ink); }
+.lang-banner-text { font-size: var(--fs-small); color: var(--ink); }
 .lang-banner-actions { display: flex; align-items: center; gap: 10px; }
 .lang-banner-switch {
   background: var(--accent);
@@ -669,7 +793,7 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 12px;
+  font-size: var(--fs-label);
   padding: 9px 16px;
   border: none;
   border-radius: 2px;
@@ -715,14 +839,14 @@ a.contact-info-value:hover { color: var(--accent); }
   gap: 12px 20px;
   text-align: center;
 }
-.cookie-banner-text { font-size: 13px; color: var(--ink-dim); }
+.cookie-banner-text { font-size: var(--fs-micro); color: var(--ink-dim); }
 .cookie-banner-accept {
   background: var(--accent);
   color: var(--accent-ink);
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 12px;
+  font-size: var(--fs-label);
   padding: 9px 20px;
   border: none;
   border-radius: 2px;
@@ -742,7 +866,7 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 700;
   text-decoration: none;
   box-sizing: border-box;
@@ -757,7 +881,7 @@ a.contact-info-value:hover { color: var(--accent); }
   padding: 48px 20px 40px;
 }
 .footer-logo { max-height: 40px; width: auto; margin-bottom: 16px; }
-.footer-tagline { font-size: 14px; line-height: 1.5; max-width: 320px; margin-bottom: 16px; }
+.footer-tagline { font-size: var(--fs-small); line-height: 1.5; max-width: 320px; margin-bottom: 16px; }
 .footer-contact { display: flex; flex-direction: column; gap: 8px; }
 .footer-contact a {
   color: var(--ink);
@@ -765,24 +889,24 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  font-size: 14px;
+  font-size: var(--fs-small);
 }
 .footer-contact a:hover { color: var(--accent); }
 .footer-heading {
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 13px;
+  font-size: var(--fs-micro);
   color: var(--ink);
   margin-bottom: 16px;
 }
 .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.footer-links a { color: var(--ink-dim); text-decoration: none; font-size: 14px; }
+.footer-links a { color: var(--ink-dim); text-decoration: none; font-size: var(--fs-small); }
 .footer-links a:hover { color: var(--accent); }
-.footer-info p { font-size: 14px; margin-bottom: 8px; }
+.footer-info p { font-size: var(--fs-small); margin-bottom: 8px; }
 .footer-bottom { border-top: 1px solid var(--line); padding: 20px; }
 .footer-bottom .wrap { text-align: center; }
-.footer-bottom p { font-size: 12px; color: var(--ink-dim); }
+.footer-bottom p { font-size: var(--fs-label); color: var(--ink-dim); }
 
 /* ---- Nav services dropdown ---- */
 .nav-dropdown { position: relative; }
@@ -808,7 +932,7 @@ a.contact-info-value:hover { color: var(--accent); }
 .nav-dropdown-menu a {
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: var(--ink-dim);
   text-decoration: none;
   padding: 10px 4px 10px 16px;
@@ -820,7 +944,7 @@ a.contact-info-value:hover { color: var(--accent); }
 .service-content h2 {
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
-  font-size: clamp(22px, 5vw, 30px);
+  font-size: var(--fs-h3);
   font-weight: 700;
   margin-bottom: 18px;
 }
@@ -828,17 +952,17 @@ a.contact-info-value:hover { color: var(--accent); }
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  font-size: 17px;
+  font-size: var(--fs-lead);
   margin: 36px 0 14px;
 }
-.service-content p { color: #45494F; font-size: 15px; line-height: 1.7; max-width: 720px; margin-bottom: 16px; }
-.service-content-list { list-style: none; max-width: 720px; }
+.service-content p { color: #45494F; font-size: var(--fs-body); line-height: 1.7; max-width: 68ch; margin-bottom: 16px; }
+.service-content-list { list-style: none; max-width: 68ch; }
 .service-content-list li {
   position: relative;
   padding-left: 26px;
   color: #45494F;
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--fs-body);
+  line-height: 1.65;
   margin-bottom: 10px;
 }
 .service-content-list li::before {
@@ -850,12 +974,12 @@ a.contact-info-value:hover { color: var(--accent); }
 }
 
 .process { background: var(--bg2); color: var(--ink); }
-.process h2 { font-size: clamp(26px, 6vw, 40px); font-weight: 700; margin-bottom: 40px; }
+.process h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 40px; }
 .process .card { color: #23262F; }
 .process .card p { color: #5C6169; }
 
 .related-services { background: var(--panel); color: #23262F; }
-.related-services h2 { font-size: clamp(22px, 5vw, 30px); font-weight: 700; margin-bottom: 32px; }
+.related-services h2 { font-size: var(--fs-h3); font-weight: 700; margin-bottom: 32px; }
 .related-services-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -873,16 +997,16 @@ a.contact-info-value:hover { color: var(--accent); }
 .related-services-grid h3 {
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
-  font-size: 16px;
+  font-size: var(--fs-lead);
   margin-bottom: 6px;
 }
-.related-services-grid p { color: #5C6169; font-size: 13px; line-height: 1.5; }
+.related-services-grid p { color: #5C6169; font-size: var(--fs-small); line-height: 1.55; }
 .related-services-grid a:hover h3 { color: var(--accent); }
 
 /* ---- FAQ ---- */
 .faq { background: var(--panel); color: #23262F; }
-.faq h2 { font-size: clamp(26px, 6vw, 40px); font-weight: 700; margin-bottom: 8px; }
-.faq .sub { color: #5C6169; margin-bottom: 40px; max-width: 600px; }
+.faq h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 8px; }
+.faq .sub { color: #5C6169; font-size: var(--fs-lead); margin-bottom: 40px; max-width: 54ch; }
 .faq-list { max-width: 780px; border-top: 1px solid #C7C6C0; }
 .faq-item { border-bottom: 1px solid #C7C6C0; }
 .faq-question {
@@ -898,7 +1022,7 @@ a.contact-info-value:hover { color: var(--accent); }
   padding: 20px 2px;
   font-family: 'Inter', sans-serif;
   font-weight: 600;
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: #23262F;
 }
 .faq-question:hover { color: var(--accent); }
@@ -915,13 +1039,13 @@ a.contact-info-value:hover { color: var(--accent); }
 .faq-item.is-open .faq-icon::after { transform: translateX(-50%) scaleY(0); opacity: 0; }
 .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
 .faq-item.is-open .faq-answer { max-height: 600px; }
-.faq-answer-inner { padding: 0 26px 22px 2px; color: #45494F; font-size: 15px; line-height: 1.7; max-width: 700px; }
+.faq-answer-inner { padding: 0 26px 22px 2px; color: #45494F; font-size: var(--fs-small); line-height: 1.7; max-width: 700px; }
 
 /* ---- 404 page ---- */
 .not-found { text-align: center; padding-top: 88px; padding-bottom: 88px; }
 .not-found .wrap { max-width: 600px; }
 .not-found .eyebrow { justify-content: center; }
-.not-found h1 { font-size: clamp(32px, 7vw, 52px); margin-bottom: 16px; }
+.not-found h1 { font-size: var(--fs-h2); margin-bottom: 16px; }
 .not-found p { color: var(--ink-dim); margin-bottom: 32px; }
 .not-found .cta-row { justify-content: center; margin-bottom: 40px; }
 .not-found .cta-row a { text-decoration: none; }
@@ -936,7 +1060,7 @@ a.contact-info-value:hover { color: var(--accent); }
   text-decoration: none;
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
-  font-size: 13px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.04em;
 }
 .not-found-links a:hover { color: var(--accent); }
@@ -951,8 +1075,21 @@ a.contact-info-value:hover { color: var(--accent); }
   section { padding: 88px 24px; }
   .site-header { padding: 32px 24px; }
   .site-header img { max-height: 78px; }
-  .hero { padding-top: 120px; padding-bottom: 100px; }
-  .hero h1 { line-height: 0.98; }
+
+  /* Compress the header once past the hero. It previously stayed at its full
+     143px for the entire scroll, permanently eating ~20% of a laptop viewport.
+     Desktop only — on mobile .main-nav is a fixed overlay positioned at
+     var(--header-h), so a shrinking header would open a gap above it. */
+  .site-header.is-scrolled { padding-top: 14px; padding-bottom: 14px; }
+  .site-header.is-scrolled img { max-height: 48px; }
+
+  .hero { padding-top: 120px; padding-bottom: 100px; min-height: 420px; }
+  .hero.has-hero-bg { min-height: clamp(560px, calc(100svh - var(--header-h)), 820px); }
+  /* Scoped to #home — an id selector outranks `.hero h1` at any position in
+     the file, so a generic rule here would be overridden by the #home block
+     above and silently do nothing. Interior heroes keep the looser 1.04,
+     which multi-line service headlines need. */
+  #home h1 { line-height: 0.98; }
 
   .main-nav {
     position: static;
@@ -966,7 +1103,7 @@ a.contact-info-value:hover { color: var(--accent); }
   }
   .main-nav > ul { flex-direction: row; align-items: center; gap: 28px; }
   .main-nav .nav-link {
-    font-size: 14px;
+    font-size: var(--fs-small);
     padding: 4px 0;
     border-bottom: none;
   }
@@ -1001,7 +1138,7 @@ a.contact-info-value:hover { color: var(--accent); }
   .nav-dropdown-menu a {
     padding: 10px 16px;
     border-bottom: none;
-    font-size: 13px;
+    font-size: var(--fs-micro);
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
