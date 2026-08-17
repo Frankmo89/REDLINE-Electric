@@ -1,5 +1,21 @@
 # Cloudflare Workers Assets — response headers.
 # Syntax: a path pattern, then indented "Header: value" lines.
+#
+# IMPORTANT — how overlapping rules resolve:
+# A request matching several patterns inherits ALL of their headers, and a
+# header set by two matching rules is joined with a comma rather than the more
+# specific rule winning. A request for /admin/login.html matches both /* and
+# /admin/* below, so simply restating Content-Security-Policy and
+# X-Frame-Options in the /admin/* block emits TWO of each header — browsers
+# then enforce the intersection of both CSPs, which is not what is intended.
+#
+# The fix is the documented "detach a header" syntax: a header name prefixed
+# with "! " removes the value inherited from a more pervasive rule. Detaching
+# and then setting a new value in the same block yields exactly one header.
+# Verified against `wrangler dev`: /admin/login returns a single
+# content-security-policy (frame-ancestors 'none') and a single
+# x-frame-options (DENY), while / returns 'self' / SAMEORIGIN.
+# https://developers.cloudflare.com/workers/static-assets/headers/
 
 /*
   X-Content-Type-Options: nosniff
@@ -15,26 +31,23 @@
   # no <object>/<embed>, no <base> hijack, and forms cannot post off-site.
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com; connect-src 'self' https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
 
-# The admin area must never be framed, and must never be indexed or cached.
+# The admin area must never be framed, indexed, or cached.
 #
-# The CSP below is a FULL restatement of the global policy, not a delta — only
-# frame-ancestors differs ('none' instead of 'self'). Two rules match a request
-# for /admin/*, and if Cloudflare resolves the duplicate Content-Security-Policy
-# by overriding rather than merging, a delta here would leave admin pages with
-# frame-ancestors alone and no script-src/connect-src/object-src/form-action —
-# stripping the policy from precisely the pages with the largest injection
-# surface. Restating in full is correct under either resolution.
-#
-# Keep this in sync with the /* policy above when either one changes.
+# The two "! " lines detach the /* values above so these replace rather than
+# stack. The CSP is a full restatement of the /* policy with frame-ancestors
+# swapped to 'none' — keep the two in sync when either changes.
 /admin/*
+  ! X-Frame-Options
   X-Frame-Options: DENY
+  ! Content-Security-Policy
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com; connect-src 'self' https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow
 
 # Fingerprint-free static assets. Keep this moderate rather than immutable:
 # filenames are not content-hashed, so a long TTL would strand an updated logo
-# or stylesheet in visitors' caches.
+# or stylesheet in visitors' caches. /* sets no Cache-Control, so these do not
+# stack with anything.
 /assets/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
