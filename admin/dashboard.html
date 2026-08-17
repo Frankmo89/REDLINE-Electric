@@ -14,7 +14,7 @@
 <body class="admin-body">
 
 <header class="admin-header">
-  <img src="../assets/redline-electric-logo.png" alt="Redline Electric" class="admin-logo-sm">
+  <img src="../assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188" class="admin-logo-sm">
   <h1 class="display">Dashboard</h1>
   <button type="button" class="btn-ghost" id="logout-btn">Log Out</button>
 </header>
@@ -191,20 +191,51 @@
   var BUCKET = 'job-photos';
   var PUBLIC_URL_MARKER = '/storage/v1/object/public/' + BUCKET + '/';
 
-  // Chrome and Firefox can't decode HEIC/HEIF (the default iPhone photo
-  // format) via Canvas, so compression silently can't run for those files.
-  // Surface that instead of letting a multi-MB original upload unnoticed.
+  var ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  var MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25MB — generous for a phone photo
+
+  // Validates a file BEFORE it touches Storage. Returns an error string, or
+  // null if the file is acceptable. Without this, any file type (including
+  // .html) could be uploaded to the public bucket, and a 0-byte or corrupt
+  // file would become a permanently broken <img> on the public site.
+  function validateImageFile(file) {
+    if (!file) return 'Choose a photo to upload.';
+    if (file.size === 0) return 'That file is empty (0 bytes). Try selecting the photo again.';
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return 'That photo is ' + (file.size / 1024 / 1024).toFixed(1) + 'MB. Please use one under 25MB.';
+    }
+    if (ALLOWED_IMAGE_TYPES.indexOf(file.type) === -1) {
+      return "That file isn't a supported image. Use JPEG, PNG, WebP, or GIF. "
+        + "(iPhone HEIC photos aren't readable in Chrome or Firefox — set your iPhone to "
+        + "Settings > Camera > Formats > Most Compatible, or upload using Safari.)";
+    }
+    return null;
+  }
+
+  // Chrome and Firefox cannot decode HEIC/HEIF via Canvas. Previously the
+  // original was uploaded anyway, which produced a broken image on the public
+  // site while telling the admin it merely "may be larger than usual". These
+  // reasons are now hard failures — validateImageFile catches most of them up
+  // front, and this catches anything that still fails to decode.
   function skipReasonMessage(reason) {
     if (reason === 'unsupported-type' || reason === 'decode-failed') {
-      return "Note: this photo's format couldn't be optimized in this browser (this happens with HEIC photos in Chrome/Firefox), so the original file was uploaded as-is — it may be larger than usual.";
+      return "This photo couldn't be read by the browser, so it wasn't uploaded "
+        + "(it would have shown as a broken image on the site). If it's an iPhone HEIC "
+        + "photo, upload it from Safari or re-save it as JPEG first.";
     }
     return null;
   }
 
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Safe for BOTH text and attribute contexts. The previous textContent ->
+    // innerHTML trick did not escape quotes, so a value like  x" onmouseover="..."
+    // could break out of an attribute and inject an event handler.
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function pathFromPublicUrl(url) {
@@ -291,7 +322,7 @@
       card.className = 'admin-card';
       var featured = !!project.is_featured;
       card.innerHTML =
-        '<img src="' + project.image_url + '" alt="' + escapeHtml(project.title) + '">' +
+        '<img src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '">' +
         '<div class="admin-card-body">' +
           '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '"> Select</label>' +
           '<h3>' + escapeHtml(project.title) + '</h3>' +
@@ -321,8 +352,15 @@
     var fileInput = document.getElementById('file');
     var file = fileInput.files[0];
 
-    if (!title || !file) {
+    if (!title) {
       uploadError.textContent = 'Title and photo are required.';
+      uploadError.hidden = false;
+      return;
+    }
+
+    var fileError = validateImageFile(file);
+    if (fileError) {
+      uploadError.textContent = fileError;
       uploadError.hidden = false;
       return;
     }
@@ -333,17 +371,25 @@
     var fileToUpload = file;
     if (window.RedlineImageCompress) {
       var compressResult = await window.RedlineImageCompress.compressImage(file);
-      fileToUpload = compressResult.file;
-      var warningMsg = skipReasonMessage(compressResult.reason);
-      if (warningMsg) {
-        uploadWarning.textContent = warningMsg;
-        uploadWarning.hidden = false;
+      var blockingMsg = skipReasonMessage(compressResult.reason);
+      if (blockingMsg) {
+        // Undecodable in this browser — abort rather than upload a file that
+        // would render as a broken image for every visitor.
+        uploadStatus.hidden = true;
+        uploadBtn.disabled = false;
+        uploadError.textContent = blockingMsg;
+        uploadError.hidden = false;
+        return;
       }
+      fileToUpload = compressResult.file;
     }
 
     uploadStatus.hidden = true;
 
-    var ext = fileToUpload.name.indexOf('.') !== -1 ? fileToUpload.name.split('.').pop() : 'jpg';
+    // Extension comes from the validated MIME type, never from the user's
+    // filename, so a crafted name can't control the stored object's extension.
+    var MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+    var ext = MIME_EXT[fileToUpload.type] || 'jpg';
     var path = Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
 
     var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, fileToUpload);
@@ -631,10 +677,19 @@
       return;
     }
 
-    businessSaveBtn.disabled = true;
-
     var photoFile = document.getElementById('biz-photo-file').files[0];
     var profilePhotoUrl = currentBusinessInfo.profile_photo_url || null;
+
+    if (photoFile) {
+      var bizFileError = validateImageFile(photoFile);
+      if (bizFileError) {
+        businessError.textContent = bizFileError;
+        businessError.hidden = false;
+        return;
+      }
+    }
+
+    businessSaveBtn.disabled = true;
 
     if (photoFile) {
       businessStatus.hidden = false;
@@ -642,17 +697,21 @@
       var photoToUpload = photoFile;
       if (window.RedlineImageCompress) {
         var bizCompressResult = await window.RedlineImageCompress.compressImage(photoFile);
-        photoToUpload = bizCompressResult.file;
-        var bizWarningMsg = skipReasonMessage(bizCompressResult.reason);
-        if (bizWarningMsg) {
-          businessWarning.textContent = bizWarningMsg;
-          businessWarning.hidden = false;
+        var bizBlockingMsg = skipReasonMessage(bizCompressResult.reason);
+        if (bizBlockingMsg) {
+          businessStatus.hidden = true;
+          businessSaveBtn.disabled = false;
+          businessError.textContent = bizBlockingMsg;
+          businessError.hidden = false;
+          return;
         }
+        photoToUpload = bizCompressResult.file;
       }
 
       businessStatus.hidden = true;
 
-      var ext = photoToUpload.name.indexOf('.') !== -1 ? photoToUpload.name.split('.').pop() : 'jpg';
+      var BIZ_MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+      var ext = BIZ_MIME_EXT[photoToUpload.type] || 'jpg';
       var path = 'profile/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
 
       var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, photoToUpload);
@@ -719,7 +778,10 @@
   var reviewsSelection = setupBulkSelection(reviewsGrid, reviewsSelectAll, reviewsBulkCount, reviewsBulkDeleteBtn, 'review');
 
   function starString(rating) {
-    var r = Math.max(1, Math.min(5, rating || 0));
+    // Round first: repeat() truncates, so 4.5 used to render 4 filled + 0 empty
+    // (only 4 glyphs). A null/invalid rating now falls back to 5, not 1.
+    var n = Number(rating);
+    var r = Math.round(Math.max(1, Math.min(5, isFinite(n) && n > 0 ? n : 5)));
     return '★'.repeat(r) + '☆'.repeat(5 - r);
   }
 

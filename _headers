@@ -1,0 +1,42 @@
+# Cloudflare Workers Assets — response headers.
+# Syntax: a path pattern, then indented "Header: value" lines.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Frame-Options: SAMEORIGIN
+  # NOTE: 'unsafe-inline' in script-src is required because every page carries
+  # inline <script> blocks and inline JSON-LD, and a static host cannot mint
+  # per-request nonces. This CSP therefore does NOT stop injected inline
+  # handlers — that class of bug is fixed at the source by escapeHtml(). What it
+  # does buy: no script can be loaded from an origin outside the allowlist below,
+  # no <object>/<embed>, no <base> hijack, and forms cannot post off-site.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com; connect-src 'self' https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+
+# The admin area must never be framed, and must never be indexed or cached.
+#
+# The CSP below is a FULL restatement of the global policy, not a delta — only
+# frame-ancestors differs ('none' instead of 'self'). Two rules match a request
+# for /admin/*, and if Cloudflare resolves the duplicate Content-Security-Policy
+# by overriding rather than merging, a delta here would leave admin pages with
+# frame-ancestors alone and no script-src/connect-src/object-src/form-action —
+# stripping the policy from precisely the pages with the largest injection
+# surface. Restating in full is correct under either resolution.
+#
+# Keep this in sync with the /* policy above when either one changes.
+/admin/*
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com; connect-src 'self' https://hvesaitxkwlufbljnupy.supabase.co https://www.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow
+
+# Fingerprint-free static assets. Keep this moderate rather than immutable:
+# filenames are not content-hashed, so a long TTL would strand an updated logo
+# or stylesheet in visitors' caches.
+/assets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/css/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

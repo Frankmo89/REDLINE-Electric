@@ -9,6 +9,24 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+
+  // Consent Mode v2. Everything is DENIED before the config call below, so no
+  // analytics cookie is written and no identifiable hit is sent until the
+  // visitor accepts via the cookie banner (assets/js/analytics.js).
+  // Previously the banner was purely decorative: gtag('config') fired here
+  // unconditionally, so GA4 tracked every visitor regardless of their choice.
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied'
+  });
+  try {
+    if (localStorage.getItem('redline-analytics-consent') === '1') {
+      gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+  } catch (e) { /* localStorage blocked (private mode) — stay denied */ }
+
   gtag('js', new Date());
   gtag('config', 'G-QEQXZJNNBB');
 </script>
@@ -16,12 +34,13 @@
 <title>Licensed Electrician San Diego, CA | Redline Electric</title>
 <meta name="description" content="Redline Electric is a licensed and insured electrical contractor (C-10 #1153394) serving San Diego County. New construction, remodels, retrofits, EV chargers, and emergency service calls.">
 
-<!-- TODO: replace REPLACE-WITH-DOMAIN.com with the real domain (redlinesd.com) once it's live -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Licensed Electrician San Diego, CA | Redline Electric">
 <meta property="og:description" content="Licensed and insured electrical contractor (C-10 #1153394) serving San Diego County. New construction, remodels, retrofits, EV chargers, and emergency service calls.">
-<meta property="og:image" content="https://REPLACE-WITH-DOMAIN.com/assets/redline-electric-logo.png">
-<meta property="og:url" content="https://REPLACE-WITH-DOMAIN.com/">
+<meta property="og:image" content="https://redlinesd.com/assets/redline-electric-logo.png">
+<meta property="og:url" content="https://redlinesd.com/">
+
+<link rel="canonical" href="https://redlinesd.com/">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,7 +51,7 @@
 {
   "@context": "https://schema.org",
   "@type": "Electrician",
-  "@id": "https://REPLACE-WITH-DOMAIN.com/#business",
+  "@id": "https://redlinesd.com/#business",
   "name": "Redline Electric",
   "telephone": "+16197480662",
   "identifier": "C-10 #1153394",
@@ -153,7 +172,7 @@
 <header class="site-header" id="site-header">
   <div class="wrap header-inner">
     <a href="#home" class="logo-link" aria-label="Redline Electric — Home">
-      <img src="assets/redline-electric-logo.png" alt="Redline Electric">
+      <img src="assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188">
     </a>
 
     <nav class="main-nav" id="main-nav">
@@ -306,8 +325,7 @@
 <section class="work" id="work">
   <div class="wrap">
     <h2 class="display" data-i18n="work_heading">Our Work</h2>
-    <!-- TODO: replace with real content -->
-    <p class="sub" data-i18n="work_teaser_sub">Placeholder intro text goes here.</p>
+    <p class="sub" data-i18n="work_teaser_sub">Recent electrical work across San Diego County — panel upgrades, EV chargers, lighting, and full remodels.</p>
     <div class="work-grid" id="work-grid">
       <p class="work-empty" id="work-empty" data-i18n="work_empty" hidden>Photos coming soon.</p>
     </div>
@@ -343,13 +361,13 @@
     <form id="quote-form" class="quote-form">
       <div class="quote-form-grid">
         <label><span data-i18n="form_label_name">Name*</span>
-          <input type="text" id="lead-name" required>
+          <input type="text" id="lead-name" name="name" autocomplete="name" required>
         </label>
         <label><span data-i18n="form_label_phone">Phone*</span>
-          <input type="tel" id="lead-phone" required>
+          <input type="tel" id="lead-phone" name="phone" autocomplete="tel" required>
         </label>
         <label><span data-i18n="form_label_email">Email</span>
-          <input type="email" id="lead-email">
+          <input type="email" id="lead-email" name="email" autocomplete="email">
         </label>
         <label><span data-i18n="form_label_service">Service Interested In</span>
           <select id="lead-service">
@@ -432,7 +450,7 @@
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
-      <img src="assets/redline-electric-logo.png" alt="Redline Electric" class="footer-logo">
+      <img src="assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188" class="footer-logo">
       <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
       <div class="footer-contact">
         <a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a>
@@ -545,9 +563,15 @@
   if (!grid || typeof supabaseClient === 'undefined') return;
 
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Safe for BOTH text and attribute contexts. The previous textContent ->
+    // innerHTML trick did not escape quotes, so a value like  x" onmouseover="..."
+    // could break out of an attribute and inject an event handler.
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function showEmpty() {
@@ -576,7 +600,7 @@
         var item = document.createElement('div');
         item.className = 'work-photo';
         item.innerHTML =
-          '<img src="' + project.image_url + '" alt="' + escapeHtml(project.title) + '" loading="lazy">' +
+          '<img src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '" loading="lazy">' +
           '<div class="work-caption">' +
             '<strong>' + escapeHtml(project.title) + '</strong>' +
             (project.category ? '<span>' + escapeHtml(project.category) + '</span>' : '') +
@@ -597,13 +621,22 @@
   if (!grid || typeof supabaseClient === 'undefined') return;
 
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Safe for BOTH text and attribute contexts. The previous textContent ->
+    // innerHTML trick did not escape quotes, so a value like  x" onmouseover="..."
+    // could break out of an attribute and inject an event handler.
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function starString(rating) {
-    var r = Math.max(1, Math.min(5, rating || 0));
+    // Round first: repeat() truncates, so 4.5 used to render 4 filled + 0 empty
+    // (only 4 glyphs). A null/invalid rating now falls back to 5, not 1.
+    var n = Number(rating);
+    var r = Math.round(Math.max(1, Math.min(5, isFinite(n) && n > 0 ? n : 5)));
     return '★'.repeat(r) + '☆'.repeat(5 - r);
   }
 
@@ -631,7 +664,7 @@
         var card = document.createElement('div');
         card.className = 'testimonial-card';
         card.innerHTML =
-          '<div class="testimonial-stars" aria-label="' + review.rating + ' out of 5 stars">' + starString(review.rating) + '</div>' +
+          '<div class="testimonial-stars" aria-label="' + escapeHtml(review.rating) + ' out of 5 stars">' + starString(review.rating) + '</div>' +
           '<p class="testimonial-text">' + escapeHtml(review.review_text) + '</p>' +
           '<div class="testimonial-author">' +
             '<strong>' + escapeHtml(review.customer_name) + '</strong>' +
@@ -649,13 +682,24 @@
 <script>
 (function () {
   var form = document.getElementById('quote-form');
-  if (!form || typeof supabaseClient === 'undefined') return;
+  if (!form) return;
 
   var submitBtn = document.getElementById('quote-submit-btn');
   var errorMsg = document.getElementById('quote-error');
   var successMsg = document.getElementById('quote-success');
 
+  function showError(key, fallback) {
+    errorMsg.textContent = (window.i18n && window.i18n.t(key)) || fallback;
+    errorMsg.hidden = false;
+  }
+
+  var GENERIC_ERROR = 'Something went wrong submitting your request. Please try calling us instead.';
+
   form.addEventListener('submit', async function (e) {
+    // preventDefault unconditionally. This listener used to be skipped entirely
+    // when supabaseClient was undefined (blocked CDN, offline, ad blocker), so
+    // the browser performed a native GET submit: the page reloaded blank and the
+    // lead was lost with no error ever shown to the visitor.
     e.preventDefault();
     errorMsg.hidden = true;
     successMsg.hidden = true;
@@ -667,26 +711,36 @@
     var message = document.getElementById('lead-message').value.trim();
 
     if (!name || !phone) {
-      errorMsg.textContent = (window.i18n && window.i18n.t('form_error_required')) || 'Name and phone are required.';
-      errorMsg.hidden = false;
+      showError('form_error_required', 'Name and phone are required.');
+      return;
+    }
+
+    if (typeof supabaseClient === 'undefined') {
+      showError('form_error_generic', GENERIC_ERROR);
       return;
     }
 
     submitBtn.disabled = true;
 
-    var res = await supabaseClient.from('leads').insert({
-      name: name,
-      phone: phone,
-      email: email || null,
-      service_interest: service || null,
-      message: message || null
-    });
-
-    submitBtn.disabled = false;
+    var res;
+    try {
+      res = await supabaseClient.from('leads').insert({
+        name: name,
+        phone: phone,
+        email: email || null,
+        service_interest: service || null,
+        message: message || null
+      });
+    } catch (err) {
+      // A rejection here (token refresh failure, patched fetch, aborted request)
+      // previously left the button disabled forever with no message.
+      res = { error: err };
+    } finally {
+      submitBtn.disabled = false;
+    }
 
     if (res.error) {
-      errorMsg.textContent = (window.i18n && window.i18n.t('form_error_generic')) || 'Something went wrong submitting your request. Please try calling us instead.';
-      errorMsg.hidden = false;
+      showError('form_error_generic', GENERIC_ERROR);
       return;
     }
 

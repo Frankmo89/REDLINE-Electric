@@ -1,0 +1,11 @@
+# Files in the repo root that must NOT be published as static assets.
+# wrangler.jsonc sets assets.directory to "./", so without this every tracked
+# file at the root would be fetchable (e.g. /wrangler.jsonc, /assets/photos/TODO.txt).
+wrangler.jsonc
+.gitignore
+.assetsignore
+**/.git
+**/.claude
+**/node_modules
+**/.DS_Store
+assets/photos/TODO.txt

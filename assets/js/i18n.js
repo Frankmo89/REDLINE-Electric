@@ -79,7 +79,10 @@
     about_credential_2: { en: 'Serving San Diego County', es: 'Sirviendo al Condado de San Diego' },
 
     work_heading: { en: 'Our Work', es: 'Nuestros Trabajos' },
-    work_teaser_sub: { en: 'Placeholder intro text goes here.', es: 'Aquí va el texto de introducción.' },
+    work_teaser_sub: {
+      en: 'Recent electrical work across San Diego County — panel upgrades, EV chargers, lighting, and full remodels.',
+      es: 'Trabajos eléctricos recientes en el Condado de San Diego — actualizaciones de panel, cargadores para autos eléctricos, iluminación y remodelaciones completas.'
+    },
     work_page_sub: {
       en: 'A look at recent electrical projects across San Diego.',
       es: 'Un vistazo a nuestros proyectos eléctricos recientes en San Diego.'

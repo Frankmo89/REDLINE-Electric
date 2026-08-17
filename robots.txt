@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://REPLACE-WITH-DOMAIN.com/sitemap.xml
+Sitemap: https://redlinesd.com/sitemap.xml

@@ -67,6 +67,11 @@
         canvas.width = targetWidth;
         canvas.height = targetHeight;
         var ctx = canvas.getContext('2d');
+        // JPEG has no alpha channel, so transparent pixels would encode as
+        // black. Paint white first so PNGs with transparency (logos, diagrams)
+        // come out on white instead of a black box.
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
         ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
         return new Promise(function (resolve) {

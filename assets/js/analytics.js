@@ -35,17 +35,31 @@
   });
 
   // ---- Cookie / analytics consent notice (CCPA) ----
+  // The <head> snippet on every page sets Consent Mode v2 defaults to DENIED,
+  // and re-grants on load if this key is already stored. Accepting here is what
+  // actually flips analytics_storage to granted for the current page view —
+  // before this, the banner only hid itself and GA4 tracked regardless.
+  function grantConsent() {
+    if (typeof window.gtag === 'function') {
+      window.gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+  }
+
   function initConsentBanner() {
     var banner = document.getElementById('cookie-banner');
     if (!banner) return;
-    if (localStorage.getItem(CONSENT_KEY)) return;
+
+    var stored = null;
+    try { stored = localStorage.getItem(CONSENT_KEY); } catch (e) { /* private mode */ }
+    if (stored) return;
 
     banner.hidden = false;
 
     var acceptBtn = banner.querySelector('[data-cookie-accept]');
     if (acceptBtn) {
       acceptBtn.addEventListener('click', function () {
-        localStorage.setItem(CONSENT_KEY, '1');
+        try { localStorage.setItem(CONSENT_KEY, '1'); } catch (e) { /* private mode */ }
+        grantConsent();
         banner.hidden = true;
       });
     }

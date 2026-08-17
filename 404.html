@@ -9,6 +9,24 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+
+  // Consent Mode v2. Everything is DENIED before the config call below, so no
+  // analytics cookie is written and no identifiable hit is sent until the
+  // visitor accepts via the cookie banner (assets/js/analytics.js).
+  // Previously the banner was purely decorative: gtag('config') fired here
+  // unconditionally, so GA4 tracked every visitor regardless of their choice.
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied'
+  });
+  try {
+    if (localStorage.getItem('redline-analytics-consent') === '1') {
+      gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+  } catch (e) { /* localStorage blocked (private mode) — stay denied */ }
+
   gtag('js', new Date());
   gtag('config', 'G-QEQXZJNNBB');
 </script>
@@ -45,7 +63,7 @@
 <header class="site-header" id="site-header">
   <div class="wrap header-inner">
     <a href="index.html#home" class="logo-link" aria-label="Redline Electric — Home">
-      <img src="assets/redline-electric-logo.png" alt="Redline Electric">
+      <img src="assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188">
     </a>
 
     <nav class="main-nav" id="main-nav">
@@ -108,7 +126,7 @@
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
-      <img src="assets/redline-electric-logo.png" alt="Redline Electric" class="footer-logo">
+      <img src="assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188" class="footer-logo">
       <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
       <div class="footer-contact">
         <a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a>
