@@ -99,7 +99,10 @@
         <label>Phone
           <input type="text" id="biz-phone" placeholder="619-748-0662">
         </label>
-        <label>WhatsApp
+        <!-- Drives the "Text Us" sms: links sitewide. The Supabase column is
+             still named whatsapp (renaming it needs a migration); the label is
+             what Joe sees, so it says what the field actually does now. -->
+        <label>Text / SMS Number
           <input type="text" id="biz-whatsapp" placeholder="619-748-0662">
         </label>
         <label>Email

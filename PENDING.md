@@ -55,7 +55,7 @@ Once the domain is live:
 **Why it's empty right now:** `joe.britt1979@gmail.com` was rendering publicly
 next to the C-10 license number, which undercut the credibility the license is
 there to establish. Rather than ship a personal Gmail, the field was cleared on
-2026-08-17 so the contact block shows phone + WhatsApp only until a proper
+2026-08-17 so the contact block shows phone + text only until a proper
 alias exists.
 
 ### 3. Resend — verified domain required
@@ -119,6 +119,34 @@ part of this codebase — listed here only so it isn't forgotten.
 ---
 
 ## Resolved
+
+### 2026-08-17 — WhatsApp replaced with SMS sitewide
+
+Joe doesn't use WhatsApp, so every `wa.me` link became a direct `sms:` link to
+the same number. Ten links across `index.html` (hero + footer), `work.html`,
+`404.html`, and all six `services/*.html` footers now read
+`sms:+16197480662` — no `?body=` pre-fill, because the query separator differs
+between iOS and Android and omitting it is the only form that opens the
+messaging app reliably on both. The `target="_blank" rel="noopener"` pair came
+off with the switch (an `sms:` handoff shouldn't spawn a tab).
+
+- Button label is now translated: `cta_text_us` in `assets/js/i18n.js`
+  ("Text Us" / "Envíenos un Mensaje" — formal *usted*, matching `cta_call_now`
+  and `contact_call_or_text`). The old links hardcoded "WhatsApp" in both
+  languages since it was a brand name.
+- Hook attribute renamed `data-whatsapp-link` → `data-sms-link`; GA4 event
+  renamed `whatsapp_click` → `sms_click` (`assets/js/analytics.js:23-24`).
+  **Historical GA4 data under `whatsapp_click` will not merge with the new
+  event name** — expected, and fine.
+- `assets/js/business-info.js` builds `sms:+1…` instead of `https://wa.me/…`,
+  and falls back to `business_info.phone` when the messaging field is blank.
+- The Supabase column is still named `business_info.whatsapp` — renaming it
+  needs a migration, so the admin form label was changed to "Text / SMS Number"
+  instead (`admin/dashboard.html`). Worth a column rename if a migration
+  happens for another reason.
+- Checked the `lead-notification` Edge Function: **no WhatsApp reference** —
+  its confirmation email already says "Call or text us" with a `tel:` button.
+  No change needed or made.
 
 ### 2026-08-17 — Per-page service eyebrows (closes item 7)
 

@@ -14,10 +14,13 @@
     return 'tel:+' + digits;
   }
 
-  function toWhatsAppHref(raw) {
+  // Plain sms: link with no ?body= — the pre-filled-body separator differs
+  // between iOS and Android, so omitting it is the only form that opens the
+  // messaging app reliably on both.
+  function toSmsHref(raw) {
     var digits = digitsOnly(raw);
     if (digits.length === 10) digits = '1' + digits;
-    return 'https://wa.me/' + digits;
+    return 'sms:+' + digits;
   }
 
   function formatPhoneDisplay(raw) {
@@ -43,9 +46,13 @@
         document.querySelectorAll('[data-phone-text]').forEach(function (el) { el.textContent = phoneDisplay; });
       }
 
-      if (info.whatsapp) {
-        var waHref = toWhatsAppHref(info.whatsapp);
-        document.querySelectorAll('[data-whatsapp-link]').forEach(function (el) { el.href = waHref; });
+      // business_info.whatsapp is the legacy column name for the messaging
+      // number; it now drives the sms: link. If it's blank, texts go to the
+      // main phone number rather than leaving the hardcoded HTML fallback.
+      var smsNumber = info.whatsapp || info.phone;
+      if (smsNumber) {
+        var smsHref = toSmsHref(smsNumber);
+        document.querySelectorAll('[data-sms-link]').forEach(function (el) { el.href = smsHref; });
       }
 
       if (info.email) {

@@ -14,6 +14,9 @@
     nav_contact: { en: 'Contact', es: 'Contacto' },
 
     cta_call_now: { en: 'Call Now', es: 'Llame Ahora' },
+    // Formal "usted" register to match cta_call_now and contact_call_or_text —
+    // the whole Spanish translation set addresses the customer formally.
+    cta_text_us: { en: 'Text Us', es: 'Envíenos un Mensaje' },
     cta_see_all_work: { en: 'See All Work', es: 'Ver Todos los Trabajos' },
 
     hero_eyebrow: { en: 'San Diego · License C-10 #1153394', es: 'San Diego · Licencia C-10 #1153394' },

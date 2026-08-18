@@ -9,7 +9,7 @@
     window.gtag('event', eventName, params || {});
   }
 
-  // ---- Call / WhatsApp clicks ----
+  // ---- Call / text (SMS) clicks ----
   // One delegated listener on document covers every instance of these
   // links (header, hero, emergency band, footer, service pages) with a
   // single binding, so a link that happens to exist in more than one
@@ -20,8 +20,8 @@
       track('call_click');
       return;
     }
-    if (e.target.closest('[data-whatsapp-link]')) {
-      track('whatsapp_click');
+    if (e.target.closest('[data-sms-link]')) {
+      track('sms_click');
     }
   });
 
