@@ -352,6 +352,7 @@
   supabaseClient
     .from('projects')
     .select('*')
+    .eq('is_published', true)
     .order('created_at', { ascending: false })
     .then(function (res) {
       if (res.error || !res.data || res.data.length === 0) {

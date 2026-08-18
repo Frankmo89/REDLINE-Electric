@@ -43,6 +43,7 @@
     supabaseClient
       .from('projects')
       .select('image_url, title, category, is_featured')
+      .eq('is_published', true)
       .order('created_at', { ascending: false })
       .then(function (res) {
         if (res.error || !res.data || res.data.length === 0) return;
