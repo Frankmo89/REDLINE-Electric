@@ -76,10 +76,20 @@ Once `redlinesd.com` is verified in Resend:
 repo — it can't be edited from the working tree and has to be changed via
 Supabase.
 
-### 4. About section profile photo
+### 4. About section profile photo — new upload needs a look
 
-Currently empty **by design**. Joe will upload his own choice through the
-dashboard's Business Info tab when ready — no action needed from us.
+**A new photo was uploaded on 2026-08-17 at 22:57 UTC**, during the Tier 2
+session, via the dashboard. This is a genuinely new file
+(`profile/1787007447803-3ngdooad0ng.jpg`), not a revert of the clear —
+`profile_photo_url` had been null and `email` is still null.
+
+**Worth a look before launch:** the new image reads as another mirror-selfie
+style shot — a figure holding a phone, reflected in an illuminated mirror.
+That was the concern that got the previous photo pulled. Left in place because
+photo choice is Joe's call, not ours. Not touched.
+
+The redesigned About block (Tier 2 item 6) is built to hold either way, so
+swapping the photo later needs no code change.
 
 The section degrades gracefully in the meantime: the `<img>` stays hidden, the
 320px wrapper collapses, and the heading, bio, and credential lines still
@@ -106,18 +116,12 @@ scroll, which is a separate visual problem tracked under Tier 2 item 7.
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
-### 7. Visual elevation — Tier 2 and Tier 3
+### 7. Visual elevation — Tier 3
 
-On hold pending review of Tier 1.
+Tier 1 and Tier 2 are complete (see Resolved). Tier 3 is on hold pending
+review.
 
 Full audit and reasoning: https://claude.ai/code/artifact/0494a80d-9dcd-4328-b76d-aeb18094754a
-
-**Tier 2 — structural craft**
-
-- Spacing scale to replace the single 88px section padding
-- Redesign the About block (must hold both with and without a photo)
-- Fix trust-badge row layout + cut the service-area triplication
-- Give the FAQ accordion real presence; animate to content height
 
 **Tier 3 — depth pages and closing**
 
@@ -151,6 +155,74 @@ constrain which photos are eligible for hero rotation. Worth folding into Tier
 ---
 
 ## Resolved
+
+### 2026-08-17 — Tier 2 visual elevation (items 5–8)
+
+CSS plus markup only. No schema, RLS, or backend changes. FAQPage JSON-LD
+verified untouched — zero changed lines across all 8 HTML files match any
+schema key.
+
+**5. Spacing scale.** Replaced the single 88px with three tiers driven by a
+`--section-pad` custom property each section sets for itself. Desktop
+40/56/76 → 56/88/128 (compact/standard/marquee). Verified: Our Work and
+`#contact` at 128px; Services, Why Us, About, Testimonials at 88px; FAQ,
+How It Works, Related Services at 56px; hero (120px) and emergency band
+(24px) untouched. `work.html`'s badge-only `.trust` strip has no id, so it
+correctly stays standard rather than inheriting marquee.
+
+**6. About section.** Asymmetric founder block — photo runs large on the left
+(46%, non-shrinking, 5:6), text panel bites 88px into it with a hairline cut
+and the section's cream background. Short accent rule above the heading,
+echoing `.eyebrow::before`. **No circular mask or red ring** — deliberately
+not the redlineelectricoc.com page-builder default. The overlap is gated
+behind `:has(.about-us-photo:not([hidden]))` so the empty state falls back to
+a centred 760px statement block instead of pulling text off the left edge.
+Both states verified at desktop and mobile.
+
+**7. Trust badges + service-area triplication.** `.trust-badges` is now a real
+grid (1 / 2 / 3 columns) instead of `space-between`, which had pinned badges
+to opposite edges and wrapped the widest onto its own row. The 20-city list
+now renders **once**, in the footer (`.footer-areas`), still driven by
+`business_info.service_areas` via `[data-service-areas-text]`. Removed the
+`.areas-served` pill block from index.html and the Service Area badge from all
+8 pages — one hook per page now, down from two.
+
+**8. FAQ accordion.** Two-column layout at ≥900px (heading rail left,
+accordion right), questions up from 16px to 18px with 24px rows. Answers
+animate to real content height via grid rows instead of the hard-coded
+`max-height: 600px`. Verified: open panel 132.8px, all others 0, previous item
+auto-closes, `aria-expanded` correct. No JS change — `faq-data.js` still only
+toggles `.is-open`.
+
+Two CSS traps hit and fixed while building #8, both worth remembering:
+- A bare `0fr` grid track takes an automatic minimum from its item, so the
+  closed panel sized to the inner element's 24px padding. Needs
+  `minmax(0, 0fr)`.
+- Padding on a grid item can't compress below its own size, so the inner
+  element still spilled out of the 0px track. The container needs
+  `overflow: hidden` too.
+
+Also noted: the harness iframe served a **cached** copy of index.html after the
+markup edits, briefly showing stale results. Cache-bust with a query string
+when verifying HTML changes.
+
+**Mobile verified (390px, screenshots taken).** All four items confirmed
+visually at narrow width, not just by measurement:
+
+- **5** — section tiers resolve to 40/56/76px
+- **6** — photo stacks above the text, overlap correctly not applied, no
+  reserved empty column in the photo-less state
+- **7** — trust badges stack to a single column with no wrap; the Service Area
+  badge is gone; the footer's Areas We Serve band renders below a hairline
+  with all 20 cities wrapping cleanly
+- **8** — FAQ collapses to one column (heading above the accordion), questions
+  hold 18px and wrap to two lines with the icon still aligned, open panel
+  expands to real content height
+
+Method: same-origin iframe at 390px (a real viewport, so `@media` evaluates
+genuinely). Still untested by this method: device pixel ratio, touch input,
+and anything user-agent specific — a real handset pass is still worth doing
+before launch.
 
 ### 2026-08-17 — Item 8: mobile breakpoints verified
 

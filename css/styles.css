@@ -28,6 +28,14 @@
   --fs-h2: clamp(1.75rem, 1.36rem + 1.74vw, 2.75rem);   /* 28 → 44 */
   --fs-h1-page: clamp(2.125rem, 1.49rem + 2.83vw, 3.75rem); /* 34 → 60 — interior page heroes */
   --fs-h1: clamp(2.5rem, 1.62rem + 3.91vw, 4.75rem);    /* 40 → 76 — home hero only */
+
+  /* Section rhythm — three tiers instead of one padding value for every
+     section regardless of density. Set per-section via --section-pad so a
+     section declares which beat it is, rather than each one restating a
+     number. Desktop values are in the min-width:760px block. */
+  --space-compact: 40px;
+  --space-standard: 56px;
+  --space-marquee: 76px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -69,7 +77,21 @@ body.nav-locked { overflow: hidden; }
   outline-color: var(--ink);
 }
 
-section { padding: 56px 20px; }
+section {
+  --section-pad: var(--space-standard);
+  padding: var(--section-pad) 20px;
+}
+/* Marquee — the showcase and the conversion point. .work covers both the home
+   teaser and the service-page galleries; #contact is the quote form on the
+   home page and on all six service pages. work.html's badge-only .trust strip
+   has no id, so it correctly stays standard. */
+.work,
+#contact { --section-pad: var(--space-marquee); }
+/* Compact — dense reference content that carries its own internal rhythm. */
+.faq,
+.process,
+.related-services { --section-pad: var(--space-compact); }
+
 .wrap { max-width: 1080px; margin: 0 auto; }
 
 .display {
@@ -380,16 +402,16 @@ section { padding: 56px 20px; }
 .about-us-inner {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 32px;
+  align-items: flex-start;
+  gap: 28px;
 }
 .about-us-photo-wrap {
   width: 100%;
-  max-width: 320px;
+  max-width: 420px;
 }
 /* No profile photo set yet (business-info.js leaves the img hidden when
    profile_photo_url is empty). Collapse the wrapper so the About section
-   doesn't reserve an empty 320px column beside the text. */
+   doesn't reserve an empty column beside the text. */
 .about-us-photo-wrap:not(:has(.about-us-photo:not([hidden]))) {
   display: none;
 }
@@ -397,11 +419,22 @@ section { padding: 56px 20px; }
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 2px;
   display: block;
 }
 .about-us-content { width: 100%; }
 .about-us-content h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 16px; }
+/* Short accent rule above the heading, echoing .eyebrow::before rather than
+   introducing a new device. Deliberately not a circular photo mask with a red
+   ring — that's a page-builder default we're avoiding. */
+.about-us-content h2::before {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 3px;
+  background: var(--accent);
+  margin-bottom: 20px;
+}
 .about-us-text {
   color: #5C6169;
   font-size: var(--fs-lead);
@@ -618,37 +651,31 @@ section { padding: 56px 20px; }
   text-decoration: none;
 }
 a.contact-info-value:hover { color: var(--accent); }
-.areas-served {
-  margin-top: 40px;
-  padding-top: 32px;
+/* The .areas-served pill block that lived here was removed — the service-area
+   list now renders once, in the footer (.footer-areas). It previously appeared
+   three times within ~600px of scroll: as pills here, as the wrapped third
+   trust badge, and again in the footer's Credentials column. */
+
+/* Real grid rather than justify-content: space-between. With badges of very
+   unequal width, space-between pinned the first left, the last hard right, and
+   let the widest wrap onto a second row spanning the container — it read as a
+   layout failure. Three tracks keep the two remaining badges left-weighted and
+   leave room for a third to return without changing this rule. */
+.trust-badges {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  align-items: center;
+  margin-top: 48px;
+  padding-top: 40px;
   border-top: 1px solid var(--line);
 }
-.areas-served-title {
-  font-family: 'Oswald', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: var(--fs-micro);
-  color: var(--ink-dim);
-  margin-bottom: 16px;
+@media (min-width: 560px) {
+  .trust-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-.areas-served-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  list-style: none;
+@media (min-width: 900px) {
+  .trust-badges { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 32px; }
 }
-.areas-served-list li {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  color: var(--ink-dim);
-  font-family: 'Oswald', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: var(--fs-label);
-  padding: 8px 14px;
-  border-radius: 2px;
-}
-.trust-badges { display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 40px; border-top: 1px solid var(--line); }
 .badge { display: flex; align-items: center; gap: 12px; }
 .badge .swatch {
   width: 44px; height: 44px; border: 2px solid var(--accent); border-radius: 50%;
@@ -904,6 +931,22 @@ a.contact-info-value:hover { color: var(--accent); }
 .footer-links a { color: var(--ink-dim); text-decoration: none; font-size: var(--fs-small); }
 .footer-links a:hover { color: var(--accent); }
 .footer-info p { font-size: var(--fs-small); margin-bottom: 8px; }
+/* The single canonical rendering of the service-area list. Driven by
+   business_info.service_areas via [data-service-areas-text], so the DB stays
+   the source of truth; the markup carries the full list as its fallback. */
+.footer-areas { padding: 0 20px 32px; }
+.footer-areas .wrap {
+  border-top: 1px solid var(--line);
+  padding-top: 26px;
+}
+.footer-areas .footer-heading { margin-bottom: 10px; }
+.footer-areas-list {
+  font-size: var(--fs-small);
+  line-height: 1.75;
+  color: var(--ink-dim);
+  max-width: 78ch;
+}
+
 .footer-bottom { border-top: 1px solid var(--line); padding: 20px; }
 .footer-bottom .wrap { text-align: center; }
 .footer-bottom p { font-size: var(--fs-label); color: var(--ink-dim); }
@@ -1014,16 +1057,20 @@ a.contact-info-value:hover { color: var(--accent); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
-  padding: 20px 2px;
+  /* Was 16px/20px — identical to body copy elsewhere, so eight questions read
+     as a stack of paragraphs rather than a section. */
+  padding: 24px 2px;
   font-family: 'Inter', sans-serif;
   font-weight: 600;
-  font-size: var(--fs-body);
+  font-size: var(--fs-lead);
+  line-height: 1.4;
   color: #23262F;
+  transition: color 0.18s ease;
 }
 .faq-question:hover { color: var(--accent); }
 .faq-icon { position: relative; flex: none; width: 20px; height: 20px; }
@@ -1037,9 +1084,53 @@ a.contact-info-value:hover { color: var(--accent); }
 .faq-icon::before { top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%); }
 .faq-icon::after { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
 .faq-item.is-open .faq-icon::after { transform: translateX(-50%) scaleY(0); opacity: 0; }
-.faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-.faq-item.is-open .faq-answer { max-height: 600px; }
-.faq-answer-inner { padding: 0 26px 22px 2px; color: #45494F; font-size: var(--fs-small); line-height: 1.7; max-width: 700px; }
+/* Animates to real content height. The old rule eased max-height to a
+   hard-coded 600px, so short answers snapped open early and long ones lagged
+   behind the easing curve — every row opened at a different apparent speed.
+   Grid rows interpolating 0fr → 1fr resolve to the panel's actual height, so
+   all eight open at one rate. No JS change: faq-data.js only toggles
+   .is-open, and the panel is never given the hidden attribute. */
+.faq-answer {
+  display: grid;
+  /* minmax(0, …) is load-bearing: a bare 0fr track takes an automatic minimum
+     from its item, so the closed panel sized itself to the inner element's
+     24px bottom padding and every answer's first line stayed visible. */
+  grid-template-rows: minmax(0, 0fr);
+  /* The container must clip too. Padding on a grid item can't be compressed
+     below its own size, so the inner element stayed 24px tall and spilled out
+     of the 0px track — the first line of every closed answer was visible. */
+  overflow: hidden;
+  transition: grid-template-rows 0.32s ease;
+}
+.faq-item.is-open .faq-answer { grid-template-rows: minmax(0, 1fr); }
+.faq-answer-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 26px 24px 2px;
+  color: #45494F;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  max-width: 64ch;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-answer { transition: none; }
+}
+
+/* Two columns: the heading anchors the left rail and the accordion gets its
+   own field, so the list reads as a section instead of a paragraph stack.
+   Placed explicitly because the section's .wrap has exactly three children
+   (h2, .sub, .faq-list) and no extra wrapper element to group the first two. */
+@media (min-width: 900px) {
+  .faq .wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    column-gap: 64px;
+    align-items: start;
+  }
+  .faq h2 { grid-column: 1; grid-row: 1; }
+  .faq .sub { grid-column: 1; grid-row: 2; margin-bottom: 0; }
+  .faq-list { grid-column: 2; grid-row: 1 / span 2; max-width: none; }
+}
 
 /* ---- 404 page ---- */
 .not-found { text-align: center; padding-top: 88px; padding-bottom: 88px; }
@@ -1072,7 +1163,12 @@ a.contact-info-value:hover { color: var(--accent); }
   body { padding-bottom: 0; }
   .sticky-call-btn { display: none; }
 
-  section { padding: 88px 24px; }
+  :root {
+    --space-compact: 56px;
+    --space-standard: 88px;
+    --space-marquee: 128px;
+  }
+  section { padding: var(--section-pad) 24px; }
   .site-header { padding: 32px 24px; }
   .site-header img { max-height: 78px; }
 
@@ -1146,13 +1242,41 @@ a.contact-info-value:hover { color: var(--accent); }
 
   .services-grid { grid-template-columns: repeat(3, 1fr); }
 
-  .about-us-inner { flex-direction: row; align-items: center; gap: 56px; }
-  .about-us-photo-wrap { flex: 0 0 320px; max-width: 320px; }
-  .about-us-content { flex: 1; }
+  /* Asymmetric two-column founder block: the photograph runs large on the
+     left and the text panel bites into it from the right, so the two share a
+     composition instead of sitting side by side. Informed by Aurora's
+     founder block and Voiceflow's overlapping text panel. */
+  .about-us-inner { flex-direction: row; align-items: center; gap: 0; }
+  /* 0 0 — the photo column must not shrink. With flex-shrink allowed, the
+     text panel's intrinsic width pulled the photograph down to ~364px, which
+     is smaller than the treatment it replaced. */
+  .about-us-photo-wrap { flex: 0 0 46%; max-width: none; }
+  .about-us-photo { aspect-ratio: 5 / 6; }
+  .about-us-content { flex: 1 1 auto; }
+
+  /* The overlap applies only when there is actually a photo to overlap, so
+     the empty state falls back to the plain block below rather than pulling
+     the text 88px off the left edge of the container. */
+  .about-us-inner:has(.about-us-photo:not([hidden])) .about-us-content {
+    position: relative;
+    z-index: 1;
+    margin-left: -88px;
+    padding: 52px 0 52px 52px;
+    background: var(--panel);
+    border-left: 1px solid #E2E1DB;
+  }
+
+  /* Empty state: no photo, so the section becomes a narrower centred
+     statement block instead of a wide column of text stranded beside 480px
+     of nothing. Reads as intentional rather than half-built. */
+  .about-us-inner:not(:has(.about-us-photo:not([hidden]))) {
+    max-width: 760px;
+  }
 
   .quote-form-grid { grid-template-columns: 1fr 1fr; }
 
   .emergency-band-inner { flex-direction: row; align-items: center; justify-content: space-between; }
 
-  .footer-grid { grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; padding: 64px 24px 48px; }
+  .footer-grid { grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; padding: 64px 24px 40px; }
+  .footer-areas { padding: 0 24px 40px; }
 }
