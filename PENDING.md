@@ -115,10 +115,161 @@ list changes.
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
+### 7. Admin dashboard audit — batch 5 (photo draft/publish state)
+
+Approved, isolated to its own batch because it touches the database and public
+site behaviour. Next up now that batches 1–4 are built.
+
+`projects` has no publish column, so a photo is live on `index.html`,
+`work.html`, and the hero rotator the instant it uploads — the only way to
+retract a bad one is permanent deletion. Reviews already have `is_published`;
+photos have nothing.
+
+Plan, as confirmed when this was approved:
+
+- `ALTER TABLE projects ADD COLUMN is_published boolean NOT NULL DEFAULT true`
+  — the `DEFAULT true` **backfills all existing rows in the same statement**, so
+  nothing currently on the site disappears when this ships.
+- Change the *insert* path in `admin/dashboard.html` to write
+  `is_published: false` explicitly, so new uploads start as drafts. The column
+  default stays `true` purely for the backfill; the two are deliberately
+  different.
+- Add `.eq('is_published', true)` to the three public queries:
+  `index.html:553`, `work.html:352`, `assets/js/hero-bg.js:44`.
+- Add a publish toggle to the photo card, and drop the "live on the site now"
+  wording from the upload success message once drafts exist.
+- Consider the same for `reviews.is_published`, whose column default is `true` —
+  a review added in the dashboard also goes live immediately.
+
+### 8. Admin dashboard audit — batches 6–12 (held)
+
+From the 2026-08-17 audit, deferred until batches 1–4 and 5 land. Numbered as in
+the audit:
+
+- **6.** Business Info race guard — *mostly closed already* by batch 4: the form
+  is now gated behind its load, so the fetch can no longer overwrite mid-edit.
+  What remains is an unsaved-changes guard when switching tabs.
+- **7.** Edit for photos and reviews (currently create + delete only; a typo in a
+  title means delete and re-upload).
+- **8.** Lead notes + new-lead count badge — needs a `leads.notes` column.
+- **9.** Consistency pass: custom confirm dialog replacing `window.confirm`,
+  honest "Feature for Hero" label (it changes the hero but not the homepage
+  gallery unless 6+ photos are featured), publish control that reads as a toggle
+  rather than a status label, "cannot be undone" on the bulk confirms.
+- **10.** Performance: `loading="lazy"` on admin photo `<img>` (the public site
+  already does this), Supabase image transforms (full 1920px images render into
+  220px cards), per-tab loading instead of four queries on first paint, a
+  refresh control, preconnect to jsdelivr and Supabase.
+- **11.** Category dropdown instead of free text — `work.html` builds its public
+  filter pills from these values, so one typo creates a duplicate pill.
+- **12.** Password reset on `admin/login.html`, plus `try/catch` hardening.
+
 
 ---
 
 ## Resolved
+
+### 2026-08-17 — Admin dashboard audit, batches 1–4
+
+Full audit of `admin/dashboard.html` + `admin/login.html` against how Joe
+actually uses it (non-technical, on a phone between jobs). Batches 1–4 built
+here; batch 5 approved but isolated (open item 7); 6–12 held (open item 8).
+
+**Batch 1 — mobile layout.** `admin/admin.css` had **zero media queries** across
+331 lines — the whole admin was a desktop layout being pinch-zoomed. Rewritten
+mobile-first, with the site's existing `min-width: 760px` block for desktop.
+
+- Every input and select is now `--fs-body` (16px). Below 16px mobile Safari
+  zooms the viewport on focus, so Joe got a page jump on *every field tap*.
+- All interactive targets ≥44px. Checkboxes are 22px but each sits inside a
+  ≥44px `<label>`, so the effective target passes — verified programmatically
+  across all four tabs (0 inputs under 16px, 0 effective targets under 44px).
+- Leads was a 9-column table with `min-width: 760px`: on a phone it scrolled
+  sideways and **Status and Delete — the only two columns Joe acts on — sat
+  furthest right**. Below 760px the same markup now lays out as stacked cards
+  via `data-label` on each cell, and empty optional fields drop out entirely
+  instead of printing "Email —".
+- Tabs are a 2×2 grid on mobile (all four visible — a scroll strip would hide
+  "Reviews" from a non-technical user) and sticky, so switching tabs doesn't
+  mean scrolling back to the top.
+- The "Dashboard" `<h1>` is visually hidden on mobile; it cost a third of the
+  header and said nothing the tab bar didn't. Still in the DOM for the outline.
+- `.admin-main` widened 960px → 1200px on desktop so the table fits without a
+  horizontal scroll.
+
+**Batch 2 — tappable contact + relative time.** Lead phone numbers were plain
+text Joe had to copy by hand, and calling back is the most common action in the
+whole dashboard. Each lead now renders **Call** and **Text** buttons
+(`tel:+1…` / `sms:+1…`, mirroring `assets/js/business-info.js` — plain `sms:`
+with no `?body=`, since the separator differs between iOS and Android).
+Timestamps were `toLocaleDateString` month/day/year, so a lead from 20 minutes
+ago and one from this morning both read "Aug 17, 2026". Now "25 mins ago" /
+"5 hours ago" / "3 days ago", with the exact time in `title`.
+
+**Batch 3 — delete ordering + mutation verification.** Two real data bugs:
+
+- Deletes removed the **storage object first**, then the DB row. A failed row
+  delete left a record pointing at a dead URL — a broken `<img>` on the
+  homepage, work page, and hero rotator. The row now goes first, so the worst
+  case is an orphaned file: costs a little storage, breaks nothing publicly. The
+  storage call's own error was also discarded entirely; it's now surfaced.
+- PostgREST returns **no error when an UPDATE or DELETE matches zero rows**, so
+  a write that RLS filtered out (expired login) was indistinguishable from
+  success — the list re-rendered unchanged and nothing was said. Joe tapped
+  Delete, nothing happened, no message. Every mutation now runs through
+  `runMutation()`, which asks for the affected rows back and treats "none" as a
+  failure with a plain-language session hint. Verified by simulating a zero-row
+  delete.
+
+**Batch 4 — loading states + consistent feedback.**
+
+- All four tabs rendered blank until Supabase answered, so an empty screen meant
+  "loading", "empty", or "broken" indistinguishably. Each list now has a
+  labelled spinner, and bulk bars stay hidden until there's something to act on.
+- Business Info is gated behind its own load, with the load error placed
+  *outside* the form (an error inside a hidden form is invisible). **Side
+  effect: this also closes most of held item 6** — the fetch can no longer land
+  mid-edit and overwrite what Joe is typing.
+- Every `window.alert()` is gone (9 call sites), replaced by non-blocking toasts
+  in an `aria-live` region: successes auto-dismiss after 4s, errors stay until
+  dismissed. Crucially, **successful deletes and toggles now speak at all** —
+  previously only failures did.
+- Lead status changes reported nothing on success, and on failure left the
+  select showing the new value while the row held the old one. Now: an inline
+  "✓ Saved" tick, and a failed save reverts the control.
+- Inline form messages scroll into view and retire on a timer instead of sitting
+  below the fold indefinitely.
+
+**Judgment calls made that weren't explicitly in scope:**
+
+- Widened `.admin-main` to 1200px. Without it the improved table scrolled
+  horizontally on desktop — a regression against what was there before.
+- Moved the Leads select-all out of the `<th>` into the bulk bar, matching
+  Photos and Reviews. Nominally held item 9, but forced by batch 1: a checkbox
+  inside a visually-hidden `<thead>` is unreachable in the card layout.
+- Upload and Add Review success messages now say the item is **live on the site
+  now**. That is currently true and the honest thing to tell Joe; the wording
+  comes out when batch 5 adds drafts.
+- Added "This cannot be undone." to the single-lead delete confirm, matching
+  photos and reviews. The *bulk* confirms still lack it — left deliberately for
+  item 9, which replaces `window.confirm` wholesale.
+- **Deliberately not done** despite being near one-line changes, to keep this
+  batch clean and reviewable: `loading="lazy"` on admin images, and lead status
+  colour chips. Both belong to held items 10 and 9.
+
+**Verification.** No Supabase credentials available, so the real render and
+interaction code was exercised against a temporary mocked client (fixture
+leads/photos/reviews, 900ms simulated latency) at 390px and 1180px viewports;
+the harness was deleted afterwards. Confirmed: mobile card layout, loading
+states mid-fetch, Call/Text hrefs, relative times, empty-field hiding, the
+"✓ Saved" tick, success and error toasts, zero-row-mutation handling, desktop
+table with no horizontal scroll, 16px inputs on login. No console errors.
+
+**Not yet verified against production Supabase:** `runMutation()` depends on
+`.select()` returning rows after UPDATE/DELETE, which needs a SELECT policy
+covering the affected rows. All four tables have one (checked `pg_policies`), so
+it should hold — but one real delete in the live dashboard is worth doing to
+confirm before relying on it.
 
 ### 2026-08-17 — WhatsApp replaced with SMS sitewide
 

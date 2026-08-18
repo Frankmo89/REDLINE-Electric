@@ -1,15 +1,30 @@
-/* Redline Electric — Admin (reuses tokens from css/styles.css) */
+/* Redline Electric — Admin (reuses tokens from css/styles.css)
+ *
+ * Mobile-first, matching the site convention: base rules target a phone, and
+ * the `min-width: 760px` block at the bottom layers on the desktop layout.
+ * Joe runs this from a phone between jobs, so the phone case is the default
+ * here rather than an afterthought.
+ *
+ * Sizing rules that are load-bearing, not taste:
+ *   - Every text input/select is --fs-body (16px). Mobile Safari zooms the
+ *     viewport on focus for anything smaller, which made every field tap
+ *     jump the page.
+ *   - Interactive targets are >= 44px tall. These get hit with work gloves.
+ */
 
 .admin-body {
   min-height: 100vh;
   background: var(--bg);
+  /* styles.css reserves 56px for the sticky mobile call button. The admin
+     has no such button, so that space is dead weight here. */
+  padding-bottom: 0;
 }
 
 /* ---- Login ---- */
 .admin-auth-wrap {
   max-width: 360px;
   margin: 0 auto;
-  padding: 88px 20px;
+  padding: 56px 20px;
 }
 .admin-logo {
   display: block;
@@ -19,7 +34,7 @@
 }
 .admin-auth-wrap h1 {
   color: var(--ink);
-  font-size: 26px;
+  font-size: var(--fs-h3);
   margin-bottom: 24px;
   text-align: center;
 }
@@ -28,7 +43,7 @@
 .admin-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 .admin-form label {
   display: flex;
@@ -36,91 +51,130 @@
   gap: 6px;
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.06em;
   color: var(--ink-dim);
 }
 .admin-form input,
-.admin-form textarea {
+.admin-form textarea,
+.admin-form select {
   font-family: 'Inter', sans-serif;
-  font-size: 15px;
+  /* 16px minimum — anything less and iOS Safari zooms on focus. */
+  font-size: var(--fs-body);
+  line-height: 1.4;
   color: var(--ink);
   background: var(--bg2);
   border: 1px solid var(--line);
   border-radius: 2px;
-  padding: 12px 14px;
+  padding: 13px 14px;
+  width: 100%;
+}
+.admin-form input[type="file"] {
+  padding: 11px 14px;
 }
 .admin-form input:focus,
-.admin-form textarea:focus {
+.admin-form textarea:focus,
+.admin-form select:focus {
   outline: none;
   border-color: var(--accent);
 }
+.admin-form input:focus-visible,
+.admin-form textarea:focus-visible,
+.admin-form select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 .admin-form button[type="submit"] {
   margin-top: 8px;
+  min-height: 48px;
+  width: 100%;
 }
-.admin-status {
-  color: var(--ink-dim);
-  font-size: 13px;
+.admin-form :disabled {
+  opacity: 0.55;
+  cursor: default;
 }
-.admin-warning {
-  color: #D99A2B;
-  font-size: 13px;
-}
-.admin-error {
-  color: var(--accent);
-  font-size: 13px;
-}
+
+/* Inline form messages. Each carries an icon-free colour cue plus a left
+   rule so the state reads without relying on colour alone. */
+.admin-status,
+.admin-warning,
+.admin-error,
 .admin-success {
-  color: #4CAF6D;
-  font-size: 13px;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  padding: 10px 12px;
+  border-left: 3px solid currentColor;
+  background: rgba(0, 0, 0, 0.16);
 }
+.admin-status { color: var(--ink-dim); }
+.admin-warning { color: #D99A2B; }
+.admin-error { color: #F1808A; }
+.admin-success { color: #6FD08C; }
 
 /* ---- Dashboard header ---- */
 .admin-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   background: var(--bg2);
   border-bottom: 1px solid var(--line);
-  padding: 18px 20px;
+  padding: 12px 16px;
 }
 .admin-logo-sm {
-  max-height: 40px;
+  max-height: 34px;
   width: auto;
 }
+/* The word "Dashboard" costs a third of the header on a 390px screen and
+   tells Joe nothing the tab bar underneath doesn't. Kept in the DOM for the
+   document outline, hidden visually until there's room for it. */
 .admin-header h1 {
-  color: var(--ink);
-  font-size: 18px;
-  flex: 1;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.admin-header .btn-ghost {
+  padding: 11px 16px;
+  min-height: 44px;
+  font-size: var(--fs-micro);
+  flex-shrink: 0;
 }
 
 /* ---- Dashboard main ---- */
 .admin-main {
   max-width: 960px;
   margin: 0 auto;
-  padding: 40px 20px 80px;
+  padding: 20px 16px 64px;
 }
 .admin-upload,
 .admin-list {
-  margin-bottom: 56px;
+  margin-bottom: 40px;
 }
 .admin-upload h2,
 .admin-list h2 {
   color: var(--ink);
-  font-size: 20px;
-  margin-bottom: 20px;
-}
-.admin-upload .admin-form {
-  max-width: 480px;
+  font-size: var(--fs-h4);
+  margin-bottom: 16px;
 }
 
 /* ---- Tabs ---- */
+/* 2x2 grid on a phone so all four are visible at once. A horizontal scroll
+   strip would push "Reviews" off-screen, and a non-technical user does not
+   reliably discover horizontally scrollable navigation. */
 .admin-tabs {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 40px;
+  margin-bottom: 28px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  padding: 12px 0;
 }
 .admin-tab-btn {
   background: transparent;
@@ -129,45 +183,136 @@
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 13px;
-  padding: 10px 20px;
+  font-size: var(--fs-micro);
+  padding: 12px 10px;
+  min-height: 46px;
   cursor: pointer;
+  border-radius: 2px;
 }
 .admin-tab-btn.is-active {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
 }
+.admin-tab-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .admin-tab-panel[hidden] { display: none; }
+
+/* ---- Loading states ---- */
+/* Every list previously rendered nothing at all until Supabase answered, so
+   an empty page meant "loading", "empty", or "broken" indistinguishably. */
+.admin-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-dim);
+  font-size: var(--fs-small);
+  padding: 20px 0;
+}
+.admin-spinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: admin-spin 0.7s linear infinite;
+}
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-spinner { animation-duration: 2s; }
+}
+
+/* ---- Toasts ---- */
+/* Replaces window.alert(), which blocked the page and was the only thing
+   that ever spoke after a delete or a status change. Successes auto-dismiss;
+   errors stay until dismissed so a failure can't scroll past unread. */
+.admin-toast-region {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.admin-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ink-dim);
+  border-radius: 2px;
+  padding: 13px 14px;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--ink);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  animation: admin-toast-in 0.18s ease-out;
+}
+.admin-toast.is-success { border-left-color: #6FD08C; }
+.admin-toast.is-error { border-left-color: var(--accent); }
+.admin-toast.is-info { border-left-color: var(--ink-dim); }
+.admin-toast-text { flex: 1; }
+.admin-toast-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 20px;
+  line-height: 1;
+  padding: 2px 4px;
+  min-width: 32px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.admin-toast-close:hover { color: var(--ink); }
+@keyframes admin-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-toast { animation: none; }
+}
 
 /* ---- Bulk selection ---- */
 .admin-body input[type="checkbox"] {
   accent-color: var(--accent);
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 .admin-bulk-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  min-height: 36px;
+  gap: 12px;
+  margin-bottom: 14px;
+  min-height: 44px;
 }
 .admin-select-all-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 10px 0;
+  min-height: 44px;
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--ink-dim);
   cursor: pointer;
 }
 .admin-bulk-count {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--ink-dim);
 }
 .admin-bulk-delete-btn {
@@ -177,8 +322,10 @@
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 12px;
-  padding: 8px 14px;
+  font-size: var(--fs-micro);
+  padding: 12px 16px;
+  min-height: 44px;
+  border-radius: 2px;
   cursor: pointer;
 }
 .admin-bulk-delete-btn:disabled {
@@ -188,30 +335,20 @@
 .admin-card-select {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 10px;
+  padding: 8px 0;
+  min-height: 44px;
+  font-size: var(--fs-micro);
   color: var(--ink-dim);
   cursor: pointer;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
-/* ---- Leads table ---- */
-.admin-table-wrap {
-  overflow-x: auto;
-}
+/* ---- Leads ---- */
+.admin-table-wrap { overflow-x: auto; }
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
-}
-.admin-table th,
-.admin-table td {
-  text-align: left;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-  font-size: 13px;
-  color: var(--ink);
-  vertical-align: top;
 }
 .admin-table th {
   font-family: 'Oswald', sans-serif;
@@ -220,26 +357,169 @@
   font-size: 11px;
   color: var(--ink-dim);
 }
-.admin-table-message {
-  max-width: 260px;
-  white-space: pre-wrap;
-  color: var(--ink-dim);
+
+/* Phone / SMS actions. Calling a new lead back is the single most common
+   thing Joe does in here, so it is a real button, not selectable text. */
+.admin-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
+.admin-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 11px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-micro);
+  text-decoration: none;
+}
+.admin-contact-btn.is-secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+.admin-contact-btn:hover { background: var(--accent-hover); color: var(--accent-ink); }
+.admin-contact-btn.is-secondary:hover { background: rgba(245, 245, 240, 0.08); border-color: var(--accent); }
+.admin-contact-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.admin-contact-none { color: var(--ink-dim); }
+.admin-lead-phone-text {
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Email is a link but not a primary action — it stays inline text. */
+.admin-inline-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.admin-inline-link:hover { color: var(--accent); }
+
 .admin-status-select {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: var(--fs-body);
   color: var(--ink);
   background: var(--bg2);
   border: 1px solid var(--line);
   border-radius: 2px;
-  padding: 6px 10px;
+  padding: 11px 12px;
+  min-height: 44px;
+  width: 100%;
+  max-width: 220px;
+}
+.admin-status-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* Inline "Saved" tick next to the status select — a status change used to
+   report nothing at all on success. */
+.admin-saved-flag {
+  display: inline-block;
+  margin-left: 10px;
+  color: #6FD08C;
+  font-size: var(--fs-micro);
+  white-space: nowrap;
 }
 
-/* ---- Existing photos grid ---- */
+.admin-lead-time { color: var(--ink-dim); }
+
+/* --- Leads as cards below 760px --- */
+/* The table is 9 columns wide; on a phone it became a sideways scroll where
+   Status and Delete — the only two columns Joe acts on — sat furthest right.
+   Below the desktop breakpoint the same markup lays out as stacked cards. */
+@media (max-width: 759px) {
+  .admin-table-wrap { overflow-x: visible; }
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+  .admin-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+  }
+  .admin-table tr {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .admin-table td {
+    border-bottom: none;
+    padding: 7px 0;
+    font-size: var(--fs-small);
+    color: var(--ink);
+  }
+  .admin-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: var(--fs-label);
+    color: var(--ink-dim);
+  }
+  /* The name is the card heading, so it drops its label and scales up. */
+  .admin-td-name {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: var(--fs-h4);
+    line-height: 1.2;
+    padding-top: 0;
+  }
+  .admin-table td.admin-td-name::before { content: none; }
+  /* Select sits as its own labelled row at the top, matching the Photos and
+     Reviews cards rather than being a bare checkbox in a table cell. */
+  .admin-td-select {
+    padding-top: 0;
+    padding-bottom: 10px;
+  }
+  .admin-table td.admin-td-select::before { content: none; }
+  .admin-td-select label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: var(--fs-label);
+    color: var(--ink-dim);
+    cursor: pointer;
+  }
+  /* Empty optional fields add nothing on a phone — hide the row entirely
+     rather than printing "Email —". */
+  .admin-table td.is-empty { display: none; }
+  .admin-table-message {
+    max-width: none;
+    white-space: pre-wrap;
+    color: var(--ink-dim);
+  }
+  .admin-td-delete { padding-top: 12px; }
+  .admin-table td.admin-td-delete::before { content: none; }
+  .admin-row-delete-btn { width: 100%; }
+}
+
+/* ---- Cards grid (photos + reviews) ---- */
 .admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 14px;
 }
 .admin-card {
   background: var(--bg2);
@@ -252,29 +532,28 @@
   aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
+  background: var(--bg);
 }
-.admin-card-body {
-  padding: 14px;
-}
+.admin-card-body { padding: 14px; }
 .admin-card-body h3 {
   color: var(--ink);
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
-  font-size: 15px;
+  font-size: var(--fs-h4);
   margin-bottom: 4px;
 }
 .admin-card-category {
   display: inline-block;
   color: var(--accent);
-  font-size: 11px;
+  font-size: var(--fs-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 6px;
 }
 .admin-card-body p {
   color: var(--ink-dim);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--fs-small);
+  line-height: 1.45;
   margin-bottom: 12px;
 }
 .admin-card-actions {
@@ -284,14 +563,17 @@
 }
 .admin-delete-btn,
 .admin-feature-btn {
+  flex: 1 1 auto;
   background: transparent;
   color: var(--accent);
   border: 1px solid var(--accent);
+  border-radius: 2px;
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 12px;
-  padding: 8px 14px;
+  font-size: var(--fs-micro);
+  padding: 12px 14px;
+  min-height: 44px;
   cursor: pointer;
 }
 .admin-feature-btn {
@@ -299,9 +581,15 @@
   border-color: var(--line);
 }
 .admin-feature-btn.is-featured {
-  color: var(--bg);
+  color: var(--accent-ink);
   background: var(--accent);
   border-color: var(--accent);
+}
+.admin-delete-btn:focus-visible,
+.admin-feature-btn:focus-visible,
+.admin-bulk-delete-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .admin-delete-btn:disabled,
 .admin-feature-btn:disabled {
@@ -310,7 +598,8 @@
 }
 .admin-empty {
   color: var(--ink-dim);
-  font-size: 14px;
+  font-size: var(--fs-small);
+  padding: 16px 0;
 }
 
 /* ---- Business info ---- */
@@ -325,7 +614,113 @@
 /* ---- Reviews ---- */
 .admin-review-stars {
   color: var(--accent);
-  font-size: 15px;
+  font-size: var(--fs-lead);
   letter-spacing: 2px;
   margin-bottom: 6px;
+}
+
+/* ============================================================
+   Desktop — matches the site's existing 760px breakpoint
+   ============================================================ */
+@media (min-width: 760px) {
+  .admin-auth-wrap { padding: 88px 20px; }
+
+  .admin-header { padding: 18px 20px; }
+  .admin-logo-sm { max-height: 40px; }
+  .admin-header h1 {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    flex: 1;
+    color: var(--ink);
+    font-size: var(--fs-lead);
+  }
+
+  /* Widened from 960px: the leads table needs ~980px to show all nine
+     columns without a horizontal scroll, and this is a dashboard rather than
+     a reading column. The forms inside stay capped at 480px. */
+  .admin-main { max-width: 1200px; padding: 40px 20px 80px; }
+  .admin-upload,
+  .admin-list { margin-bottom: 56px; }
+  .admin-upload h2,
+  .admin-list h2 { font-size: var(--fs-h3); margin-bottom: 20px; }
+  .admin-upload .admin-form { max-width: 480px; }
+  /* Scoped to the dashboard forms — the login button stays full-width, since
+     it is the only control on that screen. */
+  .admin-upload .admin-form button[type="submit"] {
+    width: auto;
+    align-self: flex-start;
+    padding-inline: 32px;
+  }
+
+  .admin-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 40px;
+    position: static;
+    padding: 0;
+  }
+  .admin-tab-btn { padding: 11px 20px; }
+
+  .admin-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+
+  /* 9 columns with a real select and two contact buttons need room; below
+     this the status control truncates to "Ne..." and the phone number wraps
+     across three lines. The wrapper scrolls if the window is narrower. */
+  .admin-table { min-width: 980px; }
+  .admin-table th,
+  .admin-table td {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: var(--fs-micro);
+    color: var(--ink);
+    vertical-align: top;
+  }
+  .admin-table td::before { content: none; }
+  .admin-table-message {
+    max-width: 260px;
+    white-space: pre-wrap;
+    color: var(--ink-dim);
+  }
+  /* Compact the contact buttons in a dense table row — side by side keeps
+     the row height down where vertical space is the scarce axis. */
+  .admin-contact-actions { flex-direction: row; gap: 6px; }
+  .admin-contact-btn {
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: var(--fs-label);
+  }
+  .admin-status-select {
+    font-size: var(--fs-micro);
+    min-height: 38px;
+    padding: 8px 10px;
+    min-width: 116px;
+  }
+  .admin-delete-btn,
+  .admin-feature-btn {
+    flex: 0 1 auto;
+    min-height: 38px;
+    padding: 9px 14px;
+    font-size: var(--fs-label);
+  }
+  .admin-select-all-label,
+  .admin-card-select { min-height: 0; padding: 0; }
+  .admin-body input[type="checkbox"] { width: 16px; height: 16px; }
+  /* The column header already says "Select" — the per-row word is only
+     there to label the checkbox in the mobile card layout. */
+  .admin-td-select label span { display: none; }
+  .admin-lead-phone-text { margin-bottom: 6px; white-space: nowrap; }
+  .admin-lead-time { white-space: nowrap; }
+
+  .admin-toast-region {
+    left: auto;
+    right: 20px;
+    bottom: 20px;
+    max-width: 380px;
+  }
 }

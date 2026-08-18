@@ -53,10 +53,13 @@
 
     <section class="admin-list">
       <h2 class="display">Existing Photos</h2>
-      <div class="admin-bulk-bar">
+      <div class="admin-bulk-bar" id="photos-bulk-bar" hidden>
         <label class="admin-select-all-label"><input type="checkbox" id="photos-select-all"> Select All</label>
         <span id="photos-bulk-count" class="admin-bulk-count" hidden></span>
         <button type="button" class="admin-bulk-delete-btn" id="photos-bulk-delete-btn" hidden>Delete Selected</button>
+      </div>
+      <div id="photos-loading" class="admin-loading" role="status">
+        <span class="admin-spinner" aria-hidden="true"></span> Loading photos…
       </div>
       <div id="projects-grid" class="admin-grid"></div>
       <p id="empty-msg" class="admin-empty" hidden></p>
@@ -66,15 +69,19 @@
   <div id="tab-leads" class="admin-tab-panel" hidden>
     <section class="admin-list">
       <h2 class="display">Leads</h2>
-      <div class="admin-bulk-bar">
+      <div class="admin-bulk-bar" id="leads-bulk-bar" hidden>
+        <label class="admin-select-all-label"><input type="checkbox" id="leads-select-all"> Select All</label>
         <span id="leads-bulk-count" class="admin-bulk-count" hidden></span>
         <button type="button" class="admin-bulk-delete-btn" id="leads-bulk-delete-btn" hidden>Delete Selected</button>
+      </div>
+      <div id="leads-loading" class="admin-loading" role="status">
+        <span class="admin-spinner" aria-hidden="true"></span> Loading leads…
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
             <tr>
-              <th><input type="checkbox" id="leads-select-all" aria-label="Select all leads"></th>
+              <th>Select</th>
               <th>Name</th>
               <th>Phone</th>
               <th>Email</th>
@@ -95,7 +102,13 @@
   <div id="tab-business" class="admin-tab-panel" hidden>
     <section class="admin-upload">
       <h2 class="display">Business Info</h2>
-      <form id="business-form" class="admin-form">
+      <div id="business-loading" class="admin-loading" role="status">
+        <span class="admin-spinner" aria-hidden="true"></span> Loading business info…
+      </div>
+      <!-- Lives outside the form because the form stays hidden until the row
+           loads — an error inside it would be invisible on the failure path. -->
+      <p id="business-load-error" class="admin-error" hidden></p>
+      <form id="business-form" class="admin-form" hidden>
         <label>Phone
           <input type="text" id="biz-phone" placeholder="619-748-0662">
         </label>
@@ -162,16 +175,23 @@
 
     <section class="admin-list">
       <h2 class="display">Existing Reviews</h2>
-      <div class="admin-bulk-bar">
+      <div class="admin-bulk-bar" id="reviews-bulk-bar" hidden>
         <label class="admin-select-all-label"><input type="checkbox" id="reviews-select-all"> Select All</label>
         <span id="reviews-bulk-count" class="admin-bulk-count" hidden></span>
         <button type="button" class="admin-bulk-delete-btn" id="reviews-bulk-delete-btn" hidden>Delete Selected</button>
+      </div>
+      <div id="reviews-loading" class="admin-loading" role="status">
+        <span class="admin-spinner" aria-hidden="true"></span> Loading reviews…
       </div>
       <div id="reviews-grid" class="admin-grid"></div>
       <p id="reviews-empty-msg" class="admin-empty" hidden></p>
     </section>
   </div>
 </main>
+
+<!-- Toast target. aria-live so a screen reader announces the same thing the
+     sighted user sees; window.alert() used to be the only feedback channel. -->
+<div id="admin-toast-region" class="admin-toast-region" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../assets/js/supabase-client.js"></script>
@@ -180,6 +200,8 @@
 (function () {
   var grid = document.getElementById('projects-grid');
   var emptyMsg = document.getElementById('empty-msg');
+  var photosLoading = document.getElementById('photos-loading');
+  var photosBulkBar = document.getElementById('photos-bulk-bar');
   var photosSelectAll = document.getElementById('photos-select-all');
   var photosBulkCount = document.getElementById('photos-bulk-count');
   var photosBulkDeleteBtn = document.getElementById('photos-bulk-delete-btn');
@@ -247,6 +269,136 @@
     return decodeURIComponent(url.slice(idx + PUBLIC_URL_MARKER.length));
   }
 
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  // ---- Feedback ----------------------------------------------------------
+  // Every list action used to speak through window.alert(), which blocks the
+  // page, looks like a browser error, and only ever fired on FAILURE — a
+  // successful delete or status change said nothing at all. Toasts replace it:
+  // same channel for both outcomes, non-blocking, and reachable by thumb.
+  var toastRegion = document.getElementById('admin-toast-region');
+
+  function showToast(message, type) {
+    var toast = document.createElement('div');
+    toast.className = 'admin-toast is-' + (type || 'info');
+
+    var text = document.createElement('span');
+    text.className = 'admin-toast-text';
+    text.textContent = message;
+
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'admin-toast-close';
+    close.setAttribute('aria-label', 'Dismiss');
+    close.textContent = '×';
+
+    function dismiss() {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }
+    close.addEventListener('click', dismiss);
+
+    toast.appendChild(text);
+    toast.appendChild(close);
+    toastRegion.appendChild(toast);
+
+    // Successes clear themselves. Errors stay put until dismissed so a
+    // failure can't quietly scroll away unread.
+    if (type !== 'error') window.setTimeout(dismiss, 4000);
+  }
+
+  // Inline form messages previously sat below the submit button — off-screen
+  // on a phone — and stayed visible until the next submit. Scroll them into
+  // view and retire them on a timer.
+  // autoHide defaults to true. Errors pass false — a failure should stay on
+  // screen until it's dealt with, a confirmation should not linger.
+  function flashInline(el, message, autoHide) {
+    if (message != null) el.textContent = message;
+    el.hidden = false;
+    if (el.scrollIntoView) {
+      el.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }
+    window.clearTimeout(el._flashTimer);
+    if (autoHide !== false) {
+      el._flashTimer = window.setTimeout(function () { el.hidden = true; }, 6000);
+    }
+  }
+
+  function setLoading(el, isLoading) {
+    if (el) el.hidden = !isLoading;
+  }
+
+  // ---- Mutation verification ---------------------------------------------
+  // PostgREST returns no error when an UPDATE or DELETE matches zero rows, so
+  // a write that RLS filtered out (expired login, revoked session) came back
+  // indistinguishable from success: the list re-rendered unchanged and nothing
+  // was said. Asking for the affected rows back turns that silence into a
+  // message Joe can act on.
+  var SESSION_HINT = 'Nothing changed — your login may have expired. Log out, log back in, and try again.';
+
+  async function runMutation(builder) {
+    var res = await builder.select();
+    if (res.error) return { ok: false, message: res.error.message };
+    if (!res.data || res.data.length === 0) return { ok: false, message: SESSION_HINT };
+    return { ok: true, data: res.data };
+  }
+
+  // ---- Formatting --------------------------------------------------------
+  function digitsOnly(raw) {
+    return String(raw == null ? '' : raw).replace(/\D/g, '');
+  }
+
+  // Mirrors assets/js/business-info.js so admin and public site build the
+  // same hrefs. Plain sms: with no ?body= — the body separator differs
+  // between iOS and Android and breaks the link on one of them.
+  function toTelHref(raw) {
+    var d = digitsOnly(raw);
+    if (d.length === 10) d = '1' + d;
+    return 'tel:+' + d;
+  }
+  function toSmsHref(raw) {
+    var d = digitsOnly(raw);
+    if (d.length === 10) d = '1' + d;
+    return 'sms:+' + d;
+  }
+  function formatPhoneDisplay(raw) {
+    var d = digitsOnly(raw);
+    if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+    if (d.length !== 10) return String(raw == null ? '' : raw);
+    return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6);
+  }
+
+  // A lead from 20 minutes ago and one from this morning both rendered as
+  // "Aug 17, 2026". Callback speed wins the job, so lead age is the number
+  // that matters — the exact timestamp moves to the title attribute.
+  function formatRelativeTime(iso) {
+    var then = new Date(iso);
+    if (isNaN(then.getTime())) return '—';
+
+    var mins = Math.floor((Date.now() - then.getTime()) / 60000);
+    if (mins < 0) return 'Just now';
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + (mins === 1 ? ' min ago' : ' mins ago');
+
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + (hours === 1 ? ' hour ago' : ' hours ago');
+
+    var days = Math.floor(hours / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return days + ' days ago';
+
+    return then.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatAbsoluteTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+  }
+
   // Wires a "select all" checkbox + per-row .admin-row-check boxes inside
   // containerEl to a bulk-count label and a bulk-delete button, showing/
   // hiding them as selection changes. Reused across Photos, Leads, Reviews.
@@ -297,11 +449,16 @@
   }
 
   async function loadProjects() {
+    setLoading(photosLoading, true);
+    photosBulkBar.hidden = true;
+    emptyMsg.hidden = true;
+
     var res = await supabaseClient
       .from('projects')
       .select('*')
       .order('created_at', { ascending: false });
 
+    setLoading(photosLoading, false);
     grid.innerHTML = '';
     photosSelection.refresh();
 
@@ -318,6 +475,7 @@
     }
 
     emptyMsg.hidden = true;
+    photosBulkBar.hidden = false;
 
     res.data.forEach(function (project) {
       var path = pathFromPublicUrl(project.image_url) || '';
@@ -356,15 +514,13 @@
     var file = fileInput.files[0];
 
     if (!title) {
-      uploadError.textContent = 'Title and photo are required.';
-      uploadError.hidden = false;
+      flashInline(uploadError, 'Title and photo are required.', false);
       return;
     }
 
     var fileError = validateImageFile(file);
     if (fileError) {
-      uploadError.textContent = fileError;
-      uploadError.hidden = false;
+      flashInline(uploadError, fileError, false);
       return;
     }
 
@@ -380,8 +536,7 @@
         // would render as a broken image for every visitor.
         uploadStatus.hidden = true;
         uploadBtn.disabled = false;
-        uploadError.textContent = blockingMsg;
-        uploadError.hidden = false;
+        flashInline(uploadError, blockingMsg, false);
         return;
       }
       fileToUpload = compressResult.file;
@@ -397,8 +552,7 @@
 
     var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, fileToUpload);
     if (uploadRes.error) {
-      uploadError.textContent = uploadRes.error.message;
-      uploadError.hidden = false;
+      flashInline(uploadError, 'Upload failed. ' + uploadRes.error.message, false);
       uploadBtn.disabled = false;
       return;
     }
@@ -416,12 +570,14 @@
     uploadBtn.disabled = false;
 
     if (insertRes.error) {
-      uploadError.textContent = insertRes.error.message;
-      uploadError.hidden = false;
+      flashInline(uploadError, 'Upload failed. ' + insertRes.error.message, false);
       return;
     }
 
-    uploadSuccess.hidden = false;
+    // Says "live" deliberately: with no draft state on projects yet, the
+    // photo is on the public site the moment this returns.
+    flashInline(uploadSuccess, 'Uploaded — this photo is live on the site now.');
+    showToast('Photo uploaded.', 'success');
     uploadForm.reset();
     loadProjects();
   });
@@ -433,18 +589,18 @@
       var wasFeatured = featureBtn.getAttribute('data-featured') === 'true';
       featureBtn.disabled = true;
 
-      var featureRes = await supabaseClient
-        .from('projects')
-        .update({ is_featured: !wasFeatured })
-        .eq('id', featureId);
+      var featureRes = await runMutation(
+        supabaseClient.from('projects').update({ is_featured: !wasFeatured }).eq('id', featureId)
+      );
 
       featureBtn.disabled = false;
 
-      if (featureRes.error) {
-        window.alert('Could not update featured status: ' + featureRes.error.message);
+      if (!featureRes.ok) {
+        showToast('Could not update the photo. ' + featureRes.message, 'error');
         return;
       }
 
+      showToast(wasFeatured ? 'Removed from the hero.' : 'Featured on the hero.', 'success');
       loadProjects();
       return;
     }
@@ -457,15 +613,27 @@
     var path = btn.getAttribute('data-path');
     btn.disabled = true;
 
-    if (path) {
-      await supabaseClient.storage.from(BUCKET).remove([path]);
-    }
-
-    var delRes = await supabaseClient.from('projects').delete().eq('id', id);
-    if (delRes.error) {
-      window.alert('Could not delete: ' + delRes.error.message);
+    // Row first, file second. The old order deleted the storage object up
+    // front, so a failed row delete left a surviving record pointing at a
+    // dead URL — a broken <img> on the homepage, work page, and hero. This
+    // way the worst case is an orphaned file, which costs a little storage
+    // and breaks nothing publicly.
+    var delRes = await runMutation(supabaseClient.from('projects').delete().eq('id', id));
+    if (!delRes.ok) {
+      showToast('Could not delete the photo. ' + delRes.message, 'error');
       btn.disabled = false;
       return;
+    }
+
+    if (path) {
+      var rmRes = await supabaseClient.storage.from(BUCKET).remove([path]);
+      if (rmRes.error) {
+        showToast('Photo removed from the site. Its stored file could not be cleaned up, but nothing is broken publicly.', 'info');
+      } else {
+        showToast('Photo deleted.', 'success');
+      }
+    } else {
+      showToast('Photo deleted.', 'success');
     }
 
     loadProjects();
@@ -480,18 +648,21 @@
     var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
     var paths = checked.map(function (cb) { return cb.getAttribute('data-path'); }).filter(Boolean);
 
+    // Same ordering rule as the single delete above: rows first, files after.
+    var bulkDelRes = await runMutation(supabaseClient.from('projects').delete().in('id', ids));
+    photosBulkDeleteBtn.disabled = false;
+
+    if (!bulkDelRes.ok) {
+      showToast('Could not delete the photos. ' + bulkDelRes.message, 'error');
+      return;
+    }
+
+    var deleted = bulkDelRes.data.length;
     if (paths.length) {
       await supabaseClient.storage.from(BUCKET).remove(paths);
     }
 
-    var bulkDelRes = await supabaseClient.from('projects').delete().in('id', ids);
-    photosBulkDeleteBtn.disabled = false;
-
-    if (bulkDelRes.error) {
-      window.alert('Could not delete: ' + bulkDelRes.error.message);
-      return;
-    }
-
+    showToast(deleted + (deleted === 1 ? ' photo deleted.' : ' photos deleted.'), 'success');
     loadProjects();
   });
 
@@ -521,6 +692,8 @@
   // ---- Leads ----
   var leadsTbody = document.getElementById('leads-tbody');
   var leadsEmptyMsg = document.getElementById('leads-empty-msg');
+  var leadsLoading = document.getElementById('leads-loading');
+  var leadsBulkBar = document.getElementById('leads-bulk-bar');
   var leadsSelectAll = document.getElementById('leads-select-all');
   var leadsBulkCount = document.getElementById('leads-bulk-count');
   var leadsBulkDeleteBtn = document.getElementById('leads-bulk-delete-btn');
@@ -528,17 +701,26 @@
   var STATUS_OPTIONS = ['new', 'contacted', 'quoted', 'won', 'lost'];
   var STATUS_LABELS = { new: 'New', contacted: 'Contacted', quoted: 'Quoted', won: 'Won', lost: 'Lost' };
 
-  function formatDate(iso) {
-    var d = new Date(iso);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  // Optional fields render as an em dash on desktop (keeps the table grid
+  // intact) but get `is-empty` so the mobile card layout can drop the row
+  // entirely rather than printing "Email  —".
+  function optionalCell(value, label, extraClass) {
+    var cls = (extraClass ? extraClass + ' ' : '') + (value ? '' : 'is-empty');
+    return '<td class="' + cls.trim() + '" data-label="' + label + '">'
+      + (value ? escapeHtml(value) : '—') + '</td>';
   }
 
   async function loadLeads() {
+    setLoading(leadsLoading, true);
+    leadsBulkBar.hidden = true;
+    leadsEmptyMsg.hidden = true;
+
     var res = await supabaseClient
       .from('leads')
       .select('*')
       .order('created_at', { ascending: false });
 
+    setLoading(leadsLoading, false);
     leadsTbody.innerHTML = '';
     leadsSelection.refresh();
 
@@ -549,12 +731,13 @@
     }
 
     if (!res.data || res.data.length === 0) {
-      leadsEmptyMsg.textContent = 'No leads yet.';
+      leadsEmptyMsg.textContent = 'No leads yet. New enquiries from the site land here.';
       leadsEmptyMsg.hidden = false;
       return;
     }
 
     leadsEmptyMsg.hidden = true;
+    leadsBulkBar.hidden = false;
 
     res.data.forEach(function (lead) {
       var tr = document.createElement('tr');
@@ -562,16 +745,34 @@
         var selected = opt === lead.status ? ' selected' : '';
         return '<option value="' + opt + '"' + selected + '>' + STATUS_LABELS[opt] + '</option>';
       }).join('');
+
+      // Calling a new lead back is the most common action in this whole
+      // dashboard, and the number used to be plain text Joe had to copy by
+      // hand off a sideways-scrolling table.
+      var phoneCell = lead.phone
+        ? '<div class="admin-lead-phone-text">' + escapeHtml(formatPhoneDisplay(lead.phone)) + '</div>'
+          + '<div class="admin-contact-actions">'
+            + '<a class="admin-contact-btn" href="' + escapeHtml(toTelHref(lead.phone)) + '">Call</a>'
+            + '<a class="admin-contact-btn is-secondary" href="' + escapeHtml(toSmsHref(lead.phone)) + '">Text</a>'
+          + '</div>'
+        : '<span class="admin-contact-none">—</span>';
+
+      var emailCell = lead.email
+        ? '<a class="admin-inline-link" href="mailto:' + escapeHtml(lead.email) + '">' + escapeHtml(lead.email) + '</a>'
+        : '—';
+
       tr.innerHTML =
-        '<td><input type="checkbox" class="admin-row-check" data-id="' + lead.id + '"></td>' +
-        '<td>' + escapeHtml(lead.name) + '</td>' +
-        '<td>' + escapeHtml(lead.phone) + '</td>' +
-        '<td>' + (lead.email ? escapeHtml(lead.email) : '—') + '</td>' +
-        '<td>' + (lead.service_interest ? escapeHtml(lead.service_interest) : '—') + '</td>' +
-        '<td class="admin-table-message">' + (lead.message ? escapeHtml(lead.message) : '—') + '</td>' +
-        '<td><select class="admin-status-select" data-id="' + lead.id + '">' + options + '</select></td>' +
-        '<td>' + formatDate(lead.created_at) + '</td>' +
-        '<td><button type="button" class="admin-delete-btn admin-row-delete-btn" data-id="' + lead.id + '" data-name="' + escapeHtml(lead.name) + '">Delete</button></td>';
+        '<td class="admin-td-select" data-label="Select">'
+          + '<label><input type="checkbox" class="admin-row-check" data-id="' + lead.id + '" data-name="' + escapeHtml(lead.name) + '"> <span>Select</span></label>'
+        + '</td>' +
+        '<td class="admin-td-name" data-label="Name">' + escapeHtml(lead.name) + '</td>' +
+        '<td data-label="Phone">' + phoneCell + '</td>' +
+        '<td class="' + (lead.email ? '' : 'is-empty') + '" data-label="Email">' + emailCell + '</td>' +
+        optionalCell(lead.service_interest, 'Service') +
+        optionalCell(lead.message, 'Message', 'admin-table-message') +
+        '<td data-label="Status"><select class="admin-status-select" data-id="' + lead.id + '" data-current="' + escapeHtml(lead.status) + '" aria-label="Status for ' + escapeHtml(lead.name) + '">' + options + '</select></td>' +
+        '<td data-label="Received"><span class="admin-lead-time" title="' + escapeHtml(formatAbsoluteTime(lead.created_at)) + '">' + escapeHtml(formatRelativeTime(lead.created_at)) + '</span></td>' +
+        '<td class="admin-td-delete" data-label="Delete"><button type="button" class="admin-delete-btn admin-row-delete-btn" data-id="' + lead.id + '" data-name="' + escapeHtml(lead.name) + '">Delete</button></td>';
       leadsTbody.appendChild(tr);
     });
   }
@@ -582,34 +783,62 @@
 
     var id = select.getAttribute('data-id');
     var newStatus = select.value;
+    // Remembered so a failed save can put the control back to what the
+    // database actually holds. Previously a failure left the select showing
+    // the new value while the row still had the old one.
+    var previousStatus = select.getAttribute('data-current') || '';
     select.disabled = true;
 
-    var res = await supabaseClient.from('leads').update({ status: newStatus }).eq('id', id);
+    var res = await runMutation(
+      supabaseClient.from('leads').update({ status: newStatus }).eq('id', id)
+    );
 
     select.disabled = false;
 
-    if (res.error) {
-      window.alert('Could not update status: ' + res.error.message);
+    if (!res.ok) {
+      if (previousStatus) select.value = previousStatus;
+      showToast('Could not update the status. ' + res.message, 'error');
+      return;
     }
+
+    select.setAttribute('data-current', newStatus);
+    markSaved(select);
   });
+
+  // A status change is the one action with no page change to confirm it, so
+  // it gets an inline tick next to the control rather than only a toast.
+  function markSaved(select) {
+    var cell = select.parentNode;
+    var existing = cell.querySelector('.admin-saved-flag');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var flag = document.createElement('span');
+    flag.className = 'admin-saved-flag';
+    flag.textContent = '✓ Saved';
+    cell.appendChild(flag);
+    window.setTimeout(function () {
+      if (flag.parentNode) flag.parentNode.removeChild(flag);
+    }, 2500);
+  }
 
   leadsTbody.addEventListener('click', async function (e) {
     var delBtn = e.target.closest('.admin-row-delete-btn');
     if (!delBtn) return;
 
     var name = delBtn.getAttribute('data-name');
-    if (!window.confirm('Delete this lead from ' + name + '?')) return;
+    if (!window.confirm('Delete the lead from ' + name + '? This cannot be undone.')) return;
 
     var id = delBtn.getAttribute('data-id');
     delBtn.disabled = true;
 
-    var delRes = await supabaseClient.from('leads').delete().eq('id', id);
-    if (delRes.error) {
-      window.alert('Could not delete: ' + delRes.error.message);
+    var delRes = await runMutation(supabaseClient.from('leads').delete().eq('id', id));
+    if (!delRes.ok) {
+      showToast('Could not delete the lead. ' + delRes.message, 'error');
       delBtn.disabled = false;
       return;
     }
 
+    showToast('Lead from ' + name + ' deleted.', 'success');
     loadLeads();
   });
 
@@ -621,14 +850,16 @@
     leadsBulkDeleteBtn.disabled = true;
     var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
 
-    var bulkDelRes = await supabaseClient.from('leads').delete().in('id', ids);
+    var bulkDelRes = await runMutation(supabaseClient.from('leads').delete().in('id', ids));
     leadsBulkDeleteBtn.disabled = false;
 
-    if (bulkDelRes.error) {
-      window.alert('Could not delete: ' + bulkDelRes.error.message);
+    if (!bulkDelRes.ok) {
+      showToast('Could not delete the leads. ' + bulkDelRes.message, 'error');
       return;
     }
 
+    var removed = bulkDelRes.data.length;
+    showToast(removed + (removed === 1 ? ' lead deleted.' : ' leads deleted.'), 'success');
     loadLeads();
   });
 
@@ -641,13 +872,24 @@
   var businessSuccess = document.getElementById('business-success');
   var bizPhotoPreviewWrap = document.getElementById('biz-photo-preview-wrap');
   var bizPhotoPreview = document.getElementById('biz-photo-preview');
+  var businessLoading = document.getElementById('business-loading');
+  var businessLoadError = document.getElementById('business-load-error');
   var currentBusinessInfo = null;
 
   async function loadBusinessInfo() {
+    setLoading(businessLoading, true);
+    businessForm.hidden = true;
+    businessLoadError.hidden = true;
+
     var res = await supabaseClient.from('business_info').select('*').limit(1).maybeSingle();
+
+    setLoading(businessLoading, false);
+
     if (res.error || !res.data) {
-      businessError.textContent = res.error ? ('Could not load business info: ' + res.error.message) : 'No business info row found.';
-      businessError.hidden = false;
+      businessLoadError.textContent = res.error
+        ? ('Could not load business info: ' + res.error.message)
+        : 'No business info found. Nothing to edit yet.';
+      businessLoadError.hidden = false;
       return;
     }
 
@@ -665,6 +907,11 @@
     } else {
       bizPhotoPreviewWrap.hidden = true;
     }
+
+    // Revealed only once the fields hold real values. Keeping the form hidden
+    // until then also means the fetch can no longer land mid-edit and
+    // overwrite something Joe was typing.
+    businessForm.hidden = false;
   }
 
   businessForm.addEventListener('submit', async function (e) {
@@ -675,8 +922,7 @@
     businessWarning.hidden = true;
 
     if (!currentBusinessInfo) {
-      businessError.textContent = 'Business info has not loaded yet. Try again in a moment.';
-      businessError.hidden = false;
+      flashInline(businessError, 'Business info has not loaded yet. Try again in a moment.', false);
       return;
     }
 
@@ -686,8 +932,7 @@
     if (photoFile) {
       var bizFileError = validateImageFile(photoFile);
       if (bizFileError) {
-        businessError.textContent = bizFileError;
-        businessError.hidden = false;
+        flashInline(businessError, bizFileError, false);
         return;
       }
     }
@@ -704,8 +949,7 @@
         if (bizBlockingMsg) {
           businessStatus.hidden = true;
           businessSaveBtn.disabled = false;
-          businessError.textContent = bizBlockingMsg;
-          businessError.hidden = false;
+          flashInline(businessError, bizBlockingMsg, false);
           return;
         }
         photoToUpload = bizCompressResult.file;
@@ -719,8 +963,7 @@
 
       var uploadRes = await supabaseClient.storage.from(BUCKET).upload(path, photoToUpload);
       if (uploadRes.error) {
-        businessError.textContent = uploadRes.error.message;
-        businessError.hidden = false;
+        flashInline(businessError, 'Could not upload the photo. ' + uploadRes.error.message, false);
         businessSaveBtn.disabled = false;
         return;
       }
@@ -750,12 +993,19 @@
     businessSaveBtn.disabled = false;
 
     if (updateRes.error) {
-      businessError.textContent = updateRes.error.message;
-      businessError.hidden = false;
+      flashInline(businessError, 'Could not save. ' + updateRes.error.message, false);
       return;
     }
 
-    currentBusinessInfo = updateRes.data || Object.assign({}, currentBusinessInfo, updates);
+    // maybeSingle() returns null when the UPDATE matched no rows, which
+    // PostgREST reports without an error — the old code treated that as a
+    // successful save and merged the edits into local state anyway.
+    if (!updateRes.data) {
+      flashInline(businessError, SESSION_HINT, false);
+      return;
+    }
+
+    currentBusinessInfo = updateRes.data;
     document.getElementById('biz-photo-file').value = '';
 
     if (currentBusinessInfo.profile_photo_url) {
@@ -765,7 +1015,8 @@
       bizPhotoPreviewWrap.hidden = true;
     }
 
-    businessSuccess.hidden = false;
+    flashInline(businessSuccess, 'Saved. The site is updated.');
+    showToast('Business info saved.', 'success');
   });
 
   // ---- Reviews ----
@@ -775,6 +1026,8 @@
   var reviewFormSuccess = document.getElementById('review-form-success');
   var reviewsGrid = document.getElementById('reviews-grid');
   var reviewsEmptyMsg = document.getElementById('reviews-empty-msg');
+  var reviewsLoading = document.getElementById('reviews-loading');
+  var reviewsBulkBar = document.getElementById('reviews-bulk-bar');
   var reviewsSelectAll = document.getElementById('reviews-select-all');
   var reviewsBulkCount = document.getElementById('reviews-bulk-count');
   var reviewsBulkDeleteBtn = document.getElementById('reviews-bulk-delete-btn');
@@ -789,11 +1042,16 @@
   }
 
   async function loadReviews() {
+    setLoading(reviewsLoading, true);
+    reviewsBulkBar.hidden = true;
+    reviewsEmptyMsg.hidden = true;
+
     var res = await supabaseClient
       .from('reviews')
       .select('*')
       .order('created_at', { ascending: false });
 
+    setLoading(reviewsLoading, false);
     reviewsGrid.innerHTML = '';
     reviewsSelection.refresh();
 
@@ -810,6 +1068,7 @@
     }
 
     reviewsEmptyMsg.hidden = true;
+    reviewsBulkBar.hidden = false;
 
     res.data.forEach(function (review) {
       var published = !!review.is_published;
@@ -844,8 +1103,7 @@
     var location = document.getElementById('review-location').value.trim();
 
     if (!name || !text) {
-      reviewFormError.textContent = 'Customer name and review text are required.';
-      reviewFormError.hidden = false;
+      flashInline(reviewFormError, 'Customer name and review text are required.', false);
       return;
     }
 
@@ -861,12 +1119,14 @@
     reviewSubmitBtn.disabled = false;
 
     if (res.error) {
-      reviewFormError.textContent = res.error.message;
-      reviewFormError.hidden = false;
+      flashInline(reviewFormError, 'Could not add the review. ' + res.error.message, false);
       return;
     }
 
-    reviewFormSuccess.hidden = false;
+    // Reviews are published by default, so this one is on the homepage
+    // immediately — say so rather than leaving Joe to guess.
+    flashInline(reviewFormSuccess, 'Added — this review is live on the site now.');
+    showToast('Review added.', 'success');
     reviewForm.reset();
     loadReviews();
   });
@@ -878,18 +1138,18 @@
       var wasPublished = toggleBtn.getAttribute('data-published') === 'true';
       toggleBtn.disabled = true;
 
-      var toggleRes = await supabaseClient
-        .from('reviews')
-        .update({ is_published: !wasPublished })
-        .eq('id', toggleId);
+      var toggleRes = await runMutation(
+        supabaseClient.from('reviews').update({ is_published: !wasPublished }).eq('id', toggleId)
+      );
 
       toggleBtn.disabled = false;
 
-      if (toggleRes.error) {
-        window.alert('Could not update review: ' + toggleRes.error.message);
+      if (!toggleRes.ok) {
+        showToast('Could not update the review. ' + toggleRes.message, 'error');
         return;
       }
 
+      showToast(wasPublished ? 'Review hidden from the site.' : 'Review published to the site.', 'success');
       loadReviews();
       return;
     }
@@ -901,13 +1161,14 @@
     var delId = delBtn.getAttribute('data-id');
     delBtn.disabled = true;
 
-    var delRes = await supabaseClient.from('reviews').delete().eq('id', delId);
-    if (delRes.error) {
-      window.alert('Could not delete: ' + delRes.error.message);
+    var delRes = await runMutation(supabaseClient.from('reviews').delete().eq('id', delId));
+    if (!delRes.ok) {
+      showToast('Could not delete the review. ' + delRes.message, 'error');
       delBtn.disabled = false;
       return;
     }
 
+    showToast('Review deleted.', 'success');
     loadReviews();
   });
 
@@ -919,14 +1180,16 @@
     reviewsBulkDeleteBtn.disabled = true;
     var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
 
-    var bulkDelRes = await supabaseClient.from('reviews').delete().in('id', ids);
+    var bulkDelRes = await runMutation(supabaseClient.from('reviews').delete().in('id', ids));
     reviewsBulkDeleteBtn.disabled = false;
 
-    if (bulkDelRes.error) {
-      window.alert('Could not delete: ' + bulkDelRes.error.message);
+    if (!bulkDelRes.ok) {
+      showToast('Could not delete the reviews. ' + bulkDelRes.message, 'error');
       return;
     }
 
+    var removed = bulkDelRes.data.length;
+    showToast(removed + (removed === 1 ? ' review deleted.' : ' reviews deleted.'), 'success');
     loadReviews();
   });
 
