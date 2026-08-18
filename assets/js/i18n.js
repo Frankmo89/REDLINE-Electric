@@ -17,6 +17,18 @@
     cta_see_all_work: { en: 'See All Work', es: 'Ver Todos los Trabajos' },
 
     hero_eyebrow: { en: 'San Diego · License C-10 #1153394', es: 'San Diego · Licencia C-10 #1153394' },
+
+    // Service-page hero eyebrows. Each names its own service plus the
+    // location, instead of repeating the home page's license line on all six
+    // pages. The home page keeps hero_eyebrow — the license is the right
+    // trust signal for a first impression. Spanish service names are reused
+    // verbatim from service_N_title so terminology stays consistent sitewide.
+    svc_newconstruction_eyebrow: { en: 'New Construction · San Diego, CA', es: 'Construcción Nueva · San Diego, CA' },
+    svc_remodels_eyebrow: { en: 'Remodels · San Diego, CA', es: 'Remodelaciones · San Diego, CA' },
+    svc_retrofits_eyebrow: { en: 'Retrofits · San Diego, CA', es: 'Modernización Eléctrica · San Diego, CA' },
+    svc_artlighting_eyebrow: { en: 'Art Lighting · San Diego, CA', es: 'Iluminación para Arte · San Diego, CA' },
+    svc_evchargers_eyebrow: { en: 'EV Chargers · San Diego, CA', es: 'Cargadores para Autos Eléctricos · San Diego, CA' },
+    svc_servicecalls_eyebrow: { en: 'Service Calls · San Diego, CA', es: 'Llamadas de Servicio · San Diego, CA' },
     hero_title: { en: 'Power you can <span>trust.</span>', es: 'La energía en la que puedes <span>confiar.</span>' },
     hero_subtitle: {
       en: 'Redline Electric — residential and commercial installation, repair, and maintenance across San Diego. Emergency service available.',

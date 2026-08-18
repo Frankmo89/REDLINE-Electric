@@ -321,6 +321,12 @@ section {
 .eyebrow::before {
   content: ""; width: 22px; height: 2px; background: var(--accent);
 }
+/* Over photography the accent red dropped to a low contrast ratio — the
+   bathroom frame has a pale beige wall right behind this line. Cream text
+   reads on every frame in rotation; the rule stays accent red so the brand
+   mark is unchanged. Applies to service-page heroes too, since they get
+   .has-hero-bg from the same script. */
+.hero.has-hero-bg .eyebrow { color: var(--ink); }
 /* Base is the interior-page hero: service headlines are long, functional
    strings ("EV Charger Installation in San Diego, CA") that need a wider
    measure and a smaller step than the home hero's short claim. */
@@ -387,6 +393,21 @@ section {
 .services-grid a.card { text-decoration: none; color: inherit; display: block; transition: background-color 0.2s ease; }
 .services-grid a.card:hover { background: #EDECE5; }
 .services-grid a.card:hover h3 { color: var(--accent); }
+/* Replaces the numerals on both card grids that describe a *set*: the six
+   services (nothing about New Construction precedes Remodels) and the four
+   Why Choose Us points. The .num device survives only on the service pages'
+   How It Works steps, where the sequence is real. This keeps the red accent
+   and the vertical rhythm the numerals provided, using the same short-rule
+   idiom as .eyebrow::before. */
+.services-grid a.card::before,
+.why-us .card::before {
+  content: "";
+  display: block;
+  width: 22px;
+  height: 3px;
+  background: var(--accent);
+  margin-bottom: 18px;
+}
 .card .num { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.1em; }
 .card h3 { font-family: 'Oswald', sans-serif; font-size: var(--fs-h4); margin: 10px 0 8px; text-transform: uppercase; line-height: 1.15; }
 .card p { color: #5C6169; font-size: var(--fs-small); line-height: 1.55; }
@@ -907,7 +928,6 @@ a.contact-info-value:hover { color: var(--accent); }
   gap: 32px;
   padding: 48px 20px 40px;
 }
-.footer-logo { max-height: 40px; width: auto; margin-bottom: 16px; }
 .footer-tagline { font-size: var(--fs-small); line-height: 1.5; max-width: 320px; margin-bottom: 16px; }
 .footer-contact { display: flex; flex-direction: column; gap: 8px; }
 .footer-contact a {
@@ -945,6 +965,27 @@ a.contact-info-value:hover { color: var(--accent); }
   line-height: 1.75;
   color: var(--ink-dim);
   max-width: 78ch;
+}
+
+/* The footer's closing brand statement. Replaces the 40px logo image that used
+   to sit in .footer-brand — the header carries the mark on every page, so the
+   footer was repeating it rather than ending on anything. Set in the site's
+   own display face at --bg2, a quiet lift off the #1C1E25 footer ground, so it
+   reads as a ground mark rather than a heading competing with the link
+   columns. Decorative only: the business name is already in the copyright
+   line, so this is aria-hidden. */
+.footer-wordmark {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(46px, 13.5vw, 158px);
+  line-height: 0.82;
+  letter-spacing: 0.005em;
+  color: var(--bg2);
+  padding: 4px 20px 0;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .footer-bottom { border-top: 1px solid var(--line); padding: 20px; }
@@ -1279,4 +1320,5 @@ a.contact-info-value:hover { color: var(--accent); }
 
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; padding: 64px 24px 40px; }
   .footer-areas { padding: 0 24px 40px; }
+  .footer-wordmark { padding: 8px 24px 0; }
 }

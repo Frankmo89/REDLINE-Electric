@@ -233,32 +233,26 @@
     <p class="sub" data-i18n="services_subheading">Residential, commercial, and emergency work, done by a licensed and insured contractor.</p>
     <div class="grid services-grid">
       <a class="card" href="services/new-construction.html">
-        <div class="num">01</div>
         <h3 class="display" data-i18n="service_1_title">New Construction</h3>
         <p data-i18n="service_1_desc">Electrical wiring for new builds from the ground up.</p>
       </a>
       <a class="card" href="services/remodels.html">
-        <div class="num">02</div>
         <h3 class="display" data-i18n="service_2_title">Remodels</h3>
         <p data-i18n="service_2_desc">Updating electrical systems as part of a home or business renovation.</p>
       </a>
       <a class="card" href="services/retrofits.html">
-        <div class="num">03</div>
         <h3 class="display" data-i18n="service_3_title">Retrofits</h3>
         <p data-i18n="service_3_desc">Upgrading older electrical systems to meet current standards.</p>
       </a>
       <a class="card" href="services/art-lighting.html">
-        <div class="num">04</div>
         <h3 class="display" data-i18n="service_4_title">Art Lighting</h3>
         <p data-i18n="service_4_desc">Custom lighting design to highlight art and architectural features.</p>
       </a>
       <a class="card" href="services/ev-chargers.html">
-        <div class="num">05</div>
         <h3 class="display" data-i18n="service_5_title">EV Chargers</h3>
         <p data-i18n="service_5_desc">Electric vehicle charger installation at home or on-site.</p>
       </a>
       <a class="card" href="services/service-calls.html">
-        <div class="num">06</div>
         <h3 class="display" data-i18n="service_6_title">Service Calls</h3>
         <p data-i18n="service_6_desc">Diagnosis and repair for electrical issues at your property.</p>
       </a>
@@ -283,22 +277,18 @@
 
     <div class="grid">
       <div class="card">
-        <div class="num">01</div>
         <h3 class="display" data-i18n="why_1_title">Licensed &amp; Insured</h3>
         <p data-i18n="why_1_desc">C-10 license #1153394, verifiable with the California State License Board. Fully insured, so you're protected if anything goes wrong on your property.</p>
       </div>
       <div class="card">
-        <div class="num">02</div>
         <h3 class="display" data-i18n="why_2_title">We Pull the Permits</h3>
         <p data-i18n="why_2_desc">Panel upgrades and major work need permits in San Diego. We handle that paperwork ourselves — you should never be asked to pull your own permit.</p>
       </div>
       <div class="card">
-        <div class="num">03</div>
         <h3 class="display" data-i18n="why_3_title">Up to Current Code</h3>
         <p data-i18n="why_3_desc">California runs on the 2023 NEC. Every job is done to current code — GFCI and AFCI placement, surge protection, tamper-resistant receptacles — so it passes inspection and stays safe.</p>
       </div>
       <div class="card">
-        <div class="num">04</div>
         <h3 class="display" data-i18n="why_4_title">Clear Pricing, On Time</h3>
         <p data-i18n="why_4_desc">You get the price before we start, not after. We show up when we say we will, and leave the work site clean.</p>
       </div>
@@ -421,7 +411,6 @@
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
-      <img src="assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188" class="footer-logo">
       <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
       <div class="footer-contact">
         <a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a>
@@ -453,6 +442,8 @@
       <p class="footer-areas-list" data-service-areas-text>San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, Escondido</p>
     </div>
   </div>
+
+  <div class="footer-wordmark" aria-hidden="true">Redline Electric</div>
 
   <div class="footer-bottom">
     <div class="wrap">
@@ -735,82 +726,9 @@
 })();
 </script>
 
+<script src="assets/js/hero-bg.js"></script>
 <script>
-(function () {
-  var hero = document.getElementById('home');
-  if (!hero || typeof supabaseClient === 'undefined') return;
-
-  var HERO_CYCLE_MS = 6000;
-  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  supabaseClient
-    .from('projects')
-    .select('image_url, title')
-    .eq('is_featured', true)
-    .order('created_at', { ascending: false })
-    .limit(10)
-    .then(function (res) {
-      if (res.error || !res.data || res.data.length === 0) return;
-
-      var photos = res.data;
-
-      var bgWrap = document.createElement('div');
-      bgWrap.className = 'hero-bg';
-      bgWrap.setAttribute('aria-hidden', 'true');
-
-      var overlay = document.createElement('div');
-      overlay.className = 'hero-overlay';
-      overlay.setAttribute('aria-hidden', 'true');
-
-      var slides = photos.map(function (photo, i) {
-        var img = document.createElement('img');
-        img.className = 'hero-bg-img';
-        img.alt = '';
-        img.decoding = 'async';
-        if (i === 0) {
-          img.loading = 'eager';
-          img.setAttribute('fetchpriority', 'high');
-          img.src = photo.image_url;
-        } else {
-          img.loading = 'lazy';
-        }
-        bgWrap.appendChild(img);
-        return { el: img, url: photo.image_url, loaded: i === 0 };
-      });
-
-      hero.insertBefore(bgWrap, hero.firstChild);
-      hero.insertBefore(overlay, bgWrap.nextSibling);
-      hero.classList.add('has-hero-bg');
-
-      slides[0].el.classList.add('is-active');
-
-      if (prefersReduced || slides.length === 1) {
-        return;
-      }
-
-      function preload(index) {
-        var slide = slides[index];
-        if (!slide.loaded) {
-          slide.el.src = slide.url;
-          slide.loaded = true;
-        }
-      }
-
-      preload(1 % slides.length);
-
-      var current = 0;
-      setInterval(function () {
-        var next = (current + 1) % slides.length;
-        preload((next + 1) % slides.length);
-        slides[current].el.classList.remove('is-active');
-        slides[next].el.classList.add('is-active');
-        current = next;
-      }, HERO_CYCLE_MS);
-    })
-    .catch(function () {
-      // Supabase unavailable — leave the existing solid hero background untouched.
-    });
-})();
+  RedlineHeroBG.init();
 </script>
 
 </body>

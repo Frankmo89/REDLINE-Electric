@@ -88,73 +88,144 @@ style shot — a figure holding a phone, reflected in an illuminated mirror.
 That was the concern that got the previous photo pulled. Left in place because
 photo choice is Joe's call, not ours. Not touched.
 
-The redesigned About block (Tier 2 item 6) is built to hold either way, so
-swapping the photo later needs no code change.
-
-The section degrades gracefully in the meantime: the `<img>` stays hidden, the
-320px wrapper collapses, and the heading, bio, and credential lines still
-render. See `css/styles.css` (`.about-us-photo-wrap:not(:has(...))`) and
-`assets/js/business-info.js:68-85`.
+The redesigned About block (Tier 2 item 6) holds either way — with a photo it
+runs the asymmetric overlap layout, without one it collapses the photo column
+and becomes a centred statement block. Swapping or removing the photo later
+needs no code change.
 
 ### 5. Service area list — unverified
 
 The 20 San Diego County cities and neighborhoods have never been checked
 against where Joe actually takes work. Confirm with him and trim if needed.
 
-The same list appears in **three** places and all three must be updated
-together:
+Since Tier 2 the visible list renders in **one** place, so there are now two
+things to keep in sync:
 
-- `business_info.service_areas` in Supabase (renders into `[data-service-areas-text]`)
-- The hardcoded `<li>` pills under "Areas We Serve" — `index.html`
+- `business_info.service_areas` in Supabase — the single source of truth,
+  rendered into the footer's Areas We Serve band via `[data-service-areas-text]`
 - The `areaServed` block in the `Electrician` JSON-LD — `index.html`
 
-Also flagged in the design audit: the list renders three times within ~600px of
-scroll, which is a separate visual problem tracked under Tier 2 item 7.
+The markup also carries the full list as a static fallback inside
+`.footer-areas-list`, for when Supabase is unreachable. Update that too if the
+list changes.
+
 
 ### 6. Google Business Profile
 
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
-### 7. Visual elevation — Tier 3
-
-Tier 1 and Tier 2 are complete (see Resolved). Tier 3 is on hold pending
-review.
-
-Full audit and reasoning: https://claude.ai/code/artifact/0494a80d-9dcd-4328-b76d-aeb18094754a
-
-**Tier 3 — depth pages and closing**
-
-- Photography on the six service page heroes
-- **Needs a decision:** EV Chargers, Retrofits, and Service Calls have zero
-  matching project photos, so those pages currently end on a bare "No photos in
-  this category yet." Design a real empty state, broaden the category mapping,
-  or hide the section when empty
-- Per-page eyebrows (all six service pages share one string today)
-- Footer as a closing brand statement
-- Retire the 01–06 numerals on services (a set, not a sequence); keep them on
-  How It Works
-
-### 9. Hero eyebrow contrast over photography
-
-Noticed during Tier 1 verification, not yet addressed.
-
-The hero eyebrow (`San Diego · License C-10 #1153394`) is accent red
-`#CC2029` at 13px with wide tracking, sitting directly on the cycling hero
-photograph. On lighter frames — the bathroom shot currently in rotation has a
-pale beige wall right behind it — it drops to a low contrast ratio and is hard
-to read.
-
-This predates the Tier 1 overlay retune and wasn't caused by it; the new
-two-layer scrim improved the headline and CTA area but the eyebrow sits high
-enough in the frame to still catch bright content. Options: raise the scrim in
-the eyebrow band, give the eyebrow a lighter colour over photo heroes only, or
-constrain which photos are eligible for hero rotation. Worth folding into Tier
-2 rather than patching in isolation.
 
 ---
 
 ## Resolved
+
+### 2026-08-17 — Per-page service eyebrows (closes item 7)
+
+All six service heroes carried the identical `San Diego · License C-10
+#1153394` — the same string the home page uses. Each now names its own service
+and location, routed through the existing i18n system rather than hardcoded:
+
+| Page | EN | ES |
+| --- | --- | --- |
+| New Construction | New Construction · San Diego, CA | Construcción Nueva · San Diego, CA |
+| Remodels | Remodels · San Diego, CA | Remodelaciones · San Diego, CA |
+| Retrofits | Retrofits · San Diego, CA | Modernización Eléctrica · San Diego, CA |
+| Art Lighting | Art Lighting · San Diego, CA | Iluminación para Arte · San Diego, CA |
+| EV Chargers | EV Chargers · San Diego, CA | Cargadores para Autos Eléctricos · San Diego, CA |
+| Service Calls | Service Calls · San Diego, CA | Llamadas de Servicio · San Diego, CA |
+
+Six new keys in `assets/js/i18n.js` (`svc_*_eyebrow`), each page's `<span
+class="eyebrow">` repointed from `hero_eyebrow`. **The home page deliberately
+keeps `hero_eyebrow`** — the license line is the right trust signal for a first
+impression.
+
+Spanish service names are reused verbatim from the existing `service_N_title`
+entries so terminology stays consistent with the nav, the services grid and the
+quote form's service dropdown.
+
+Verified: all 237 `data-i18n` keys used across the site resolve (no missing
+keys); all six new keys return correct EN and ES; home page eyebrow unchanged;
+no console errors. Longest Spanish string ("Cargadores para Autos Eléctricos ·
+San Diego, CA") holds a single line at 408px on desktop, and Retrofits' Spanish
+holds one line at 331px inside a 390px viewport — no wrapping at either size.
+Screenshots taken at 1528px (EN and ES) and 390px.
+
+**Verification gotcha worth remembering:** the browser served a stale cached
+`assets/js/i18n.js` even after `location.reload()`, so the new keys resolved to
+`null` and every eyebrow silently fell back to its English markup. A query-string
+cache-bust does *not* fix this — it updates a different cache entry. What worked
+was `fetch('/assets/js/i18n.js', {cache: 'reload'})` on the bare URL, then a
+reload. Worth doing after any i18n.js change before concluding a translation is
+broken.
+
+### 2026-08-17 — Why Choose Us numerals retired
+
+Follow-up to Tier 3 item 13. The four Why Choose Us cards carried `01`–`04`
+with the same flaw the service cards had — a set presented as a sequence — and
+removing them only from Services had left the home page inconsistent between
+its two card grids.
+
+Removed all four numerals and extended the accent rule to cover both grids:
+`.services-grid a.card::before, .why-us .card::before`. The `.num` device now
+survives in exactly one place, the service pages' How It Works steps, where the
+sequence is real.
+
+Verified desktop (1528px) and mobile (390px): `.why-us .num` and
+`.services-grid .num` both 0, accent rule resolving to 22×3px in
+`rgb(204, 32, 41)` on both grids. How It Works still renders `01`–`04` and
+correctly gets **no** accent rule (`content: none`), so the two treatments stay
+visually distinct.
+
+### 2026-08-17 — Tier 3 visual elevation (items 9, 10, 12, 13) + hero eyebrow contrast
+
+CSS, markup and one new JS module. No schema, RLS, or backend changes. All
+verified with screenshots at desktop (1528px) and mobile (390px), plus a
+console-error check on every page type.
+
+**9. Service-page photography.** The inline hero-background block was extracted
+from `index.html` into `assets/js/hero-bg.js` so the six service pages don't
+each carry a copy, then wired up with each page's own category. A service page
+prefers photos from its own category; where that category has none it falls
+back to the featured set — the same photos the home hero uses. Hero slides
+carry no caption and empty alt text, so no photo is presented as an example of
+that specific service.
+
+Verified: Art Lighting draws its own 3 category photos; EV Chargers (zero
+matching) falls back to 7 featured. Home page regression-checked — still 7
+slides with `.has-hero-bg`, crossfade and Ken Burns intact.
+
+**Fallback confirmed as intended behaviour (2026-08-17).** It means a page like
+EV Chargers currently shows a bathroom remodel behind its headline. Decision:
+keep it — showing real quality work beats an empty background, and it resolves
+itself as Joe uploads category-specific photos. No code change needed when he
+does; the category filter picks them up automatically.
+
+**10. Empty galleries hidden.** `showEmpty()` on the service pages now hides
+the whole `<section class="work">` instead of rendering a heading followed by
+"No photos in this category yet." `renderGrid()` un-hides it when matches
+exist, so the section reappears the moment a photo is categorised. Verified:
+EV Chargers `workHidden: true`; Remodels visible with 2 matching tiles.
+
+**12. Footer as closing statement.** The 40px logo image was removed from
+`.footer-brand` — the sticky header carries the mark on every page, so the
+footer was repeating it rather than closing on anything. In its place, an
+oversized `REDLINE ELECTRIC` set in Oswald at `clamp(46px, 13.5vw, 158px)` in
+`--bg2`, a quiet lift off the `#1C1E25` footer ground. `aria-hidden`, since the
+business name is already in the copyright line. Wraps to two lines at 390px.
+
+**13. Service numerals retired.** Removed `01`–`06` from the six service cards
+— a set of services is not a sequence. Replaced with the same short accent rule
+used by `.eyebrow::before`, which keeps the red accent and the vertical rhythm
+the numerals were providing. The `.num` device is still used on the service
+pages' How It Works steps, where the sequence is real.
+
+**Hero eyebrow contrast (was open item 9).** Over photography the accent red
+dropped to a low contrast ratio — the bathroom frame has a pale beige wall
+directly behind that line. `.hero.has-hero-bg .eyebrow` is now cream
+(`var(--ink)`); the short rule stays accent red so the brand mark is unchanged.
+Applies to service heroes automatically, since they now get `.has-hero-bg` from
+the same module. Verified `rgb(245, 245, 240)` on both home and service pages.
 
 ### 2026-08-17 — Tier 2 visual elevation (items 5–8)
 

@@ -169,7 +169,7 @@
 
 <section class="hero">
   <div class="wrap">
-    <span class="eyebrow" data-i18n="hero_eyebrow">San Diego · License C-10 #1153394</span>
+    <span class="eyebrow" data-i18n="svc_artlighting_eyebrow">Art Lighting · San Diego, CA</span>
     <h1 class="display" data-i18n="svc_artlighting_hero_title">Custom Art & Accent Lighting Installation in San Diego, CA</h1>
     <p data-i18n="svc_artlighting_hero_subtitle">Lighting design and wiring that highlights your art, architecture, and outdoor spaces — installed by a licensed electrician.</p>
     <div class="cta-row">
@@ -342,7 +342,6 @@
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
-      <img src="../assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188" class="footer-logo">
       <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
       <div class="footer-contact">
         <a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a>
@@ -374,6 +373,8 @@
       <p class="footer-areas-list" data-service-areas-text>San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, Escondido</p>
     </div>
   </div>
+
+  <div class="footer-wordmark" aria-hidden="true">Redline Electric</div>
 
   <div class="footer-bottom">
     <div class="wrap">
@@ -452,6 +453,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../assets/js/supabase-client.js"></script>
 <script src="../assets/js/business-info.js"></script>
+<script src="../assets/js/hero-bg.js"></script>
+<script>
+  RedlineHeroBG.init({ category: 'Art Lighting' });
+</script>
 
 <script>
 (function () {
@@ -482,10 +487,11 @@
   }
 
   function showEmpty() {
-    grid.innerHTML = '';
-    emptyMsg.textContent = tr('work_empty_filtered', 'No photos in this category yet.');
-    emptyMsg.hidden = false;
-    grid.appendChild(emptyMsg);
+    // Hide the whole section rather than render a heading followed by a line
+    // announcing there is nothing to show. Three of the six categories have
+    // no matching photos, and an empty gallery reads worse than no gallery.
+    var section = grid.closest('section');
+    if (section) section.hidden = true;
   }
 
   var matchedProjects = [];
@@ -495,6 +501,8 @@
       showEmpty();
       return;
     }
+    var section = grid.closest('section');
+    if (section) section.hidden = false;
     grid.innerHTML = '';
     matchedProjects.forEach(function (project) {
       var item = document.createElement('div');
