@@ -42,6 +42,9 @@
         <label>Category
           <select id="category"></select>
         </label>
+        <label class="admin-category-other" id="category-other-wrap" hidden>Custom Category
+          <input type="text" id="category-other" placeholder="e.g. Commercial">
+        </label>
         <label>Photo
           <input type="file" id="file" accept="image/*" required>
         </label>
@@ -317,25 +320,67 @@
   // rendering a select with nothing in it.
   var SERVICE_CATEGORIES = window.RedlineServiceCategories || [];
 
+  // Sentinel for the Other option. Not a storable category: it is swapped for
+  // whatever is typed in the custom field before anything is written.
+  var OTHER_CATEGORY = '__other__';
+
+  function isServiceCategory(value) {
+    return SERVICE_CATEGORIES.indexOf(value) !== -1;
+  }
+
+  // A stored value that is not one of the six belongs in Other. Photos uploaded
+  // while this was a free-text field hold exactly that — "Lighting" and
+  // "Commercial" are both in the table today — and they must survive being
+  // opened in the edit form untouched.
+  function usesOtherCategory(value) {
+    return !!value && !isServiceCategory(value);
+  }
+
+  // The six real services stay clean options, so "Remodels" can no longer
+  // become "Remodel" by a typo. Other keeps the field open for anything else,
+  // guided rather than free-form.
   function categoryOptions(selected) {
     var current = selected || '';
-    var known = false;
     var out = '<option value="">No category</option>';
     SERVICE_CATEGORIES.forEach(function (name) {
-      if (name === current) known = true;
       out += '<option value="' + escapeHtml(name) + '"' +
         (name === current ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
     });
-    // Photos uploaded while this was a free-text field can hold anything —
-    // "Remodel", "Lighting", "Commercial" all exist in the table today. Keep
-    // the stored value as a selected option so opening the edit form never
-    // silently reassigns a photo's category, and flag it so the odd one out is
-    // visible rather than looking like one of the six.
-    if (current && !known) {
-      out += '<option value="' + escapeHtml(current) + '" selected>' +
-        escapeHtml(current) + ' (no service page)</option>';
-    }
+    out += '<option value="' + OTHER_CATEGORY + '"' +
+      (usesOtherCategory(current) ? ' selected' : '') + '>Other\u2026</option>';
     return out;
+  }
+
+  function categoryOtherField(selected, inputClass) {
+    var current = selected || '';
+    var isOther = usesOtherCategory(current);
+    return '<label class="admin-category-other"' + (isOther ? '' : ' hidden') + '>Custom Category' +
+      '<input type="text" class="' + inputClass + '" placeholder="e.g. Commercial" value="' +
+      escapeHtml(isOther ? current : '') + '">' +
+    '</label>';
+  }
+
+  // Shows or hides the custom field to match the select. The typed value is
+  // deliberately left in place when switching away, so flipping to a service
+  // and back does not lose it.
+  function syncCategoryOther(selectEl, wrapEl, shouldFocus) {
+    var isOther = selectEl.value === OTHER_CATEGORY;
+    wrapEl.hidden = !isOther;
+    if (isOther && shouldFocus) {
+      var input = wrapEl.querySelector('input');
+      if (input) input.focus();
+    }
+  }
+
+  // Resolves what to store. `ok: false` means Other was chosen with nothing
+  // typed, which is the one invalid combination.
+  function resolveCategory(selectEl, inputEl) {
+    if (selectEl.value !== OTHER_CATEGORY) {
+      return { ok: true, value: selectEl.value || null };
+    }
+    var custom = inputEl.value.trim();
+    if (!custom) return { ok: false };
+    return { ok: true, value: custom };
   }
 
   // ---- Confirm dialog ----------------------------------------------------
@@ -573,6 +618,7 @@
         '<label>Category' +
           '<select class="admin-edit-category">' + categoryOptions(project.category) + '</select>' +
         '</label>' +
+        categoryOtherField(project.category, 'admin-edit-category-other') +
         '<p class="admin-error admin-edit-error" hidden></p>' +
         '<div class="admin-card-actions">' +
           '<button type="submit" class="admin-save-btn">Save</button>' +
@@ -675,12 +721,20 @@
 
     var title = document.getElementById('title').value.trim();
     var description = document.getElementById('description').value.trim();
-    var category = document.getElementById('category').value.trim();
+    var categorySelect = document.getElementById('category');
+    var categoryOther = document.getElementById('category-other');
+    var categoryResolved = resolveCategory(categorySelect, categoryOther);
     var fileInput = document.getElementById('file');
     var file = fileInput.files[0];
 
     if (!title) {
       flashInline(uploadError, 'Title and photo are required.', false);
+      return;
+    }
+
+    if (!categoryResolved.ok) {
+      flashInline(uploadError, 'Type a name for the custom category, or pick one from the list.', false);
+      categoryOther.focus();
       return;
     }
 
@@ -733,7 +787,7 @@
     var insertRes = await supabaseClient.from('projects').insert({
       title: title,
       description: description || null,
-      category: category || null,
+      category: categoryResolved.value,
       image_url: imageUrl,
       is_published: false
     });
@@ -748,6 +802,10 @@
     flashInline(uploadSuccess, 'Uploaded as a draft — tap Publish on the photo below to put it on the site.');
     showToast('Photo uploaded as a draft.', 'success');
     uploadForm.reset();
+    // form.reset() restores the select but leaves the revealed custom field on
+    // screen with its text still in it.
+    categoryOther.value = '';
+    document.getElementById('category-other-wrap').hidden = true;
     loadProjects();
   });
 
@@ -777,6 +835,13 @@
     }
   });
 
+  grid.addEventListener('change', function (e) {
+    var select = e.target.closest('.admin-edit-category');
+    if (!select) return;
+    var wrap = select.closest('.admin-card-edit').querySelector('.admin-category-other');
+    syncCategoryOther(select, wrap, true);
+  });
+
   grid.addEventListener('submit', async function (e) {
     var form = e.target.closest('.admin-card-edit');
     if (!form) return;
@@ -787,11 +852,17 @@
     var errEl = form.querySelector('.admin-edit-error');
     var title = titleEl.value.trim();
     var description = form.querySelector('.admin-edit-description').value.trim();
-    var category = form.querySelector('.admin-edit-category').value.trim();
+    var editCategoryOther = form.querySelector('.admin-edit-category-other');
+    var editCategory = resolveCategory(form.querySelector('.admin-edit-category'), editCategoryOther);
 
     if (!title) {
       flashInline(errEl, 'Title is required.', false);
       titleEl.focus();
+      return;
+    }
+    if (!editCategory.ok) {
+      flashInline(errEl, 'Type a name for the custom category, or pick one from the list.', false);
+      editCategoryOther.focus();
       return;
     }
     errEl.hidden = true;
@@ -805,7 +876,7 @@
       supabaseClient.from('projects').update({
         title: title,
         description: description || null,
-        category: category || null
+        category: editCategory.value
       }).eq('id', id)
     );
 
@@ -1928,7 +1999,12 @@
     if (!session) return;
     // Active tab only. The other three load when first opened; the leads badge
     // gets its own count-only query so it is correct before that happens.
-    document.getElementById('category').innerHTML = categoryOptions('');
+    var uploadCategorySelect = document.getElementById('category');
+    var uploadCategoryWrap = document.getElementById('category-other-wrap');
+    uploadCategorySelect.innerHTML = categoryOptions('');
+    uploadCategorySelect.addEventListener('change', function () {
+      syncCategoryOther(uploadCategorySelect, uploadCategoryWrap, true);
+    });
 
     tabLoaded.photos = true;
     loadProjects();

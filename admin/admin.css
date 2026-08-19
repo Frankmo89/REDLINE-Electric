@@ -72,6 +72,10 @@
 .admin-form input[type="file"] {
   padding: 11px 14px;
 }
+/* .admin-form label is display:flex, which beats the [hidden] attribute's
+   default display:none — without this the "Other" custom field would stay on
+   screen while marked hidden. */
+.admin-form label[hidden] { display: none; }
 .admin-form input:focus,
 .admin-form textarea:focus,
 .admin-form select:focus {

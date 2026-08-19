@@ -120,6 +120,62 @@ part of this codebase — listed here only so it isn't forgotten.
 
 ## Resolved
 
+### 2026-08-18 — Category field revised: six services plus "Other" (revises item 11)
+
+Batch 9 shipped the category field as a closed dropdown of the six services,
+which solved the typo problem but could not express anything outside them. It
+now carries an **Other…** option that reveals a required free-text field for a
+custom label, in both the upload form and the batch 6 edit form.
+
+- The six services stay clean options, so "Remodels" still cannot become
+  "Remodel" by accident — the original problem stays solved.
+- Choosing Other reveals a Custom Category field, focuses it, and stores what is
+  typed (trimmed) as the category. Choosing Other and leaving it blank is the
+  one invalid combination and is blocked in both forms with
+  "Type a name for the custom category, or pick one from the list."
+- Opening a photo whose stored category is not one of the six — `Lighting` and
+  `Commercial` both are — shows **Other pre-selected with that value
+  pre-filled**, never forced into one of the six and never silently dropped.
+  This replaces batch 9's read-only "(no service page)" option, which preserved
+  the value but gave no way to change it.
+- Switching away from Other hides the field but keeps what was typed, so
+  flipping to a service and back does not lose it.
+
+**One CSS trap worth recording.** `.admin-form label` is `display: flex`, which
+beats the `[hidden]` attribute's default `display: none` — so the custom field
+stayed on screen while marked hidden. Fixed with an explicit
+`.admin-form label[hidden] { display: none; }`.
+
+**Migration.** `Remodel` → `Remodels` was already applied earlier the same day
+and needed no repeat; verified there are no `Remodel` rows left. `Lighting` and
+`Commercial` are untouched and now reachable through Other for manual
+recategorisation.
+
+**Verification.** Upload with a service category stored `Retrofits`; upload with
+Other + custom stored `ZZ Trace Category`, trimmed — both confirmed by querying
+the server directly, not just by reading the rendered card. Edit form: opened
+both real off-list photos and confirmed Other pre-selected with the value
+pre-filled, then cancelled, leaving them unchanged; switched a custom category
+to a service and back to Other with a new label, both saved correctly; blank
+Other blocked. `work.html` pills built from the stored values with no
+duplicates, and filtering by the custom pill returned exactly its one photo.
+Checked at 390px: both custom fields 16px and 50px tall, no horizontal overflow.
+Test photos and their storage objects deleted — `projects` back to 8, 10 files,
+category counts unchanged.
+
+**A "vanishing upload" during testing was two sessions colliding, not a bug.**
+Two test photos uploaded fine, survived an edit, and were then gone from the
+database with no storage object — because test uploads were being deleted from
+the dashboard by hand from another session at the same time. The dashboard's delete removes the row
+first and the file second, which is exactly the state that was found, and it
+explains why an earlier UPDATE returned a row while a later publish reported
+"Nothing changed": the row was deleted in between. No fault in the upload path,
+and nothing to watch for.
+
+Worth remembering only as a testing note: **two people working the same admin
+data at once will produce results that look like data loss.** Use distinctive
+test titles and say when a test run is in progress.
+
 ### 2026-08-18 — Password reset verified in production (closes items 7 and 12)
 
 Verified manually, end to end, against the real deployment: reset requested from
@@ -277,8 +333,8 @@ no orphaned storage object.
 **Follow-ups completed 2026-08-18, after review:**
 
 *Category migration.* `Remodel` → `Remodels` on the two photos holding it, at
-Joe's instruction. `Lighting` and `Commercial` were left alone deliberately —
-he is recategorising those two by hand once he has looked at them. Worth
+request. `Lighting` and `Commercial` were left alone deliberately — they are
+to be recategorised by hand after someone has looked at the actual photos. Worth
 recording that this changed **less than expected**: `hero-bg.js` `normalize()`
 lowercases and strips a trailing `s`, so `Remodel` already matched the Remodels
 service page hero. The only thing that moved was `work.html`'s filter pill,
