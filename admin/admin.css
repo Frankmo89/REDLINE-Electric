@@ -578,7 +578,10 @@
 }
 .admin-delete-btn,
 .admin-feature-btn,
-.admin-publish-btn {
+.admin-publish-btn,
+.admin-edit-btn,
+.admin-save-btn,
+.admin-cancel-btn {
   flex: 1 1 auto;
   background: transparent;
   color: var(--accent);
@@ -593,7 +596,9 @@
   cursor: pointer;
 }
 .admin-feature-btn,
-.admin-publish-btn {
+.admin-publish-btn,
+.admin-edit-btn,
+.admin-cancel-btn {
   color: var(--ink-dim);
   border-color: var(--line);
 }
@@ -613,13 +618,19 @@
 .admin-delete-btn:focus-visible,
 .admin-feature-btn:focus-visible,
 .admin-publish-btn:focus-visible,
+.admin-edit-btn:focus-visible,
+.admin-save-btn:focus-visible,
+.admin-cancel-btn:focus-visible,
 .admin-bulk-delete-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 .admin-delete-btn:disabled,
 .admin-feature-btn:disabled,
-.admin-publish-btn:disabled {
+.admin-publish-btn:disabled,
+.admin-edit-btn:disabled,
+.admin-save-btn:disabled,
+.admin-cancel-btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
@@ -627,6 +638,32 @@
   color: var(--ink-dim);
   font-size: var(--fs-small);
   padding: 16px 0;
+}
+
+/* ---- Inline card editing ----
+   Reuses .admin-form for the 16px fields, with a tighter gap because this one
+   sits inside a card rather than filling a section. */
+.admin-card-edit {
+  gap: 12px;
+}
+/* .admin-form makes the submit button full-width and pushes it down — right for
+   the page-level Upload/Add Review forms, wrong here where Save sits beside
+   Cancel in the usual card action row. */
+.admin-card-edit button[type="submit"] {
+  margin-top: 0;
+  width: auto;
+  min-height: 44px;
+}
+/* Save is the form's primary action, so it takes the solid fill the site's
+   .btn-primary uses. No clash with .is-featured: in edit mode the action row
+   holds only Save and Cancel. */
+.admin-save-btn {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.admin-card-edit .admin-edit-error {
+  margin: 0;
 }
 
 /* ---- Business info ---- */
@@ -730,12 +767,18 @@
   }
   .admin-delete-btn,
   .admin-feature-btn,
-  .admin-publish-btn {
+  .admin-publish-btn,
+  .admin-edit-btn,
+  .admin-save-btn,
+  .admin-cancel-btn {
     flex: 0 1 auto;
     min-height: 38px;
     padding: 9px 14px;
     font-size: var(--fs-label);
   }
+  /* Matches the 38px the other card buttons drop to. Needs the same selector
+     shape as the base rule to outrank .admin-form button[type="submit"]. */
+  .admin-card-edit button[type="submit"] { min-height: 38px; }
   .admin-select-all-label,
   .admin-card-select { min-height: 0; padding: 0; }
   .admin-body input[type="checkbox"] { width: 16px; height: 16px; }

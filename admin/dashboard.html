@@ -439,6 +439,77 @@
 
   var photosSelection = setupBulkSelection(grid, photosSelectAll, photosBulkCount, photosBulkDeleteBtn, 'photo');
 
+  // Rows are kept by id so a card can be re-rendered — into its edit form, or
+  // back out of it — without refetching the whole grid.
+  var projectsById = Object.create(null);
+
+  // The badge carries the state so the button can carry the action — "Publish"
+  // is what tapping it does, not what the photo currently is.
+  function projectViewInner(project) {
+    var path = pathFromPublicUrl(project.image_url) || '';
+    var featured = !!project.is_featured;
+    var published = !!project.is_published;
+    return '' +
+      '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '"> Select</label>' +
+      (published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
+      '<h3>' + escapeHtml(project.title) + '</h3>' +
+      (project.category ? '<span class="admin-card-category">' + escapeHtml(project.category) + '</span>' : '') +
+      (project.description ? '<p>' + escapeHtml(project.description) + '</p>' : '') +
+      '<div class="admin-card-actions">' +
+        '<button type="button" class="admin-publish-btn' + (published ? '' : ' is-draft') + '" data-id="' + project.id + '" data-published="' + published + '">' +
+          (published ? 'Unpublish' : 'Publish') +
+        '</button>' +
+        '<button type="button" class="admin-edit-btn" data-id="' + project.id + '">Edit</button>' +
+        '<button type="button" class="admin-feature-btn' + (featured ? ' is-featured' : '') + '" data-id="' + project.id + '" data-featured="' + featured + '">' +
+          (featured ? '★ Featured' : '☆ Feature for Hero') +
+        '</button>' +
+        '<button type="button" class="admin-delete-btn" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '">Delete</button>' +
+      '</div>';
+  }
+
+  // The image is deliberately absent: swapping the stored file is a different
+  // job (delete + re-upload), so edit covers the text fields only.
+  function projectEditInner(project) {
+    return '' +
+      '<form class="admin-form admin-card-edit" data-id="' + project.id + '">' +
+        (project.is_published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
+        '<label>Title' +
+          '<input type="text" class="admin-edit-title" value="' + escapeHtml(project.title) + '" required>' +
+        '</label>' +
+        '<label>Description' +
+          '<textarea class="admin-edit-description" rows="3">' + escapeHtml(project.description || '') + '</textarea>' +
+        '</label>' +
+        '<label>Category' +
+          '<input type="text" class="admin-edit-category" value="' + escapeHtml(project.category || '') + '">' +
+        '</label>' +
+        '<p class="admin-error admin-edit-error" hidden></p>' +
+        '<div class="admin-card-actions">' +
+          '<button type="submit" class="admin-save-btn">Save</button>' +
+          '<button type="button" class="admin-cancel-btn">Cancel</button>' +
+        '</div>' +
+      '</form>';
+  }
+
+  function buildProjectCard(project) {
+    var card = document.createElement('div');
+    card.className = 'admin-card' + (project.is_published ? '' : ' is-draft');
+    card.setAttribute('data-id', project.id);
+    card.innerHTML =
+      '<img src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '">' +
+      '<div class="admin-card-body">' + projectViewInner(project) + '</div>';
+    return card;
+  }
+
+  // Swapping one card beats reloading the grid: a full reload would discard an
+  // edit form open on a *different* card, losing whatever was typed there.
+  function replaceProjectCard(project) {
+    projectsById[project.id] = project;
+    var old = grid.querySelector('.admin-card[data-id="' + project.id + '"]');
+    if (!old) { loadProjects(); return; }
+    old.parentNode.replaceChild(buildProjectCard(project), old);
+    photosSelection.refresh();
+  }
+
   async function requireSession() {
     var res = await supabaseClient.auth.getSession();
     if (!res.data.session) {
@@ -477,33 +548,10 @@
     emptyMsg.hidden = true;
     photosBulkBar.hidden = false;
 
+    projectsById = Object.create(null);
     res.data.forEach(function (project) {
-      var path = pathFromPublicUrl(project.image_url) || '';
-      var card = document.createElement('div');
-      var featured = !!project.is_featured;
-      var published = !!project.is_published;
-      // The badge carries the state so the button can carry the action —
-      // "Publish" is what tapping it does, not what the photo currently is.
-      card.className = 'admin-card' + (published ? '' : ' is-draft');
-      card.innerHTML =
-        '<img src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '">' +
-        '<div class="admin-card-body">' +
-          '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '"> Select</label>' +
-          (published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
-          '<h3>' + escapeHtml(project.title) + '</h3>' +
-          (project.category ? '<span class="admin-card-category">' + escapeHtml(project.category) + '</span>' : '') +
-          (project.description ? '<p>' + escapeHtml(project.description) + '</p>' : '') +
-          '<div class="admin-card-actions">' +
-            '<button type="button" class="admin-publish-btn' + (published ? '' : ' is-draft') + '" data-id="' + project.id + '" data-published="' + published + '">' +
-              (published ? 'Unpublish' : 'Publish') +
-            '</button>' +
-            '<button type="button" class="admin-feature-btn' + (featured ? ' is-featured' : '') + '" data-id="' + project.id + '" data-featured="' + featured + '">' +
-              (featured ? '★ Featured' : '☆ Feature for Hero') +
-            '</button>' +
-            '<button type="button" class="admin-delete-btn" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '">Delete</button>' +
-          '</div>' +
-        '</div>';
-      grid.appendChild(card);
+      projectsById[project.id] = project;
+      grid.appendChild(buildProjectCard(project));
     });
   }
 
@@ -592,6 +640,78 @@
     loadProjects();
   });
 
+  grid.addEventListener('click', function (e) {
+    var editBtn = e.target.closest('.admin-edit-btn');
+    if (editBtn) {
+      var editCard = editBtn.closest('.admin-card');
+      var editProject = projectsById[editBtn.getAttribute('data-id')];
+      if (!editProject) return;
+      editCard.querySelector('.admin-card-body').innerHTML = projectEditInner(editProject);
+      // The row checkbox is replaced by the form, so the bulk bar has to recount.
+      photosSelection.refresh();
+      var firstField = editCard.querySelector('.admin-edit-title');
+      if (firstField) firstField.focus();
+      return;
+    }
+
+    var cancelBtn = e.target.closest('.admin-cancel-btn');
+    if (cancelBtn) {
+      var cancelCard = cancelBtn.closest('.admin-card');
+      var cancelProject = projectsById[cancelCard.getAttribute('data-id')];
+      if (!cancelProject) return;
+      // Straight back to the last loaded values — nothing typed is written.
+      cancelCard.querySelector('.admin-card-body').innerHTML = projectViewInner(cancelProject);
+      photosSelection.refresh();
+      return;
+    }
+  });
+
+  grid.addEventListener('submit', async function (e) {
+    var form = e.target.closest('.admin-card-edit');
+    if (!form) return;
+    e.preventDefault();
+
+    var id = form.getAttribute('data-id');
+    var titleEl = form.querySelector('.admin-edit-title');
+    var errEl = form.querySelector('.admin-edit-error');
+    var title = titleEl.value.trim();
+    var description = form.querySelector('.admin-edit-description').value.trim();
+    var category = form.querySelector('.admin-edit-category').value.trim();
+
+    if (!title) {
+      flashInline(errEl, 'Title is required.', false);
+      titleEl.focus();
+      return;
+    }
+    errEl.hidden = true;
+
+    var saveBtn = form.querySelector('.admin-save-btn');
+    var cancelSaveBtn = form.querySelector('.admin-cancel-btn');
+    saveBtn.disabled = true;
+    cancelSaveBtn.disabled = true;
+
+    var saveRes = await runMutation(
+      supabaseClient.from('projects').update({
+        title: title,
+        description: description || null,
+        category: category || null
+      }).eq('id', id)
+    );
+
+    saveBtn.disabled = false;
+    cancelSaveBtn.disabled = false;
+
+    if (!saveRes.ok) {
+      // The form is left open and still populated on purpose: a failed save
+      // must not throw away what was typed.
+      showToast('Could not save the changes. ' + saveRes.message, 'error');
+      return;
+    }
+
+    showToast('Photo details saved.', 'success');
+    replaceProjectCard(saveRes.data[0]);
+  });
+
   grid.addEventListener('click', async function (e) {
     var publishBtn = e.target.closest('.admin-publish-btn');
     if (publishBtn) {
@@ -611,7 +731,7 @@
       }
 
       showToast(wasPublished ? 'Photo taken off the site.' : 'Photo published to the site.', 'success');
-      loadProjects();
+      replaceProjectCard(publishRes.data[0]);
       return;
     }
 
@@ -640,7 +760,7 @@
           : (stillDraft ? 'Featured — it shows on the hero once you publish it.' : 'Featured on the hero.'),
         'success'
       );
-      loadProjects();
+      replaceProjectCard(featureRes.data[0]);
       return;
     }
 
@@ -1072,12 +1192,90 @@
   var reviewsBulkDeleteBtn = document.getElementById('reviews-bulk-delete-btn');
   var reviewsSelection = setupBulkSelection(reviewsGrid, reviewsSelectAll, reviewsBulkCount, reviewsBulkDeleteBtn, 'review');
 
-  function starString(rating) {
-    // Round first: repeat() truncates, so 4.5 used to render 4 filled + 0 empty
-    // (only 4 glyphs). A null/invalid rating now falls back to 5, not 1.
+  // Round first: repeat() truncates, so 4.5 used to render 4 filled + 0 empty
+  // (only 4 glyphs). A null/invalid rating falls back to 5, not 1. The edit
+  // form's <select> needs the same clamp to preselect the right option.
+  function normalizedRating(rating) {
     var n = Number(rating);
-    var r = Math.round(Math.max(1, Math.min(5, isFinite(n) && n > 0 ? n : 5)));
+    return Math.round(Math.max(1, Math.min(5, isFinite(n) && n > 0 ? n : 5)));
+  }
+
+  function starString(rating) {
+    var r = normalizedRating(rating);
     return '★'.repeat(r) + '☆'.repeat(5 - r);
+  }
+
+  function ratingOptions(selected) {
+    var current = normalizedRating(selected);
+    var out = '';
+    for (var r = 5; r >= 1; r--) {
+      out += '<option value="' + r + '"' + (r === current ? ' selected' : '') + '>' +
+        starString(r) + ' (' + r + ')</option>';
+    }
+    return out;
+  }
+
+  // Rows are kept by id for the same reason as the photo grid: so one card can
+  // be re-rendered into and out of its edit form without refetching.
+  var reviewsById = Object.create(null);
+
+  function reviewViewInner(review) {
+    var published = !!review.is_published;
+    return '' +
+      '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + review.id + '"> Select</label>' +
+      (published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
+      '<div class="admin-review-stars">' + starString(review.rating) + '</div>' +
+      '<h3>' + escapeHtml(review.customer_name) + '</h3>' +
+      (review.location ? '<span class="admin-card-category">' + escapeHtml(review.location) + '</span>' : '') +
+      '<p>' + escapeHtml(review.review_text) + '</p>' +
+      '<div class="admin-card-actions">' +
+        '<button type="button" class="admin-publish-btn' + (published ? '' : ' is-draft') + '" data-id="' + review.id + '" data-published="' + published + '">' +
+          (published ? 'Unpublish' : 'Publish') +
+        '</button>' +
+        '<button type="button" class="admin-edit-btn" data-id="' + review.id + '">Edit</button>' +
+        '<button type="button" class="admin-delete-btn" data-id="' + review.id + '">Delete</button>' +
+      '</div>';
+  }
+
+  function reviewEditInner(review) {
+    return '' +
+      '<form class="admin-form admin-card-edit" data-id="' + review.id + '">' +
+        (review.is_published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
+        '<label>Customer Name' +
+          '<input type="text" class="admin-edit-name" value="' + escapeHtml(review.customer_name) + '" required>' +
+        '</label>' +
+        '<label>Rating' +
+          '<select class="admin-edit-rating">' + ratingOptions(review.rating) + '</select>' +
+        '</label>' +
+        '<label>Review Text' +
+          '<textarea class="admin-edit-text" rows="4" required>' + escapeHtml(review.review_text || '') + '</textarea>' +
+        '</label>' +
+        '<label>Location (optional)' +
+          '<input type="text" class="admin-edit-location" value="' + escapeHtml(review.location || '') + '">' +
+        '</label>' +
+        '<p class="admin-error admin-edit-error" hidden></p>' +
+        '<div class="admin-card-actions">' +
+          '<button type="submit" class="admin-save-btn">Save</button>' +
+          '<button type="button" class="admin-cancel-btn">Cancel</button>' +
+        '</div>' +
+      '</form>';
+  }
+
+  function buildReviewCard(review) {
+    var card = document.createElement('div');
+    // Matches the photo card exactly: badge for state, verb for the button.
+    card.className = 'admin-card' + (review.is_published ? '' : ' is-draft');
+    card.setAttribute('data-id', review.id);
+    card.innerHTML = '<div class="admin-card-body">' + reviewViewInner(review) + '</div>';
+    return card;
+  }
+
+  function replaceReviewCard(review) {
+    reviewsById[review.id] = review;
+    var old = reviewsGrid.querySelector('.admin-card[data-id="' + review.id + '"]');
+    if (!old) { loadReviews(); return; }
+    old.parentNode.replaceChild(buildReviewCard(review), old);
+    reviewsSelection.refresh();
   }
 
   async function loadReviews() {
@@ -1109,29 +1307,10 @@
     reviewsEmptyMsg.hidden = true;
     reviewsBulkBar.hidden = false;
 
+    reviewsById = Object.create(null);
     res.data.forEach(function (review) {
-      var published = !!review.is_published;
-      var card = document.createElement('div');
-      // Matches the photo card exactly: badge for state, verb for the button.
-      // The old control was a status label styled like the Feature toggle,
-      // which read as "this is published" rather than "tap to publish".
-      card.className = 'admin-card' + (published ? '' : ' is-draft');
-      card.innerHTML =
-        '<div class="admin-card-body">' +
-          '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + review.id + '"> Select</label>' +
-          (published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
-          '<div class="admin-review-stars">' + starString(review.rating) + '</div>' +
-          '<h3>' + escapeHtml(review.customer_name) + '</h3>' +
-          (review.location ? '<span class="admin-card-category">' + escapeHtml(review.location) + '</span>' : '') +
-          '<p>' + escapeHtml(review.review_text) + '</p>' +
-          '<div class="admin-card-actions">' +
-            '<button type="button" class="admin-publish-btn' + (published ? '' : ' is-draft') + '" data-id="' + review.id + '" data-published="' + published + '">' +
-              (published ? 'Unpublish' : 'Publish') +
-            '</button>' +
-            '<button type="button" class="admin-delete-btn" data-id="' + review.id + '">Delete</button>' +
-          '</div>' +
-        '</div>';
-      reviewsGrid.appendChild(card);
+      reviewsById[review.id] = review;
+      reviewsGrid.appendChild(buildReviewCard(review));
     });
   }
 
@@ -1176,6 +1355,79 @@
     loadReviews();
   });
 
+  reviewsGrid.addEventListener('click', function (e) {
+    var editBtn = e.target.closest('.admin-edit-btn');
+    if (editBtn) {
+      var editCard = editBtn.closest('.admin-card');
+      var editReview = reviewsById[editBtn.getAttribute('data-id')];
+      if (!editReview) return;
+      editCard.querySelector('.admin-card-body').innerHTML = reviewEditInner(editReview);
+      reviewsSelection.refresh();
+      var firstField = editCard.querySelector('.admin-edit-name');
+      if (firstField) firstField.focus();
+      return;
+    }
+
+    var cancelBtn = e.target.closest('.admin-cancel-btn');
+    if (cancelBtn) {
+      var cancelCard = cancelBtn.closest('.admin-card');
+      var cancelReview = reviewsById[cancelCard.getAttribute('data-id')];
+      if (!cancelReview) return;
+      cancelCard.querySelector('.admin-card-body').innerHTML = reviewViewInner(cancelReview);
+      reviewsSelection.refresh();
+      return;
+    }
+  });
+
+  reviewsGrid.addEventListener('submit', async function (e) {
+    var form = e.target.closest('.admin-card-edit');
+    if (!form) return;
+    e.preventDefault();
+
+    var id = form.getAttribute('data-id');
+    var nameEl = form.querySelector('.admin-edit-name');
+    var textEl = form.querySelector('.admin-edit-text');
+    var errEl = form.querySelector('.admin-edit-error');
+    var name = nameEl.value.trim();
+    var text = textEl.value.trim();
+    var location = form.querySelector('.admin-edit-location').value.trim();
+    var rating = parseInt(form.querySelector('.admin-edit-rating').value, 10);
+
+    // Same two required fields the Add Review form enforces.
+    if (!name || !text) {
+      flashInline(errEl, 'Customer name and review text are required.', false);
+      (name ? textEl : nameEl).focus();
+      return;
+    }
+    errEl.hidden = true;
+
+    var saveBtn = form.querySelector('.admin-save-btn');
+    var cancelSaveBtn = form.querySelector('.admin-cancel-btn');
+    saveBtn.disabled = true;
+    cancelSaveBtn.disabled = true;
+
+    var saveRes = await runMutation(
+      supabaseClient.from('reviews').update({
+        customer_name: name,
+        rating: rating,
+        review_text: text,
+        location: location || null
+      }).eq('id', id)
+    );
+
+    saveBtn.disabled = false;
+    cancelSaveBtn.disabled = false;
+
+    if (!saveRes.ok) {
+      // Left open and populated, same as the photo form.
+      showToast('Could not save the changes. ' + saveRes.message, 'error');
+      return;
+    }
+
+    showToast('Review saved.', 'success');
+    replaceReviewCard(saveRes.data[0]);
+  });
+
   reviewsGrid.addEventListener('click', async function (e) {
     var toggleBtn = e.target.closest('.admin-publish-btn');
     if (toggleBtn) {
@@ -1195,7 +1447,7 @@
       }
 
       showToast(wasPublished ? 'Review taken off the site.' : 'Review published to the site.', 'success');
-      loadReviews();
+      replaceReviewCard(toggleRes.data[0]);
       return;
     }
 

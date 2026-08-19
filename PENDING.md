@@ -115,16 +115,14 @@ list changes.
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
-### 8. Admin dashboard audit — batches 6–12 (held)
+### 8. Admin dashboard audit — remaining items (held)
 
 From the 2026-08-17 audit, deferred until batches 1–4 and 5 land. Numbered as in
-the audit:
+the audit, so the gap at 7 means resolved (edit shipped 2026-08-18, batch 6):
 
 - **6.** Business Info race guard — *mostly closed already* by batch 4: the form
   is now gated behind its load, so the fetch can no longer overwrite mid-edit.
   What remains is an unsaved-changes guard when switching tabs.
-- **7.** Edit for photos and reviews (currently create + delete only; a typo in a
-  title means delete and re-upload).
 - **8.** Lead notes + new-lead count badge — needs a `leads.notes` column.
 - **9.** Consistency pass: custom confirm dialog replacing `window.confirm`,
   honest "Feature for Hero" label (it changes the hero but not the homepage
@@ -143,7 +141,59 @@ the audit:
 
 ## Resolved
 
-### 2026-08-18 — Admin dashboard audit, batch 5 (closes item 7)
+### 2026-08-18 — Admin dashboard audit, batch 6 (closes audit item 7, listed under open item 8)
+
+Create and delete were the only operations, so fixing a typo in a photo title
+or a miscategorised review meant deleting the row and re-uploading the file.
+
+**Inline editing, in the card.** An `Edit` button on each photo and review card
+swaps that card's body for a form pre-filled with the current values; `Save`
+writes an `UPDATE` through the existing `runMutation()` helper and `Cancel` puts
+the card straight back without writing. The form reuses `.admin-form`, so it
+inherits the 16px fields batch 1 established — no separate styling to keep in
+sync.
+
+- Photos edit `title`, `description`, `category`. The image is deliberately not
+  editable: swapping the stored file is delete + re-upload, a different job.
+- Reviews edit `customer_name`, `rating` (a `<select>`, same five options as the
+  Add Review form), `review_text`, `location`.
+- A failed save keeps the form open with everything still typed in it, and
+  re-enables both buttons — the error toast is the only thing that changes.
+  Verified by pointing a save at a non-existent row id.
+- The row's bulk-select checkbox is replaced by the form while editing, so
+  entering and leaving edit mode recounts the bulk bar.
+
+**Judgment call: the publish and feature toggles no longer reload the grid.**
+They now re-render only their own card, from the row `runMutation()` already
+returns via `.select()`. Without this, tapping Publish on one card would call
+`loadProjects()` and silently destroy an edit form open on another card, along
+with whatever had been typed into it. This batch created that hazard, so it
+fixes it rather than leaving it for item 9.
+
+**Also extracted:** `normalizedRating()`, so the edit form's `<select>`
+preselects using the same clamp `starString()` uses — a stored 4.5 shows four
+stars and preselects 5, rather than the two disagreeing.
+
+**One CSS trap worth knowing.** `.admin-form button[type="submit"]` is
+full-width with `min-height: 48px`, which is right for the page-level Upload and
+Add Review forms and wrong for a Save that sits beside Cancel in a card. The
+override needs the same selector shape (`.admin-card-edit button[type="submit"]`)
+to outrank it — a bare `.admin-save-btn` loses on specificity, which silently
+left Save at 44px on desktop while Cancel shrank to 38px.
+
+**Verification.** Layout checked in a 390px and a 1200px viewport: fields render
+at 16px, Save/Cancel are 45px tall on mobile and 38px on desktop, no horizontal
+overflow, and a card entering edit mode leaves its neighbours untouched. Write
+path run end-to-end against the live project with a throwaway row in each table:
+photo title/description/category edited and confirmed in the database and on the
+card, then published and confirmed to carry the *edited* values into the public
+`is_published`-filtered query; review name, rating (3 → 5), text and location
+edited and confirmed the same way; Cancel confirmed to discard typed text; the
+failure path confirmed to hold the form open. Both test rows and the uploaded
+storage object were deleted afterwards — `projects` and `reviews` are back to 8
+and 3, all published, no leftovers.
+
+### 2026-08-18 — Admin dashboard audit, batch 5 (closes open item 7)
 
 Photos had no publish state: an upload was on `index.html`, `work.html`, and the
 hero rotator the instant it finished, and the only way to retract a bad one was
