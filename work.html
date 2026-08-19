@@ -47,6 +47,8 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<a class="skip-link" href="#main-content" data-i18n="skip_to_content">Skip to main content</a>
+
 
 <div class="lang-banner" id="lang-banner" hidden>
   <div class="wrap lang-banner-inner">
@@ -113,6 +115,8 @@
   </div>
 </header>
 
+<main id="main-content">
+
 <section class="work">
   <div class="wrap">
     <h1 class="display" data-i18n="work_heading">Our Work</h1>
@@ -120,6 +124,7 @@
 
     <div class="filter-pills" id="filter-pills"></div>
 
+    <p class="visually-hidden" id="work-status" role="status" aria-live="polite"></p>
     <div class="work-grid" id="work-grid">
       <p class="work-empty" id="work-empty" data-i18n="work_empty" hidden>Photos coming soon.</p>
     </div>
@@ -141,6 +146,8 @@
   </div>
 </section>
 
+</main>
+
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
@@ -152,7 +159,7 @@
     </div>
 
     <div class="footer-links">
-      <h3 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h3>
+      <h2 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h2>
       <ul>
         <li><a href="index.html#home" data-i18n="nav_home">Home</a></li>
         <li><a href="index.html#services" data-i18n="nav_services">Services</a></li>
@@ -163,14 +170,14 @@
     </div>
 
     <div class="footer-info">
-      <h3 class="footer-heading" data-i18n="footer_credentials">Credentials</h3>
+      <h2 class="footer-heading" data-i18n="footer_credentials">Credentials</h2>
       <p data-i18n="footer_license">C-10 License #1153394</p>
     </div>
   </div>
 
   <div class="footer-areas">
     <div class="wrap">
-      <h3 class="footer-heading" data-i18n="areas_served_heading">Areas We Serve</h3>
+      <h2 class="footer-heading" data-i18n="areas_served_heading">Areas We Serve</h2>
       <p class="footer-areas-list" data-service-areas-text>San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, Escondido</p>
     </div>
   </div>
@@ -298,11 +305,24 @@
     labels.forEach(function (label) {
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'filter-pill' + (label === activeCategory ? ' is-active' : '');
+      var isActive = label === activeCategory;
+      btn.className = 'filter-pill' + (isActive ? ' is-active' : '');
       btn.textContent = label === 'All' ? tr('work_filter_all', 'All') : label;
       btn.setAttribute('data-category', label);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       pillsWrap.appendChild(btn);
     });
+  }
+
+  // Filtering swaps the gallery contents with no other visible confirmation,
+  // which is silent to a screen reader. This says what happened.
+  function announceCount(n) {
+    var statusEl = document.getElementById('work-status');
+    if (!statusEl) return;
+    var label = activeCategory === 'All' ? tr('work_filter_all', 'All') : activeCategory;
+    statusEl.textContent = n === 1
+      ? '1 photo shown, filtered by ' + label + '.'
+      : n + ' photos shown, filtered by ' + label + '.';
   }
 
   function renderGrid() {
@@ -313,11 +333,13 @@
     grid.innerHTML = '';
 
     if (filtered.length === 0) {
+      announceCount(0);
       showEmpty('work_empty_filtered', 'No photos in this category yet.');
       return;
     }
 
     emptyMsg.hidden = true;
+    announceCount(filtered.length);
 
     filtered.forEach(function (project) {
       var item = document.createElement('div');

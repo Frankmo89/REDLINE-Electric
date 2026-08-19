@@ -116,9 +116,134 @@ Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
 
+### 8. Accessibility — three contrast decisions that need a human call
+
+From the 2026-08-18 WCAG 2.1 AA pass. Everything mechanical was fixed in that
+batch; these three need a decision because the fix changes how the site looks,
+and the audit brief said not to guess on those.
+
+**8a. The brand red fails as text on dark — this is the big one.**
+`--accent` `#CC2029` on `--bg` `#23262F` is **2.74:1**. AA needs 4.5:1 for body
+text and 3.0:1 even for large text, so it fails both. It is used as text in 22
+places in `css/styles.css` — section eyebrows, `.card .num`, the hero's
+`POWER YOU CAN **TRUST.**`, list markers, and every `:hover` colour change.
+
+Measured options, keeping the brand hue and saturation and raising lightness:
+
+| candidate | on `--bg` | on `--bg2` | on light panel | verdict |
+|---|---|---|---|---|
+| `#CC2029` (today) | 2.74 | 2.45 | 5.04 | fails on dark |
+| `#DF353E` | 3.39 | 3.04 | 4.07 | passes **large text only** |
+| `#E97379` | 5.18 | 4.64 | 2.67 | passes on dark, **now fails on light** |
+
+There is no single red that passes 4.5:1 on the dark surfaces and still works on
+the light panel, so this cannot be solved by editing one token. The realistic
+choices are:
+
+1. **Two tokens** — keep `#CC2029` for fills, logo and light-panel text; add an
+   `--accent-text-dark` at `#E97379` used only for accent text sitting on dark.
+   Fixes it properly; the small red text turns noticeably salmon.
+2. **`#DF353E` everywhere** — closest to the current red, and enough for the
+   large hero word, but small accent text still fails.
+3. **Stop using red for small text on dark** — keep the palette, switch eyebrows
+   and `.card .num` to `--ink-dim` (6.84:1, already used elsewhere) and keep red
+   for fills and large display only.
+
+Option 3 changes the palette not at all and is probably the least invasive, but
+it changes where red appears, which is a brand-feel call.
+
+*Already fixed without waiting for this:* the quote form's error text, which was
+this same red. It now uses `#F1808A` — the red the admin already uses for error
+text — at 5.90:1. That one was not worth leaving broken: it is the message a
+visitor must read when a submission fails.
+
+**8b. Focus ring is 2.74:1 against the page background.**
+`:focus-visible` draws `2px solid var(--accent)`. WCAG 2.1 does not set an
+explicit ratio for focus indicators (that is 2.4.11 in WCAG 2.2), but 1.4.11
+Non-text Contrast is commonly read as covering focus state, and 2.74:1 is under
+3.0 either way. The ring is clearly visible in practice — verified by real
+keyboard tabbing — so this is a "meets the spirit, misses a strict reading"
+case. Options: switch the ring to `--ink` (13.82:1, but invisible on the light
+panel), or use a two-tone ring (dark inner, light outer) that works on any
+background. The file already switches to `--ink` for elements sitting on accent
+fills, so a per-surface rule has precedent.
+
+**8c. Form field borders are 1.41:1.**
+`--line` `#3A3E48` on `--bg` is 1.41:1, and the field fill `--bg2` differs from
+the page by only 1.12:1 — so the boundary of every input is essentially
+invisible to a low-vision user. 1.4.11 wants 3.0:1 for the boundary of a control
+that needs one to be identified. Reaching it needs roughly `#6B7280` (3.13:1),
+which visibly lightens every field outline on the site and in the admin. Real
+issue, visible change, so it is logged rather than guessed at.
+
 ---
 
 ## Resolved
+
+### 2026-08-18 — WCAG 2.1 AA audit and remediation, public site + admin
+
+Full pass over `index.html`, `work.html`, `404.html`, the six service pages and
+both admin pages. Contrast was computed from the tokens rather than eyeballed;
+structure was checked with a script over all nine files; keyboard behaviour was
+driven with real input in the browser, not simulated clicks.
+
+**Fixed — landmarks and bypass (2.4.1, 1.3.1).** No page had a `<main>` landmark
+and no page had a skip link, so a keyboard user had to tab the whole header and
+nav on every page. Added `<main id="main-content">` around the content of all
+nine public pages, plus `id` on the admin's existing `<main>`, and a
+`.skip-link` as the first focusable element on every page. Safe to wrap because
+`body` is not a flex/grid container and nothing uses `body >` selectors —
+verified no layout shift and no horizontal scroll afterwards. Confirmed working
+with real Shift+Tab input: the link appears top-left on focus and moves focus to
+the content.
+
+**Fixed — status messages were silent (4.1.3).** The quote form's error and
+success paragraphs had no role, so a failed or successful submission announced
+nothing. Error is now `role="alert"` (assertive — a failure should interrupt),
+success is `role="status"` (polite). Applied to the seven pages carrying the
+form.
+
+**Fixed — filter state was invisible (4.1.2).** `work.html`'s category pills
+showed the active filter with a CSS class only. They now carry `aria-pressed`,
+verified to keep exactly one pressed as the filter changes. The same problem and
+the same fix applied to the admin's four tab buttons.
+
+**Fixed — filtering was silent (4.1.3).** Changing the gallery filter swapped
+the contents with no announcement. A visually-hidden `role="status"` line now
+reports "2 photos shown, filtered by Remodels."
+
+**Fixed — heading order (1.3.1).** `work.html` and `404.html` jumped h1 → h3,
+because their only headings after the h1 were the footer's. Footer headings are
+now `h2` across all nine pages. Styling is driven by `.footer-heading`, not the
+tag, so this is semantics-only — confirmed the rendered size and family are
+unchanged (13px Oswald).
+
+**Fixed — error text contrast (1.4.3).** `.quote-error` was the brand red at
+2.74:1; now `#F1808A` at 5.90:1, reusing the admin's existing error colour.
+
+**Checked and already correct** — worth recording so the next pass does not
+redo it: every form control has a real label (all wrapping labels); the FAQ
+accordion is a real `<button>` with `aria-expanded`, `aria-controls` and a
+`role="region"` panel; the language buttons carry `aria-pressed`; the hamburger
+toggles `aria-expanded`; the admin toast region is `role="status"`; photo alt
+text is the project title, and the hero rotator images correctly use `alt=""`
+as decorative; no positive `tabindex` anywhere; no element is focusable while
+invisible, at desktop or at 390px; the admin confirm dialog traps and restores
+focus (batch 8).
+
+**Not changed, logged instead** — see open item 8: the brand red failing as text
+on dark (2.74:1, 22 usages), the focus ring at 2.74:1, and form-field borders at
+1.41:1. All three need a visible-design decision.
+
+**Regression check.** FAQ accordion, hero rotator, EN/ES switching, FAQ schema,
+quote form and its success copy all verified intact afterwards, with no
+horizontal scroll. The skip link is translated (`skip_to_content` added to
+`i18n.js` in both languages) and the language was left on EN.
+
+**One self-inflicted bug, caught and fixed in the same pass.** Rewriting the
+footer headings changed the opening tags to `h2` but left the closing `</h3>`,
+across 26 headings on nine pages. Caught by checking tag pairing rather than
+trusting the edit; repaired and re-verified.
 
 ### 2026-08-18 — Category field revised: six services plus "Other" (revises item 11)
 

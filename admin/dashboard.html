@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="admin.css">
 </head>
 <body class="admin-body">
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
 <header class="admin-header">
   <img src="../assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188" class="admin-logo-sm">
@@ -21,7 +22,7 @@
   <button type="button" class="btn-ghost" id="logout-btn">Log Out</button>
 </header>
 
-<main class="admin-main">
+<main class="admin-main" id="main-content">
   <div class="admin-tabs">
     <button type="button" class="admin-tab-btn is-active" data-tab="photos">Job Photos</button>
     <button type="button" class="admin-tab-btn" data-tab="leads">Leads <span class="admin-tab-badge" id="leads-new-badge" aria-hidden="true" hidden>0</span></button>
@@ -1125,7 +1126,12 @@
   }
 
   function activateTab(tab) {
-    tabBtns.forEach(function (b) { b.classList.toggle('is-active', b.getAttribute('data-tab') === tab); });
+    tabBtns.forEach(function (b) {
+      var on = b.getAttribute('data-tab') === tab;
+      b.classList.toggle('is-active', on);
+      // The class alone said nothing to assistive tech about which tab is open.
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
     Object.keys(tabPanels).forEach(function (key) {
       tabPanels[key].hidden = key !== tab;
     });
@@ -2001,6 +2007,10 @@
     // gets its own count-only query so it is correct before that happens.
     var uploadCategorySelect = document.getElementById('category');
     var uploadCategoryWrap = document.getElementById('category-other-wrap');
+    tabBtns.forEach(function (b) {
+      b.setAttribute('aria-pressed', b.classList.contains('is-active') ? 'true' : 'false');
+    });
+
     uploadCategorySelect.innerHTML = categoryOptions('');
     uploadCategorySelect.addEventListener('change', function () {
       syncCategoryOther(uploadCategorySelect, uploadCategoryWrap, true);

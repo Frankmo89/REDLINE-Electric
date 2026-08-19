@@ -7,6 +7,8 @@
   var SUGGESTED_KEY = 'redline-lang-suggested';
 
   var TRANSLATIONS = {
+    // Skip link — first focusable element on every page (WCAG 2.4.1).
+    skip_to_content: { en: 'Skip to main content', es: 'Saltar al contenido principal' },
     nav_home: { en: 'Home', es: 'Inicio' },
     nav_services: { en: 'Services', es: 'Servicios' },
     nav_why_us: { en: 'Why Choose Us', es: 'Por Qué Elegirnos' },

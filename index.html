@@ -148,6 +148,8 @@
 </script>
 </head>
 <body>
+<a class="skip-link" href="#main-content" data-i18n="skip_to_content">Skip to main content</a>
+
 
 <div class="lang-banner" id="lang-banner" hidden>
   <div class="wrap lang-banner-inner">
@@ -214,6 +216,8 @@
     </div>
   </div>
 </header>
+
+<main id="main-content">
 
 <section class="hero" id="home">
   <div class="wrap">
@@ -375,8 +379,8 @@
         <textarea id="lead-message" rows="4"></textarea>
       </label>
       <button type="submit" class="btn-primary" id="quote-submit-btn" data-i18n="form_submit">Request a Quote</button>
-      <p id="quote-error" class="quote-error" hidden></p>
-      <p id="quote-success" class="quote-success" data-i18n="form_success" hidden>Thanks — we've got your request and will be in touch soon.</p>
+      <p id="quote-error" class="quote-error" role="alert" hidden></p>
+      <p id="quote-success" class="quote-success" role="status" data-i18n="form_success" hidden>Thanks — we've got your request and will be in touch soon.</p>
     </form>
 
     <div class="contact-info">
@@ -408,6 +412,8 @@
   </div>
 </section>
 
+</main>
+
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
@@ -419,7 +425,7 @@
     </div>
 
     <div class="footer-links">
-      <h3 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h3>
+      <h2 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h2>
       <ul>
         <li><a href="#home" data-i18n="nav_home">Home</a></li>
         <li><a href="#services" data-i18n="nav_services">Services</a></li>
@@ -431,14 +437,14 @@
     </div>
 
     <div class="footer-info">
-      <h3 class="footer-heading" data-i18n="footer_credentials">Credentials</h3>
+      <h2 class="footer-heading" data-i18n="footer_credentials">Credentials</h2>
       <p data-i18n="footer_license">C-10 License #1153394</p>
     </div>
   </div>
 
   <div class="footer-areas">
     <div class="wrap">
-      <h3 class="footer-heading" data-i18n="areas_served_heading">Areas We Serve</h3>
+      <h2 class="footer-heading" data-i18n="areas_served_heading">Areas We Serve</h2>
       <p class="footer-areas-list" data-service-areas-text>San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, Escondido</p>
     </div>
   </div>
