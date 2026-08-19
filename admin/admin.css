@@ -527,6 +527,21 @@
   border-radius: 2px;
   overflow: hidden;
 }
+.admin-card.is-draft { border-color: #D99A2B; }
+/* Same amber as .admin-warning: attention, not danger. The accent red is
+   spoken for by Delete, so a draft must not borrow it. */
+.admin-card-draft {
+  display: inline-block;
+  color: #D99A2B;
+  border: 1px solid #D99A2B;
+  border-radius: 2px;
+  padding: 3px 8px;
+  margin-bottom: 8px;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-label);
+}
 .admin-card img {
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -562,7 +577,8 @@
   gap: 8px;
 }
 .admin-delete-btn,
-.admin-feature-btn {
+.admin-feature-btn,
+.admin-publish-btn {
   flex: 1 1 auto;
   background: transparent;
   color: var(--accent);
@@ -576,9 +592,18 @@
   min-height: 44px;
   cursor: pointer;
 }
-.admin-feature-btn {
+.admin-feature-btn,
+.admin-publish-btn {
   color: var(--ink-dim);
   border-color: var(--line);
+}
+/* Quiet when the item is live (the button then reads "Unpublish"), amber when
+   it is a draft, so the one thing left to do on a fresh upload is the one
+   thing that stands out. Solid fills are reserved for state (.is-featured);
+   this is an action, so it stays outlined. */
+.admin-publish-btn.is-draft {
+  color: #D99A2B;
+  border-color: #D99A2B;
 }
 .admin-feature-btn.is-featured {
   color: var(--accent-ink);
@@ -587,12 +612,14 @@
 }
 .admin-delete-btn:focus-visible,
 .admin-feature-btn:focus-visible,
+.admin-publish-btn:focus-visible,
 .admin-bulk-delete-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 .admin-delete-btn:disabled,
-.admin-feature-btn:disabled {
+.admin-feature-btn:disabled,
+.admin-publish-btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
@@ -702,7 +729,8 @@
     min-width: 116px;
   }
   .admin-delete-btn,
-  .admin-feature-btn {
+  .admin-feature-btn,
+  .admin-publish-btn {
     flex: 0 1 auto;
     min-height: 38px;
     padding: 9px 14px;

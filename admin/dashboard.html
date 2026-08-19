@@ -480,16 +480,23 @@
     res.data.forEach(function (project) {
       var path = pathFromPublicUrl(project.image_url) || '';
       var card = document.createElement('div');
-      card.className = 'admin-card';
       var featured = !!project.is_featured;
+      var published = !!project.is_published;
+      // The badge carries the state so the button can carry the action —
+      // "Publish" is what tapping it does, not what the photo currently is.
+      card.className = 'admin-card' + (published ? '' : ' is-draft');
       card.innerHTML =
         '<img src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '">' +
         '<div class="admin-card-body">' +
           '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '"> Select</label>' +
+          (published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
           '<h3>' + escapeHtml(project.title) + '</h3>' +
           (project.category ? '<span class="admin-card-category">' + escapeHtml(project.category) + '</span>' : '') +
           (project.description ? '<p>' + escapeHtml(project.description) + '</p>' : '') +
           '<div class="admin-card-actions">' +
+            '<button type="button" class="admin-publish-btn' + (published ? '' : ' is-draft') + '" data-id="' + project.id + '" data-published="' + published + '">' +
+              (published ? 'Unpublish' : 'Publish') +
+            '</button>' +
             '<button type="button" class="admin-feature-btn' + (featured ? ' is-featured' : '') + '" data-id="' + project.id + '" data-featured="' + featured + '">' +
               (featured ? '★ Featured' : '☆ Feature for Hero') +
             '</button>' +
@@ -560,11 +567,16 @@
     var publicUrlRes = supabaseClient.storage.from(BUCKET).getPublicUrl(path);
     var imageUrl = publicUrlRes.data.publicUrl;
 
+    // Written explicitly, and deliberately the opposite of the column default.
+    // `projects.is_published` defaults to true so the ALTER TABLE backfilled
+    // every existing row as live; new uploads start as drafts so a bad photo
+    // never reaches the public site before Joe has looked at it.
     var insertRes = await supabaseClient.from('projects').insert({
       title: title,
       description: description || null,
       category: category || null,
-      image_url: imageUrl
+      image_url: imageUrl,
+      is_published: false
     });
 
     uploadBtn.disabled = false;
@@ -574,15 +586,35 @@
       return;
     }
 
-    // Says "live" deliberately: with no draft state on projects yet, the
-    // photo is on the public site the moment this returns.
-    flashInline(uploadSuccess, 'Uploaded — this photo is live on the site now.');
-    showToast('Photo uploaded.', 'success');
+    flashInline(uploadSuccess, 'Uploaded as a draft — tap Publish on the photo below to put it on the site.');
+    showToast('Photo uploaded as a draft.', 'success');
     uploadForm.reset();
     loadProjects();
   });
 
   grid.addEventListener('click', async function (e) {
+    var publishBtn = e.target.closest('.admin-publish-btn');
+    if (publishBtn) {
+      var publishId = publishBtn.getAttribute('data-id');
+      var wasPublished = publishBtn.getAttribute('data-published') === 'true';
+      publishBtn.disabled = true;
+
+      var publishRes = await runMutation(
+        supabaseClient.from('projects').update({ is_published: !wasPublished }).eq('id', publishId)
+      );
+
+      publishBtn.disabled = false;
+
+      if (!publishRes.ok) {
+        showToast('Could not update the photo. ' + publishRes.message, 'error');
+        return;
+      }
+
+      showToast(wasPublished ? 'Photo taken off the site.' : 'Photo published to the site.', 'success');
+      loadProjects();
+      return;
+    }
+
     var featureBtn = e.target.closest('.admin-feature-btn');
     if (featureBtn) {
       var featureId = featureBtn.getAttribute('data-id');
@@ -600,7 +632,14 @@
         return;
       }
 
-      showToast(wasFeatured ? 'Removed from the hero.' : 'Featured on the hero.', 'success');
+      // A draft is filtered out of the hero query, so "Featured on the hero"
+      // would be a lie until it is published. Say what will actually happen.
+      var stillDraft = featureBtn.closest('.admin-card').classList.contains('is-draft');
+      showToast(
+        wasFeatured ? 'Removed from the hero.'
+          : (stillDraft ? 'Featured — it shows on the hero once you publish it.' : 'Featured on the hero.'),
+        'success'
+      );
       loadProjects();
       return;
     }
@@ -1073,17 +1112,21 @@
     res.data.forEach(function (review) {
       var published = !!review.is_published;
       var card = document.createElement('div');
-      card.className = 'admin-card';
+      // Matches the photo card exactly: badge for state, verb for the button.
+      // The old control was a status label styled like the Feature toggle,
+      // which read as "this is published" rather than "tap to publish".
+      card.className = 'admin-card' + (published ? '' : ' is-draft');
       card.innerHTML =
         '<div class="admin-card-body">' +
           '<label class="admin-card-select"><input type="checkbox" class="admin-row-check" data-id="' + review.id + '"> Select</label>' +
+          (published ? '' : '<span class="admin-card-draft">Draft — not on the site</span>') +
           '<div class="admin-review-stars">' + starString(review.rating) + '</div>' +
           '<h3>' + escapeHtml(review.customer_name) + '</h3>' +
           (review.location ? '<span class="admin-card-category">' + escapeHtml(review.location) + '</span>' : '') +
           '<p>' + escapeHtml(review.review_text) + '</p>' +
           '<div class="admin-card-actions">' +
-            '<button type="button" class="admin-feature-btn' + (published ? ' is-featured' : '') + '" data-id="' + review.id + '" data-published="' + published + '">' +
-              (published ? '★ Published' : '☆ Unpublished') +
+            '<button type="button" class="admin-publish-btn' + (published ? '' : ' is-draft') + '" data-id="' + review.id + '" data-published="' + published + '">' +
+              (published ? 'Unpublish' : 'Publish') +
             '</button>' +
             '<button type="button" class="admin-delete-btn" data-id="' + review.id + '">Delete</button>' +
           '</div>' +
@@ -1109,11 +1152,15 @@
 
     reviewSubmitBtn.disabled = true;
 
+    // Same deal as the photo insert: the column default stays true (it is what
+    // backfilled the existing rows), but a review typed in here starts as a
+    // draft so a typo in a customer's name isn't on the homepage instantly.
     var res = await supabaseClient.from('reviews').insert({
       customer_name: name,
       rating: rating,
       review_text: text,
-      location: location || null
+      location: location || null,
+      is_published: false
     });
 
     reviewSubmitBtn.disabled = false;
@@ -1123,16 +1170,14 @@
       return;
     }
 
-    // Reviews are published by default, so this one is on the homepage
-    // immediately — say so rather than leaving Joe to guess.
-    flashInline(reviewFormSuccess, 'Added — this review is live on the site now.');
-    showToast('Review added.', 'success');
+    flashInline(reviewFormSuccess, 'Added as a draft — tap Publish on the review below to put it on the site.');
+    showToast('Review added as a draft.', 'success');
     reviewForm.reset();
     loadReviews();
   });
 
   reviewsGrid.addEventListener('click', async function (e) {
-    var toggleBtn = e.target.closest('.admin-feature-btn');
+    var toggleBtn = e.target.closest('.admin-publish-btn');
     if (toggleBtn) {
       var toggleId = toggleBtn.getAttribute('data-id');
       var wasPublished = toggleBtn.getAttribute('data-published') === 'true';
@@ -1149,7 +1194,7 @@
         return;
       }
 
-      showToast(wasPublished ? 'Review hidden from the site.' : 'Review published to the site.', 'success');
+      showToast(wasPublished ? 'Review taken off the site.' : 'Review published to the site.', 'success');
       loadReviews();
       return;
     }

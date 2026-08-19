@@ -7,7 +7,7 @@ single sitting belongs here so it doesn't get lost.
 bottom with the date it closed — don't delete it. Add new open items as they
 come up.
 
-Last updated: 2026-08-17
+Last updated: 2026-08-18
 
 ---
 
@@ -115,32 +115,6 @@ list changes.
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
-### 7. Admin dashboard audit — batch 5 (photo draft/publish state)
-
-Approved, isolated to its own batch because it touches the database and public
-site behaviour. Next up now that batches 1–4 are built.
-
-`projects` has no publish column, so a photo is live on `index.html`,
-`work.html`, and the hero rotator the instant it uploads — the only way to
-retract a bad one is permanent deletion. Reviews already have `is_published`;
-photos have nothing.
-
-Plan, as confirmed when this was approved:
-
-- `ALTER TABLE projects ADD COLUMN is_published boolean NOT NULL DEFAULT true`
-  — the `DEFAULT true` **backfills all existing rows in the same statement**, so
-  nothing currently on the site disappears when this ships.
-- Change the *insert* path in `admin/dashboard.html` to write
-  `is_published: false` explicitly, so new uploads start as drafts. The column
-  default stays `true` purely for the backfill; the two are deliberately
-  different.
-- Add `.eq('is_published', true)` to the three public queries:
-  `index.html:553`, `work.html:352`, `assets/js/hero-bg.js:44`.
-- Add a publish toggle to the photo card, and drop the "live on the site now"
-  wording from the upload success message once drafts exist.
-- Consider the same for `reviews.is_published`, whose column default is `true` —
-  a review added in the dashboard also goes live immediately.
-
 ### 8. Admin dashboard audit — batches 6–12 (held)
 
 From the 2026-08-17 audit, deferred until batches 1–4 and 5 land. Numbered as in
@@ -154,8 +128,8 @@ the audit:
 - **8.** Lead notes + new-lead count badge — needs a `leads.notes` column.
 - **9.** Consistency pass: custom confirm dialog replacing `window.confirm`,
   honest "Feature for Hero" label (it changes the hero but not the homepage
-  gallery unless 6+ photos are featured), publish control that reads as a toggle
-  rather than a status label, "cannot be undone" on the bulk confirms.
+  gallery unless 6+ photos are featured), "cannot be undone" on the bulk
+  confirms. *The publish-control-reads-as-a-toggle part closed with batch 5.*
 - **10.** Performance: `loading="lazy"` on admin photo `<img>` (the public site
   already does this), Supabase image transforms (full 1920px images render into
   220px cards), per-tab loading instead of four queries on first paint, a
@@ -168,6 +142,55 @@ the audit:
 ---
 
 ## Resolved
+
+### 2026-08-18 — Admin dashboard audit, batch 5 (closes item 7)
+
+Photos had no publish state: an upload was on `index.html`, `work.html`, and the
+hero rotator the instant it finished, and the only way to retract a bad one was
+permanent deletion. Reviews had the column but inserted straight to published,
+so a typo in a customer's name went live the same way.
+
+**Database.** `projects.is_published boolean NOT NULL DEFAULT true` — the
+`DEFAULT true` backfilled all 8 existing rows in the same statement, so nothing
+on the site disappeared when this shipped. `reviews.is_published` already
+existed with the same default.
+
+**The default is deliberately inconsistent with the insert path.** The column
+default stays `true` because that is what performed the backfill; both insert
+paths now write `is_published: false` explicitly, so *new* photos and reviews
+start as drafts. Anyone changing one should not "fix" the other to match.
+
+- Public reads filter on `.eq('is_published', true)` — `index.html` (photos and
+  reviews), `work.html`, `assets/js/hero-bg.js`, and the six service pages.
+- Photo and review cards render a `Draft — not on the site` badge and an amber
+  card border when unpublished.
+- The control is now a verb, not a status label: `Publish` / `Unpublish`. The
+  badge carries the state, so the button can say what tapping it does. This
+  replaced the reviews `★ Published / ☆ Unpublished` label, which read as a
+  description rather than an action — nominally held item 9, done here because
+  leaving two different publish affordances side by side was worse.
+- Solid fills stay reserved for state (`.is-featured`); the publish button is an
+  action, so it stays outlined. Amber (`#D99A2B`, the same one `.admin-warning`
+  uses) rather than the accent red, which is spoken for by Delete.
+- Success wording dropped "live on the site now" for "Uploaded as a draft — tap
+  Publish on the photo below to put it on the site."
+
+**Judgment call not explicitly in scope.** Featuring a *draft* photo is a no-op
+on the public hero, because the hero query filters unpublished rows — the toast
+said "Featured on the hero.", which was a lie for drafts. It now says "Featured
+— it shows on the hero once you publish it." when the card is a draft. The
+button is still enabled: pre-setting the flag before publishing is legitimate,
+and the toast is now honest about what will happen.
+
+**Verification.** Rendering checked at 390px and 1200px viewports against real
+Supabase rows; three action buttons fit one row inside a 303px card at 390px,
+all ≥44px tall, no horizontal overflow. Write path then run end-to-end against
+the live project with a throwaway row in each table: upload landed
+`is_published: false` with the badge; the public query stayed at 8 photos while
+the draft existed and went to 9 only after tapping Publish, then back to 8 after
+Unpublish; the review path behaved identically (3 → 4 → 3). Both test rows and
+the uploaded storage object were deleted afterwards — `projects` and `reviews`
+are back to 8 and 3, all published, no leftovers.
 
 ### 2026-08-17 — Admin dashboard audit, batches 1–4
 
@@ -249,7 +272,7 @@ ago and one from this morning both read "Aug 17, 2026". Now "25 mins ago" /
   inside a visually-hidden `<thead>` is unreachable in the card layout.
 - Upload and Add Review success messages now say the item is **live on the site
   now**. That is currently true and the honest thing to tell Joe; the wording
-  comes out when batch 5 adds drafts.
+  comes out when batch 5 adds drafts. *(It did — see 2026-08-18 below.)*
 - Added "This cannot be undone." to the single-lead delete confirm, matching
   photos and reviews. The *bulk* confirms still lack it — left deliberately for
   item 9, which replaces `window.confirm` wholesale.
