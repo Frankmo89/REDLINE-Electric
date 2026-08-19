@@ -118,12 +118,12 @@ part of this codebase — listed here only so it isn't forgotten.
 ### 8. Admin dashboard audit — remaining items (held)
 
 From the 2026-08-17 audit, deferred until batches 1–4 and 5 land. Numbered as in
-the audit, so the gap at 7 means resolved (edit shipped 2026-08-18, batch 6):
+the audit, so a gap means resolved (7 shipped 2026-08-18 as batch 6, 8 as
+batch 7):
 
 - **6.** Business Info race guard — *mostly closed already* by batch 4: the form
   is now gated behind its load, so the fetch can no longer overwrite mid-edit.
   What remains is an unsaved-changes guard when switching tabs.
-- **8.** Lead notes + new-lead count badge — needs a `leads.notes` column.
 - **9.** Consistency pass: custom confirm dialog replacing `window.confirm`,
   honest "Feature for Hero" label (it changes the hero but not the homepage
   gallery unless 6+ photos are featured), "cannot be undone" on the bulk
@@ -140,6 +140,71 @@ the audit, so the gap at 7 means resolved (edit shipped 2026-08-18, batch 6):
 ---
 
 ## Resolved
+
+### 2026-08-18 — Admin dashboard audit, batch 7 (closes audit item 8)
+
+Status was the only thing Joe could record against a lead, so the context that
+actually decides the follow-up — what was quoted, when to call back — had
+nowhere to live.
+
+**Database.** `alter table public.leads add column notes text` — nullable, no
+default, with a column comment. Absent stays distinct from empty.
+
+**RLS: verified, not assumed.** The existing `Authenticated users can update
+leads` policy is `USING true / WITH CHECK true` for `authenticated`, and RLS
+policies are never column-scoped (`pg_policy` holds no column list), so it
+covers `notes` as-is. The grant side was the part actually worth checking: a
+*column-level* grant would not extend to a column added later. `authenticated`
+holds a **table-level** UPDATE grant, which does. Confirmed a third time by the
+end-to-end test, which wrote the column through the browser as the signed-in
+user. No new policy, no new grant.
+
+**Notes live in a full-width row under the lead, not a tenth column.** The
+desktop table is `min-width: 980px` inside a 1160px content area — about 180px
+of headroom — so a notes column wide enough to type a sentence into would have
+pushed it straight back into the horizontal scroll batch 1 removed. As a
+`colspan="9"` strip the textarea gets **1069px** at a 1200px viewport, and the
+table measures 1097px with `scrollWidth === clientWidth`: no scroll
+reintroduced.
+
+**No edit-mode toggle.** Unlike the photo and review cards, the textarea is
+always live; Save and Cancel reveal themselves only once what is typed differs
+from `data-original`. The cards need an explicit Edit because their view mode is
+formatted text; a textarea is already its own view. Failure keeps the text on
+screen and the buttons live, same contract as batch 6. Clearing the field writes
+`NULL` rather than `''`, so "no note" stays one state instead of two that look
+identical.
+
+**The badge is a new component — there was no `.admin-tab-badge` to follow.**
+Batch 4 produced `.admin-bulk-count`, which is plain text in the bulk bar, not a
+pill. The new badge borrows its type scale and the accent pair the tabs already
+use, and **inverts on the active tab** (`--accent-ink` ground, `--accent` text),
+which it has to: the active tab is itself accent-filled, so an accent badge
+would vanish into it. The pill is `aria-hidden`; the count goes into the
+button's `aria-label` ("Leads, 3 new") so it is not announced as "Leads 3".
+Counts come from the rows already in memory and update on any status change with
+no refetch.
+
+**Known nit, not fixed here.** Because the notes strip is a second `<tr>`, the
+mobile card renders it *after* the Delete button. The two rows are seamed into
+one card (verified: 0px gap), but Delete sits between the lead's details and its
+notes. Fixing it would mean either a tenth column or restructuring the row into
+non-table markup — both larger than this batch. Worth folding into item 9's
+consistency pass.
+
+**Verification.** The leads table was empty, so three test leads were inserted
+directly by SQL rather than through the public quote form — the form fires the
+`lead-notification` Edge Function, and this did not warrant real email. Two were
+`new`, one `contacted`. Badge read 2, `aria-label` "Leads, 2 new". Typing
+revealed Save/Cancel; Cancel reverted and re-hid them; Save persisted and
+survived a full reload; a save aimed at a non-existent row id left the text and
+buttons intact under an error toast; clearing the field stored `NULL`. Status
+changes moved the badge 2 → 1 → hidden at zero → back to 1 without a reload, and
+the inline "✓ Saved" flag still fires. Checked at 390px (16px field, seamed
+card, no horizontal overflow, duplicate `data-label` suppressed) and 1200px
+(Save/Cancel 38px, no table scroll). All three test leads deleted afterwards —
+`leads` is back to 0 rows, and the empty state clears the badge rather than
+leaving a stale count.
 
 ### 2026-08-18 — Admin dashboard audit, batch 6 (closes audit item 7, listed under open item 8)
 

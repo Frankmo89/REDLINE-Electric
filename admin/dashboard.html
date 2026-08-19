@@ -22,7 +22,7 @@
 <main class="admin-main">
   <div class="admin-tabs">
     <button type="button" class="admin-tab-btn is-active" data-tab="photos">Job Photos</button>
-    <button type="button" class="admin-tab-btn" data-tab="leads">Leads</button>
+    <button type="button" class="admin-tab-btn" data-tab="leads">Leads <span class="admin-tab-badge" id="leads-new-badge" aria-hidden="true" hidden>0</span></button>
     <button type="button" class="admin-tab-btn" data-tab="business">Business Info</button>
     <button type="button" class="admin-tab-btn" data-tab="reviews">Reviews</button>
   </div>
@@ -857,8 +857,56 @@
   var leadsBulkCount = document.getElementById('leads-bulk-count');
   var leadsBulkDeleteBtn = document.getElementById('leads-bulk-delete-btn');
   var leadsSelection = setupBulkSelection(leadsTbody, leadsSelectAll, leadsBulkCount, leadsBulkDeleteBtn, 'lead');
+  var leadsNewBadge = document.getElementById('leads-new-badge');
+  var leadsTabBtn = document.querySelector('.admin-tab-btn[data-tab="leads"]');
+  var leadsData = [];
   var STATUS_OPTIONS = ['new', 'contacted', 'quoted', 'won', 'lost'];
   var STATUS_LABELS = { new: 'New', contacted: 'Contacted', quoted: 'Quoted', won: 'Won', lost: 'Lost' };
+
+  var NOTES_PLACEHOLDER = 'e.g. Quoted $2,400, calling back Tuesday';
+
+  // Counted from the rows already in memory, so the badge is correct the
+  // instant a status changes — no refetch and no manual refresh.
+  function updateNewLeadBadge() {
+    var count = 0;
+    leadsData.forEach(function (lead) { if (lead.status === 'new') count++; });
+    leadsNewBadge.textContent = count;
+    leadsNewBadge.hidden = count === 0;
+    // The pill is aria-hidden, so the count goes in the button's accessible
+    // name — "Leads, 3 new" rather than the run-together "Leads 3".
+    leadsTabBtn.setAttribute('aria-label', count ? 'Leads, ' + count + ' new' : 'Leads');
+  }
+
+  function updateCachedLead(lead) {
+    for (var i = 0; i < leadsData.length; i++) {
+      if (leadsData[i].id === lead.id) { leadsData[i] = lead; break; }
+    }
+    updateNewLeadBadge();
+  }
+
+  // A full-width strip under the lead, not a tenth column: the desktop table
+  // already sits at min-width 980px inside a 1160px content area, so a notes
+  // column wide enough to actually type into would push the table back into
+  // the horizontal scroll batch 1 removed.
+  function buildNotesRow(lead) {
+    var note = lead.notes || '';
+    var tr = document.createElement('tr');
+    tr.className = 'admin-lead-notes-row';
+    tr.setAttribute('data-id', lead.id);
+    tr.innerHTML =
+      '<td class="admin-td-notes" colspan="9">' +
+        '<form class="admin-form admin-notes-form" data-id="' + lead.id + '">' +
+          '<label class="admin-notes-label">Notes' +
+            '<textarea class="admin-notes-input" rows="2" placeholder="' + escapeHtml(NOTES_PLACEHOLDER) + '" data-original="' + escapeHtml(note) + '">' + escapeHtml(note) + '</textarea>' +
+          '</label>' +
+          '<div class="admin-card-actions admin-notes-actions" hidden>' +
+            '<button type="submit" class="admin-save-btn">Save</button>' +
+            '<button type="button" class="admin-cancel-btn">Cancel</button>' +
+          '</div>' +
+        '</form>' +
+      '</td>';
+    return tr;
+  }
 
   // Optional fields render as an em dash on desktop (keeps the table grid
   // intact) but get `is-empty` so the mobile card layout can drop the row
@@ -883,6 +931,11 @@
     leadsTbody.innerHTML = '';
     leadsSelection.refresh();
 
+    // Set before the early returns so a failed or empty load clears the badge
+    // instead of leaving a stale count on the tab.
+    leadsData = (res.error || !res.data) ? [] : res.data;
+    updateNewLeadBadge();
+
     if (res.error) {
       leadsEmptyMsg.textContent = 'Could not load leads: ' + res.error.message;
       leadsEmptyMsg.hidden = false;
@@ -900,6 +953,8 @@
 
     res.data.forEach(function (lead) {
       var tr = document.createElement('tr');
+      tr.className = 'admin-lead-row';
+      tr.setAttribute('data-id', lead.id);
       var options = STATUS_OPTIONS.map(function (opt) {
         var selected = opt === lead.status ? ' selected' : '';
         return '<option value="' + opt + '"' + selected + '>' + STATUS_LABELS[opt] + '</option>';
@@ -933,6 +988,7 @@
         '<td data-label="Received"><span class="admin-lead-time" title="' + escapeHtml(formatAbsoluteTime(lead.created_at)) + '">' + escapeHtml(formatRelativeTime(lead.created_at)) + '</span></td>' +
         '<td class="admin-td-delete" data-label="Delete"><button type="button" class="admin-delete-btn admin-row-delete-btn" data-id="' + lead.id + '" data-name="' + escapeHtml(lead.name) + '">Delete</button></td>';
       leadsTbody.appendChild(tr);
+      leadsTbody.appendChild(buildNotesRow(lead));
     });
   }
 
@@ -962,6 +1018,7 @@
 
     select.setAttribute('data-current', newStatus);
     markSaved(select);
+    updateCachedLead(res.data[0]);
   });
 
   // A status change is the one action with no page change to confirm it, so
@@ -979,6 +1036,65 @@
       if (flag.parentNode) flag.parentNode.removeChild(flag);
     }, 2500);
   }
+
+  // The textarea is always live; Save and Cancel reveal themselves only once
+  // what is typed differs from what is stored. That is one tap fewer than the
+  // photo and review cards, which need an explicit Edit because their view
+  // mode is formatted text rather than a field.
+  leadsTbody.addEventListener('input', function (e) {
+    var input = e.target.closest('.admin-notes-input');
+    if (!input) return;
+    var form = input.closest('.admin-notes-form');
+    form.querySelector('.admin-notes-actions').hidden =
+      input.value === (input.getAttribute('data-original') || '');
+  });
+
+  leadsTbody.addEventListener('click', function (e) {
+    var cancelBtn = e.target.closest('.admin-notes-form .admin-cancel-btn');
+    if (!cancelBtn) return;
+    var form = cancelBtn.closest('.admin-notes-form');
+    var input = form.querySelector('.admin-notes-input');
+    input.value = input.getAttribute('data-original') || '';
+    form.querySelector('.admin-notes-actions').hidden = true;
+  });
+
+  leadsTbody.addEventListener('submit', async function (e) {
+    var form = e.target.closest('.admin-notes-form');
+    if (!form) return;
+    e.preventDefault();
+
+    var id = form.getAttribute('data-id');
+    var input = form.querySelector('.admin-notes-input');
+    var actions = form.querySelector('.admin-notes-actions');
+    var saveBtn = form.querySelector('.admin-save-btn');
+    var cancelBtn = form.querySelector('.admin-cancel-btn');
+    var text = input.value.trim();
+
+    saveBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    // Cleared to NULL rather than '' so "no note" stays a single state in the
+    // column instead of two that look identical in the UI.
+    var noteRes = await runMutation(
+      supabaseClient.from('leads').update({ notes: text || null }).eq('id', id)
+    );
+
+    saveBtn.disabled = false;
+    cancelBtn.disabled = false;
+
+    if (!noteRes.ok) {
+      // Same contract as the batch 6 forms: what was typed stays on screen.
+      showToast('Could not save the note. ' + noteRes.message, 'error');
+      return;
+    }
+
+    var saved = noteRes.data[0];
+    input.value = saved.notes || '';
+    input.setAttribute('data-original', saved.notes || '');
+    actions.hidden = true;
+    updateCachedLead(saved);
+    showToast('Note saved.', 'success');
+  });
 
   leadsTbody.addEventListener('click', async function (e) {
     var delBtn = e.target.closest('.admin-row-delete-btn');

@@ -194,6 +194,28 @@
   border-color: var(--accent);
   color: var(--accent-ink);
 }
+/* No tab badge existed before this: batch 4 added .admin-bulk-count, which is
+   plain text in the bulk bar rather than a pill. This borrows that type scale
+   and the accent pair the active tab already uses. */
+.admin-tab-badge {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: 'Oswald', sans-serif;
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  text-align: center;
+}
+/* The active tab is already filled with the accent, so the badge inverts
+   rather than disappearing into it. */
+.admin-tab-btn.is-active .admin-tab-badge {
+  background: var(--accent-ink);
+  color: var(--accent);
+}
 .admin-tab-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -513,6 +535,37 @@
   .admin-td-delete { padding-top: 12px; }
   .admin-table td.admin-td-delete::before { content: none; }
   .admin-row-delete-btn { width: 100%; }
+  /* Notes are a second <tr>, which this card layout would otherwise render as
+     its own detached card floating under the lead. Seam the two halves into
+     one card instead. */
+  .admin-table tr.admin-lead-row {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    border-radius: 2px 2px 0 0;
+  }
+  .admin-table tr.admin-lead-notes-row {
+    padding-top: 0;
+    border-top: none;
+    border-radius: 0 0 2px 2px;
+  }
+  /* The form carries its own visible label, so the generic data-label
+     pseudo-element would just repeat it. */
+  .admin-table td.admin-td-notes::before { content: none; }
+}
+
+/* ---- Lead notes ----
+   Reuses .admin-form for the 16px field, tighter because it sits inside a
+   table row rather than filling a section. */
+.admin-notes-form { gap: 8px; }
+.admin-notes-label { gap: 6px; }
+/* Same specificity trap as .admin-card-edit: .admin-form button[type="submit"]
+   is full-width at 48px, which is wrong for a Save sitting beside Cancel. The
+   override has to match its selector shape to outrank it. */
+.admin-notes-form button[type="submit"] {
+  margin-top: 0;
+  width: auto;
+  min-height: 44px;
 }
 
 /* ---- Cards grid (photos + reviews) ---- */
@@ -746,6 +799,10 @@
     vertical-align: top;
   }
   .admin-table td::before { content: none; }
+  /* The separator belongs under the notes strip, not between a lead and its
+     own notes. */
+  .admin-lead-row > td { border-bottom: none; }
+  .admin-notes-form button[type="submit"] { min-height: 38px; }
   .admin-table-message {
     max-width: 260px;
     white-space: pre-wrap;
