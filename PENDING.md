@@ -118,16 +118,12 @@ part of this codebase — listed here only so it isn't forgotten.
 ### 8. Admin dashboard audit — remaining items (held)
 
 From the 2026-08-17 audit, deferred until batches 1–4 and 5 land. Numbered as in
-the audit, so a gap means resolved (7 shipped 2026-08-18 as batch 6, 8 as
-batch 7):
+the audit, so a gap means resolved (7 shipped as batch 6, 8 as batch 7, 9 as
+batch 8 — all 2026-08-18):
 
 - **6.** Business Info race guard — *mostly closed already* by batch 4: the form
   is now gated behind its load, so the fetch can no longer overwrite mid-edit.
   What remains is an unsaved-changes guard when switching tabs.
-- **9.** Consistency pass: custom confirm dialog replacing `window.confirm`,
-  honest "Feature for Hero" label (it changes the hero but not the homepage
-  gallery unless 6+ photos are featured), "cannot be undone" on the bulk
-  confirms. *The publish-control-reads-as-a-toggle part closed with batch 5.*
 - **10.** Performance: `loading="lazy"` on admin photo `<img>` (the public site
   already does this), Supabase image transforms (full 1920px images render into
   220px cards), per-tab loading instead of four queries on first paint, a
@@ -140,6 +136,93 @@ batch 7):
 ---
 
 ## Resolved
+
+### 2026-08-18 — Admin dashboard audit, batch 8 (closes audit item 9)
+
+The consistency pass. Everything item 9 listed, plus the mobile ordering nit
+batch 7 left behind.
+
+**`window.confirm` is gone — all six call sites.** It is OS chrome: unstyleable,
+rendered on a phone as a system sheet that looks nothing like the rest of the
+page, and limited to one line, which is why the bulk deletes could never say
+what they were about to destroy. The replacement is a promise-returning
+`confirmDialog()` in the same visual language as the rest of the admin —
+`role="alertdialog"`, `aria-modal`, wired `aria-labelledby`/`describedby`,
+Escape and backdrop both cancel, focus trapped between the two buttons and
+restored to the trigger on close. **Cancel takes focus, not Confirm**, because
+every caller is destructive and a stray Enter should do nothing. A backdrop
+*mousedown* cancels but a drag that starts on the panel does not.
+
+Every dialog now names its object and states the consequence:
+
+- `"Bathroom Vanity Lighting" will be removed from the site and its image file
+  deleted. This cannot be undone.`
+- `The enquiry from <name>, including any notes on it, will be deleted. …`
+- `The 2 selected enquiries, including any notes on them, will be deleted. …`
+
+"This cannot be undone." now appears on the **bulk** confirms, which batch 1
+deliberately left off pending this batch. Singular and plural both read
+correctly (`1 lead` / `2 leads`, `enquiry` / `enquiries`).
+
+**"Feature for Hero" was overclaiming.** Renamed to **`☆ Use in Hero` /
+`★ In Hero`**, and the toast now says "Added to the homepage hero rotation."
+rather than "Featured on the hero." A hint line under Existing Photos states the
+whole truth, which is more layered than item 9 recorded:
+
+- it picks what rotates behind the **homepage** hero;
+- **service-page heroes ignore it entirely** when any photo matches that page's
+  category — `hero-bg.js` `pick()` returns the category match first and only
+  falls back to featured;
+- the homepage **gallery** only consults it once 6+ photos are featured
+  (`index.html`: `featured.length >= 6 ? featured.slice(0,6) : all.slice(0,6)`),
+  showing the 6 newest under that.
+
+**Publish control: already at parity, so the fix was elsewhere.** Checked
+against Delete and Feature — same base rule, same border, same 44px box, and
+batch 5 had already made the text a verb. What all of these actually lacked was
+any response to the pointer: no hover, no press state, which is what leaves a
+bordered word reading as a badge. Added hover (behind `hover: hover`, so it does
+not stick after a tap on touch) and `:active` press feedback across every card
+button, the bulk delete, and the dialog.
+
+**Lead status is now a colour chip.** `new` amber, `contacted` blue, `quoted`
+purple, `won` green, `lost` neutral grey. Keyed off the existing `data-current`
+attribute, which holds the *saved* status — set on render, updated only after a
+successful write, untouched on failure — so the colour always reflects the
+database rather than an in-flight selection. `option` elements are repainted
+explicitly because the OS draws that list on its own light background and would
+otherwise inherit the tinted text.
+
+**Deliberately still a native `<select>`.** A custom listbox would look more
+like Notion, but on a phone the native control opens the OS picker, which is far
+better with work gloves — and batch 1 standardised on native controls at 16px
+for exactly that reason. The chip is the closed state; the picker is the open
+one. Say so if a full custom dropdown is wanted.
+
+**Batch 7's mobile nit is fixed by moving Delete, not by CSS.** Delete was the
+ninth table column, which put it between a lead's details and its notes on a
+phone — and because the notes strip is a second `<tr>`, no amount of `order`
+could reorder across the two. Delete now lives in the strip, after the notes:
+the card reads details → Notes → Delete on mobile, and on desktop the strip
+gained a right-aligned action while the table **dropped to 8 columns**
+(`min-width` 980px → 900px). Verified no horizontal scroll was reintroduced:
+table 1097px, `scrollWidth === clientWidth`.
+
+**Verification.** Five test leads covering all five statuses. Dialog: opens with
+correct role and wiring, focus on Cancel, Tab swaps between the two buttons,
+Escape and backdrop cancel without deleting (row count held at 5), a press
+starting on the panel does not cancel, focus returns to the trigger; confirming
+actually deleted (5 → 4, notes rows stayed in step at 4, toast fired). Photo and
+review dialogs name their object. Chip recoloured amber → green on save and the
+new-lead badge went 1 → 0 and hid itself. At 390px: card order is Received →
+Notes → Delete with a 0px seam, Delete full-width, dialog panel 335px with 45px
+buttons, no horizontal overflow. At 1200px: 8 columns, no table scroll, Delete
+right-aligned in the strip, dialog buttons 38px and right-aligned. All five test
+leads deleted afterwards — `leads` back to 0, `projects` 8, `reviews` 3, no
+leftovers anywhere.
+
+**Still open after this batch:** items 6 (unsaved-changes guard when switching
+tabs), 10 (performance), 11 (category dropdown), 12 (login hardening).
 
 ### 2026-08-18 — Admin dashboard audit, batch 7 (closes audit item 8)
 

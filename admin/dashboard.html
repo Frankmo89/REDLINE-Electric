@@ -53,6 +53,7 @@
 
     <section class="admin-list">
       <h2 class="display">Existing Photos</h2>
+      <p class="admin-hint">&#9734; Use in Hero picks which photos rotate behind the homepage banner. Service pages use their own category&#39;s photos instead, and the gallery below the hero shows your 6 newest until 6 or more photos are marked.</p>
       <div class="admin-bulk-bar" id="photos-bulk-bar" hidden>
         <label class="admin-select-all-label"><input type="checkbox" id="photos-select-all"> Select All</label>
         <span id="photos-bulk-count" class="admin-bulk-count" hidden></span>
@@ -89,7 +90,6 @@
               <th>Message</th>
               <th>Status</th>
               <th>Received</th>
-              <th>Delete</th>
             </tr>
           </thead>
           <tbody id="leads-tbody"></tbody>
@@ -308,6 +308,67 @@
     if (type !== 'error') window.setTimeout(dismiss, 4000);
   }
 
+  // ---- Confirm dialog ----------------------------------------------------
+  // window.confirm() is OS chrome: it cannot be styled, on a phone it renders
+  // as a system sheet that looks nothing like the rest of this page, and its
+  // single line of text left the bulk deletes unable to say what they were
+  // about to destroy. This is the same blocking shape, on-brand, and it can
+  // name the thing.
+  var confirmSeq = 0;
+
+  function confirmDialog(opts) {
+    return new Promise(function (resolve) {
+      var seq = ++confirmSeq;
+      var titleId = 'admin-confirm-title-' + seq;
+      var bodyId = 'admin-confirm-body-' + seq;
+      var previouslyFocused = document.activeElement;
+
+      var overlay = document.createElement('div');
+      overlay.className = 'admin-modal-overlay';
+      overlay.innerHTML =
+        '<div class="admin-modal" role="alertdialog" aria-modal="true" aria-labelledby="' + titleId + '" aria-describedby="' + bodyId + '">' +
+          '<h2 class="admin-modal-title" id="' + titleId + '">' + escapeHtml(opts.title) + '</h2>' +
+          '<p class="admin-modal-body" id="' + bodyId + '">' + escapeHtml(opts.body) + '</p>' +
+          '<div class="admin-modal-actions">' +
+            '<button type="button" class="admin-modal-cancel">Cancel</button>' +
+            '<button type="button" class="admin-modal-confirm">' + escapeHtml(opts.confirmLabel || 'Delete') + '</button>' +
+          '</div>' +
+        '</div>';
+
+      var cancelBtn = overlay.querySelector('.admin-modal-cancel');
+      var confirmBtn = overlay.querySelector('.admin-modal-confirm');
+
+      function close(result) {
+        document.removeEventListener('keydown', onKeydown, true);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
+        resolve(result);
+      }
+
+      function onKeydown(e) {
+        if (e.key === 'Escape') { e.preventDefault(); close(false); return; }
+        if (e.key !== 'Tab') return;
+        // Only two focusable controls, so trapping focus is just a swap.
+        e.preventDefault();
+        (document.activeElement === cancelBtn ? confirmBtn : cancelBtn).focus();
+      }
+
+      cancelBtn.addEventListener('click', function () { close(false); });
+      confirmBtn.addEventListener('click', function () { close(true); });
+      overlay.addEventListener('mousedown', function (e) {
+        // Backdrop cancels. mousedown, not click, so a drag that starts inside
+        // the panel and ends outside it does not count as a backdrop press.
+        if (e.target === overlay) close(false);
+      });
+      document.addEventListener('keydown', onKeydown, true);
+
+      document.body.appendChild(overlay);
+      // Cancel takes focus, not Confirm: every caller is destructive, so a
+      // stray Enter should do nothing.
+      cancelBtn.focus();
+    });
+  }
+
   // Inline form messages previously sat below the submit button — off-screen
   // on a phone — and stayed visible until the next submit. Scroll them into
   // view and retire them on a timer.
@@ -461,7 +522,7 @@
         '</button>' +
         '<button type="button" class="admin-edit-btn" data-id="' + project.id + '">Edit</button>' +
         '<button type="button" class="admin-feature-btn' + (featured ? ' is-featured' : '') + '" data-id="' + project.id + '" data-featured="' + featured + '">' +
-          (featured ? '★ Featured' : '☆ Feature for Hero') +
+          (featured ? '★ In Hero' : '☆ Use in Hero') +
         '</button>' +
         '<button type="button" class="admin-delete-btn" data-id="' + project.id + '" data-path="' + escapeHtml(path) + '">Delete</button>' +
       '</div>';
@@ -752,12 +813,12 @@
         return;
       }
 
-      // A draft is filtered out of the hero query, so "Featured on the hero"
-      // would be a lie until it is published. Say what will actually happen.
+      // A draft is filtered out of the hero query, so any "it is on the hero
+      // now" wording would be a lie until it is published.
       var stillDraft = featureBtn.closest('.admin-card').classList.contains('is-draft');
       showToast(
-        wasFeatured ? 'Removed from the hero.'
-          : (stillDraft ? 'Featured — it shows on the hero once you publish it.' : 'Featured on the hero.'),
+        wasFeatured ? 'Removed from the homepage hero rotation.'
+          : (stillDraft ? 'Added to the hero rotation — it shows once you publish it.' : 'Added to the homepage hero rotation.'),
         'success'
       );
       replaceProjectCard(featureRes.data[0]);
@@ -766,7 +827,13 @@
 
     var btn = e.target.closest('.admin-delete-btn');
     if (!btn) return;
-    if (!window.confirm('Delete this photo? This cannot be undone.')) return;
+    var photoForDelete = projectsById[btn.getAttribute('data-id')];
+    var okPhoto = await confirmDialog({
+      title: 'Delete this photo?',
+      body: (photoForDelete ? '\u201c' + photoForDelete.title + '\u201d' : 'This photo')
+        + ' will be removed from the site and its image file deleted. This cannot be undone.'
+    });
+    if (!okPhoto) return;
 
     var id = btn.getAttribute('data-id');
     var path = btn.getAttribute('data-path');
@@ -801,7 +868,13 @@
   photosBulkDeleteBtn.addEventListener('click', async function () {
     var checked = photosSelection.getChecked();
     if (checked.length === 0) return;
-    if (!window.confirm('Delete ' + checked.length + ' photo' + (checked.length === 1 ? '' : 's') + '?')) return;
+    var okPhotos = await confirmDialog({
+      title: 'Delete ' + checked.length + ' photo' + (checked.length === 1 ? '' : 's') + '?',
+      body: 'The ' + checked.length + ' selected photo' + (checked.length === 1 ? '' : 's')
+        + ' will be removed from the site and ' + (checked.length === 1 ? 'its image file' : 'their image files')
+        + ' deleted. This cannot be undone.'
+    });
+    if (!okPhotos) return;
 
     photosBulkDeleteBtn.disabled = true;
     var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
@@ -884,17 +957,22 @@
     updateNewLeadBadge();
   }
 
-  // A full-width strip under the lead, not a tenth column: the desktop table
-  // already sits at min-width 980px inside a 1160px content area, so a notes
-  // column wide enough to actually type into would push the table back into
-  // the horizontal scroll batch 1 removed.
+  // A full-width strip under the lead, not another column: a notes column wide
+  // enough to actually type into would push the desktop table back into the
+  // horizontal scroll batch 1 removed.
+  //
+  // Delete lives down here too, after the notes. It used to be the ninth
+  // column, which put it *between* a lead's details and its notes in the
+  // mobile card layout — the strip is a second <tr>, so no CSS could reorder
+  // across the two. Moving it into the strip fixes the order on a phone and
+  // costs the desktop table a column it is happier without.
   function buildNotesRow(lead) {
     var note = lead.notes || '';
     var tr = document.createElement('tr');
     tr.className = 'admin-lead-notes-row';
     tr.setAttribute('data-id', lead.id);
     tr.innerHTML =
-      '<td class="admin-td-notes" colspan="9">' +
+      '<td class="admin-td-notes" colspan="8">' +
         '<form class="admin-form admin-notes-form" data-id="' + lead.id + '">' +
           '<label class="admin-notes-label">Notes' +
             '<textarea class="admin-notes-input" rows="2" placeholder="' + escapeHtml(NOTES_PLACEHOLDER) + '" data-original="' + escapeHtml(note) + '">' + escapeHtml(note) + '</textarea>' +
@@ -904,6 +982,9 @@
             '<button type="button" class="admin-cancel-btn">Cancel</button>' +
           '</div>' +
         '</form>' +
+        '<div class="admin-lead-actions">' +
+          '<button type="button" class="admin-delete-btn admin-row-delete-btn" data-id="' + lead.id + '" data-name="' + escapeHtml(lead.name) + '">Delete</button>' +
+        '</div>' +
       '</td>';
     return tr;
   }
@@ -985,8 +1066,7 @@
         optionalCell(lead.service_interest, 'Service') +
         optionalCell(lead.message, 'Message', 'admin-table-message') +
         '<td data-label="Status"><select class="admin-status-select" data-id="' + lead.id + '" data-current="' + escapeHtml(lead.status) + '" aria-label="Status for ' + escapeHtml(lead.name) + '">' + options + '</select></td>' +
-        '<td data-label="Received"><span class="admin-lead-time" title="' + escapeHtml(formatAbsoluteTime(lead.created_at)) + '">' + escapeHtml(formatRelativeTime(lead.created_at)) + '</span></td>' +
-        '<td class="admin-td-delete" data-label="Delete"><button type="button" class="admin-delete-btn admin-row-delete-btn" data-id="' + lead.id + '" data-name="' + escapeHtml(lead.name) + '">Delete</button></td>';
+        '<td data-label="Received"><span class="admin-lead-time" title="' + escapeHtml(formatAbsoluteTime(lead.created_at)) + '">' + escapeHtml(formatRelativeTime(lead.created_at)) + '</span></td>';
       leadsTbody.appendChild(tr);
       leadsTbody.appendChild(buildNotesRow(lead));
     });
@@ -1101,7 +1181,11 @@
     if (!delBtn) return;
 
     var name = delBtn.getAttribute('data-name');
-    if (!window.confirm('Delete the lead from ' + name + '? This cannot be undone.')) return;
+    var okLead = await confirmDialog({
+      title: 'Delete this lead?',
+      body: 'The enquiry from ' + name + ', including any notes on it, will be deleted. This cannot be undone.'
+    });
+    if (!okLead) return;
 
     var id = delBtn.getAttribute('data-id');
     delBtn.disabled = true;
@@ -1120,7 +1204,13 @@
   leadsBulkDeleteBtn.addEventListener('click', async function () {
     var checked = leadsSelection.getChecked();
     if (checked.length === 0) return;
-    if (!window.confirm('Delete ' + checked.length + ' lead' + (checked.length === 1 ? '' : 's') + '?')) return;
+    var okLeads = await confirmDialog({
+      title: 'Delete ' + checked.length + ' lead' + (checked.length === 1 ? '' : 's') + '?',
+      body: 'The ' + checked.length + ' selected enquir' + (checked.length === 1 ? 'y' : 'ies')
+        + ', including any notes on ' + (checked.length === 1 ? 'it' : 'them')
+        + ', will be deleted. This cannot be undone.'
+    });
+    if (!okLeads) return;
 
     leadsBulkDeleteBtn.disabled = true;
     var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });
@@ -1569,7 +1659,13 @@
 
     var delBtn = e.target.closest('.admin-delete-btn');
     if (!delBtn) return;
-    if (!window.confirm('Delete this review? This cannot be undone.')) return;
+    var reviewForDelete = reviewsById[delBtn.getAttribute('data-id')];
+    var okReview = await confirmDialog({
+      title: 'Delete this review?',
+      body: 'The review from ' + (reviewForDelete ? reviewForDelete.customer_name : 'this customer')
+        + ' will be deleted. This cannot be undone.'
+    });
+    if (!okReview) return;
 
     var delId = delBtn.getAttribute('data-id');
     delBtn.disabled = true;
@@ -1588,7 +1684,12 @@
   reviewsBulkDeleteBtn.addEventListener('click', async function () {
     var checked = reviewsSelection.getChecked();
     if (checked.length === 0) return;
-    if (!window.confirm('Delete ' + checked.length + ' review' + (checked.length === 1 ? '' : 's') + '?')) return;
+    var okReviews = await confirmDialog({
+      title: 'Delete ' + checked.length + ' review' + (checked.length === 1 ? '' : 's') + '?',
+      body: 'The ' + checked.length + ' selected review' + (checked.length === 1 ? '' : 's')
+        + ' will be deleted. This cannot be undone.'
+    });
+    if (!okReviews) return;
 
     reviewsBulkDeleteBtn.disabled = true;
     var ids = checked.map(function (cb) { return cb.getAttribute('data-id'); });

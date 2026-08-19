@@ -440,6 +440,42 @@
   max-width: 220px;
 }
 .admin-status-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* Colour chips, keyed off data-current — which holds the *saved* status, so
+   the colour follows the database rather than an in-flight selection.
+   Deliberately still a native <select>: on a phone it opens the OS picker,
+   which is far better with work gloves than a custom listbox, and batch 1
+   standardised on native controls at 16px for exactly that reason. */
+.admin-status-select[data-current="new"] {
+  color: #E8B45C;
+  border-color: rgba(217, 154, 43, 0.55);
+  background: rgba(217, 154, 43, 0.14);
+}
+.admin-status-select[data-current="contacted"] {
+  color: #8FC0EE;
+  border-color: rgba(107, 168, 229, 0.55);
+  background: rgba(107, 168, 229, 0.14);
+}
+.admin-status-select[data-current="quoted"] {
+  color: #C4A8EC;
+  border-color: rgba(176, 140, 224, 0.55);
+  background: rgba(176, 140, 224, 0.14);
+}
+.admin-status-select[data-current="won"] {
+  color: #6FD08C;
+  border-color: rgba(111, 208, 140, 0.55);
+  background: rgba(111, 208, 140, 0.14);
+}
+.admin-status-select[data-current="lost"] {
+  color: var(--ink-dim);
+  border-color: var(--line);
+  background: transparent;
+}
+/* The option list is painted by the OS, which ignores the chip colours above
+   and would otherwise inherit the tinted text onto its own light background. */
+.admin-status-select option {
+  color: var(--ink);
+  background: var(--bg2);
+}
 /* Inline "Saved" tick next to the status select — a status change used to
    report nothing at all on success. */
 .admin-saved-flag {
@@ -532,8 +568,6 @@
     white-space: pre-wrap;
     color: var(--ink-dim);
   }
-  .admin-td-delete { padding-top: 12px; }
-  .admin-table td.admin-td-delete::before { content: none; }
   .admin-row-delete-btn { width: 100%; }
   /* Notes are a second <tr>, which this card layout would otherwise render as
      its own detached card floating under the lead. Seam the two halves into
@@ -552,6 +586,90 @@
   /* The form carries its own visible label, so the generic data-label
      pseudo-element would just repeat it. */
   .admin-table td.admin-td-notes::before { content: none; }
+}
+
+/* Delete moved out of the table row and into the notes strip, so it reads as
+   the row's last action on both layouts instead of landing between a lead's
+   details and its notes on a phone. */
+.admin-lead-actions {
+  display: flex;
+  margin-top: 10px;
+}
+
+/* ---- Confirm dialog ----
+   Replaces window.confirm(). 200 puts it above the sticky tab bar (20) and
+   above the toast region (100) — a toast still on screen should not sit over
+   a modal demanding an answer. */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 17, 21, 0.72);
+}
+.admin-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 20px;
+}
+.admin-modal-title {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-h4);
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.admin-modal-body {
+  color: var(--ink-dim);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+.admin-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-modal-actions button {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 12px 16px;
+  border-radius: 2px;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-micro);
+  cursor: pointer;
+}
+.admin-modal-cancel {
+  background: transparent;
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+}
+.admin-modal-confirm {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+}
+.admin-modal-actions button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- Section hint ---- */
+.admin-hint {
+  color: var(--ink-dim);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  max-width: 68ch;
+  margin-bottom: 14px;
 }
 
 /* ---- Lead notes ----
@@ -668,6 +786,49 @@
   background: var(--accent);
   border-color: var(--accent);
 }
+/* Item 9 asked whether the publish control reads as a button or as a status
+   label. Against Delete and Feature it is already at parity — same base rule,
+   same border, same 44px box, and batch 5 made the text a verb. What every one
+   of these lacked was any response to the pointer: no hover, no press state,
+   which is what left a bordered word looking like a badge. hover: hover keeps
+   it off touch, where it would stick after a tap. */
+@media (hover: hover) {
+  .admin-delete-btn:hover,
+  .admin-feature-btn:hover,
+  .admin-publish-btn:hover,
+  .admin-edit-btn:hover,
+  .admin-cancel-btn:hover {
+    background: rgba(245, 245, 240, 0.07);
+  }
+  .admin-publish-btn.is-draft:hover {
+    background: rgba(217, 154, 43, 0.14);
+  }
+  .admin-delete-btn:hover {
+    background: rgba(204, 32, 41, 0.14);
+  }
+  .admin-feature-btn.is-featured:hover,
+  .admin-save-btn:hover,
+  .admin-modal-confirm:hover,
+  .admin-bulk-delete-btn:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
+  .admin-modal-cancel:hover {
+    background: rgba(245, 245, 240, 0.07);
+  }
+}
+/* Press feedback, which touch does get. */
+.admin-delete-btn:active,
+.admin-feature-btn:active,
+.admin-publish-btn:active,
+.admin-edit-btn:active,
+.admin-save-btn:active,
+.admin-cancel-btn:active,
+.admin-bulk-delete-btn:active,
+.admin-modal-actions button:active {
+  background: rgba(245, 245, 240, 0.14);
+}
+
 .admin-delete-btn:focus-visible,
 .admin-feature-btn:focus-visible,
 .admin-publish-btn:focus-visible,
@@ -785,10 +946,11 @@
 
   .admin-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 
-  /* 9 columns with a real select and two contact buttons need room; below
+  /* 8 columns with a real select and two contact buttons need room; below
      this the status control truncates to "Ne..." and the phone number wraps
-     across three lines. The wrapper scrolls if the window is narrower. */
-  .admin-table { min-width: 980px; }
+     across three lines. The wrapper scrolls if the window is narrower.
+     Was 980px when Delete was a ninth column. */
+  .admin-table { min-width: 900px; }
   .admin-table th,
   .admin-table td {
     text-align: left;
@@ -803,6 +965,10 @@
      own notes. */
   .admin-lead-row > td { border-bottom: none; }
   .admin-notes-form button[type="submit"] { min-height: 38px; }
+  /* Delete sits at the right-hand end of the strip rather than stretching. */
+  .admin-lead-actions { justify-content: flex-end; margin-top: 8px; }
+  .admin-modal-actions { justify-content: flex-end; }
+  .admin-modal-actions button { flex: 0 1 auto; min-height: 38px; }
   .admin-table-message {
     max-width: 260px;
     white-space: pre-wrap;
