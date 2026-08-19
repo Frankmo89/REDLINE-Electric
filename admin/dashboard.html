@@ -7,6 +7,8 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://hvesaitxkwlufbljnupy.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/styles.css">
 <link rel="stylesheet" href="admin.css">
@@ -38,7 +40,7 @@
           <textarea id="description" rows="3"></textarea>
         </label>
         <label>Category
-          <input type="text" id="category">
+          <select id="category"></select>
         </label>
         <label>Photo
           <input type="file" id="file" accept="image/*" required>
@@ -52,7 +54,7 @@
     </section>
 
     <section class="admin-list">
-      <h2 class="display">Existing Photos</h2>
+      <h2 class="display">Existing Photos <button type="button" class="admin-refresh-btn" data-refresh="photos">Refresh</button></h2>
       <p class="admin-hint">&#9734; Use in Hero picks which photos rotate behind the homepage banner. Service pages use their own category&#39;s photos instead, and the gallery below the hero shows your 6 newest until 6 or more photos are marked.</p>
       <div class="admin-bulk-bar" id="photos-bulk-bar" hidden>
         <label class="admin-select-all-label"><input type="checkbox" id="photos-select-all"> Select All</label>
@@ -69,7 +71,7 @@
 
   <div id="tab-leads" class="admin-tab-panel" hidden>
     <section class="admin-list">
-      <h2 class="display">Leads</h2>
+      <h2 class="display">Leads <button type="button" class="admin-refresh-btn" data-refresh="leads">Refresh</button></h2>
       <div class="admin-bulk-bar" id="leads-bulk-bar" hidden>
         <label class="admin-select-all-label"><input type="checkbox" id="leads-select-all"> Select All</label>
         <span id="leads-bulk-count" class="admin-bulk-count" hidden></span>
@@ -101,7 +103,7 @@
 
   <div id="tab-business" class="admin-tab-panel" hidden>
     <section class="admin-upload">
-      <h2 class="display">Business Info</h2>
+      <h2 class="display">Business Info <button type="button" class="admin-refresh-btn" data-refresh="business">Refresh</button></h2>
       <div id="business-loading" class="admin-loading" role="status">
         <span class="admin-spinner" aria-hidden="true"></span> Loading business info…
       </div>
@@ -174,7 +176,7 @@
     </section>
 
     <section class="admin-list">
-      <h2 class="display">Existing Reviews</h2>
+      <h2 class="display">Existing Reviews <button type="button" class="admin-refresh-btn" data-refresh="reviews">Refresh</button></h2>
       <div class="admin-bulk-bar" id="reviews-bulk-bar" hidden>
         <label class="admin-select-all-label"><input type="checkbox" id="reviews-select-all"> Select All</label>
         <span id="reviews-bulk-count" class="admin-bulk-count" hidden></span>
@@ -196,6 +198,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../assets/js/supabase-client.js"></script>
 <script src="../assets/js/image-compress.js"></script>
+<script src="../assets/js/service-categories.js"></script>
 <script>
 (function () {
   var grid = document.getElementById('projects-grid');
@@ -306,6 +309,33 @@
     // Successes clear themselves. Errors stay put until dismissed so a
     // failure can't quietly scroll away unread.
     if (type !== 'error') window.setTimeout(dismiss, 4000);
+  }
+
+  // ---- Categories --------------------------------------------------------
+  // Single source of truth lives in assets/js/service-categories.js. The
+  // fallback keeps the form usable if that file ever fails to load rather than
+  // rendering a select with nothing in it.
+  var SERVICE_CATEGORIES = window.RedlineServiceCategories || [];
+
+  function categoryOptions(selected) {
+    var current = selected || '';
+    var known = false;
+    var out = '<option value="">No category</option>';
+    SERVICE_CATEGORIES.forEach(function (name) {
+      if (name === current) known = true;
+      out += '<option value="' + escapeHtml(name) + '"' +
+        (name === current ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
+    });
+    // Photos uploaded while this was a free-text field can hold anything —
+    // "Remodel", "Lighting", "Commercial" all exist in the table today. Keep
+    // the stored value as a selected option so opening the edit form never
+    // silently reassigns a photo's category, and flag it so the odd one out is
+    // visible rather than looking like one of the six.
+    if (current && !known) {
+      out += '<option value="' + escapeHtml(current) + '" selected>' +
+        escapeHtml(current) + ' (no service page)</option>';
+    }
+    return out;
   }
 
   // ---- Confirm dialog ----------------------------------------------------
@@ -541,7 +571,7 @@
           '<textarea class="admin-edit-description" rows="3">' + escapeHtml(project.description || '') + '</textarea>' +
         '</label>' +
         '<label>Category' +
-          '<input type="text" class="admin-edit-category" value="' + escapeHtml(project.category || '') + '">' +
+          '<select class="admin-edit-category">' + categoryOptions(project.category) + '</select>' +
         '</label>' +
         '<p class="admin-error admin-edit-error" hidden></p>' +
         '<div class="admin-card-actions">' +
@@ -551,13 +581,33 @@
       '</form>';
   }
 
+  // Cards render about 300px wide; 440 covers a 1.5x display. The stored file
+  // is the full upload — measured at 1.3MB for a thumbnail that needs 28KB, a
+  // 97% saving per image across a grid that loads every photo at once.
+  var THUMB_WIDTH = 440;
+
+  function thumbUrl(url) {
+    if (!url || url.indexOf(PUBLIC_URL_MARKER) === -1) return url;
+    return url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') +
+      '?width=' + THUMB_WIDTH + '&resize=contain&quality=75';
+  }
+
   function buildProjectCard(project) {
     var card = document.createElement('div');
     card.className = 'admin-card' + (project.is_published ? '' : ' is-draft');
     card.setAttribute('data-id', project.id);
     card.innerHTML =
-      '<img src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '">' +
+      '<img src="' + escapeHtml(thumbUrl(project.image_url)) + '" alt="' + escapeHtml(project.title) + '" loading="lazy">' +
       '<div class="admin-card-body">' + projectViewInner(project) + '</div>';
+    // Image transforms are a paid Supabase feature. They are enabled on this
+    // project (verified), but if that ever changes the render endpoint starts
+    // erroring and every admin thumbnail would break — so fall back to the
+    // original file rather than showing a grid of broken images.
+    var img = card.querySelector('img');
+    img.addEventListener('error', function onThumbError() {
+      img.removeEventListener('error', onThumbError);
+      img.src = project.image_url;
+    });
     return card;
   }
 
@@ -911,15 +961,149 @@
     business: document.getElementById('tab-business'),
     reviews: document.getElementById('tab-reviews')
   };
+  // ---- Unsaved-edit guard -------------------------------------------------
+  // Three things count as an edit in progress: a photo or review card sitting
+  // in its batch-6 edit form, a lead note typed but not saved (batch 7 reveals
+  // Save/Cancel only when it differs from what is stored), and the Business
+  // Info form differing from the row it loaded.
+  //
+  // Worth being precise about what this prevents. Switching tabs only toggles
+  // `hidden`, so the DOM — and anything typed into it — survives on its own.
+  // What destroys it is a re-render: the Refresh control added in this batch,
+  // and the reload that follows a save elsewhere on the tab. The guard is what
+  // makes "discard" an explicit answer instead of something that happens
+  // silently the moment Refresh is pressed.
+  var businessSnapshot = null;
+
+  function businessFieldValues() {
+    return [
+      'biz-phone', 'biz-whatsapp', 'biz-email',
+      'biz-hours', 'biz-service-areas', 'biz-about'
+    ].map(function (id) {
+      var el = document.getElementById(id);
+      return el ? el.value : '';
+    }).join('\u0000');
+  }
+
+  function snapshotBusinessForm() {
+    businessSnapshot = businessFieldValues();
+  }
+
+  function pendingEditCount(scope) {
+    var root = scope || document;
+    var count = root.querySelectorAll('.admin-card-edit').length;
+    Array.prototype.forEach.call(root.querySelectorAll('.admin-notes-actions'), function (el) {
+      if (!el.hidden) count++;
+    });
+    if ((!scope || scope === tabPanels.business) && businessSnapshot !== null &&
+        !businessForm.hidden && businessFieldValues() !== businessSnapshot) {
+      count++;
+    }
+    return count;
+  }
+
+  async function confirmDiscard(scope) {
+    var count = pendingEditCount(scope);
+    if (count === 0) return true;
+    return confirmDialog({
+      title: 'Discard unsaved changes?',
+      body: count === 1
+        ? 'You have one unsaved change. It will be lost.'
+        : 'You have ' + count + ' unsaved changes. They will be lost.',
+      confirmLabel: 'Discard'
+    });
+  }
+
+  // Closes every open editor without writing anything, so the tab is left in a
+  // clean state rather than holding a half-typed form the user already agreed
+  // to abandon.
+  function discardPendingEdits(scope) {
+    var root = scope || document;
+    Array.prototype.forEach.call(root.querySelectorAll('.admin-card-edit'), function (form) {
+      var cancel = form.querySelector('.admin-cancel-btn');
+      if (cancel) cancel.click();
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('.admin-notes-form'), function (form) {
+      var actions = form.querySelector('.admin-notes-actions');
+      if (actions && !actions.hidden) {
+        var cancel = form.querySelector('.admin-cancel-btn');
+        if (cancel) cancel.click();
+      }
+    });
+    if ((!scope || scope === tabPanels.business) && businessSnapshot !== null && !businessForm.hidden) {
+      loadBusinessInfo();
+    }
+  }
+
+  // ---- Per-tab loading ----------------------------------------------------
+  // First paint used to fire all four queries at once, three of them for tabs
+  // that were not on screen. Only the active tab loads now; the rest load the
+  // first time they are opened.
+  var tabLoaders = {
+    photos: loadProjects,
+    leads: loadLeads,
+    business: loadBusinessInfo,
+    reviews: loadReviews
+  };
+  var tabLoaded = {};
+
+  function ensureTabLoaded(tab) {
+    if (tabLoaded[tab] || !tabLoaders[tab]) return;
+    tabLoaded[tab] = true;
+    tabLoaders[tab]();
+  }
+
+  function activateTab(tab) {
+    tabBtns.forEach(function (b) { b.classList.toggle('is-active', b.getAttribute('data-tab') === tab); });
+    Object.keys(tabPanels).forEach(function (key) {
+      tabPanels[key].hidden = key !== tab;
+    });
+    ensureTabLoaded(tab);
+  }
+
+  function currentTab() {
+    var active = document.querySelector('.admin-tab-btn.is-active');
+    return active ? active.getAttribute('data-tab') : 'photos';
+  }
+
   tabBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', async function () {
       var tab = btn.getAttribute('data-tab');
-      tabBtns.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
-      Object.keys(tabPanels).forEach(function (key) {
-        tabPanels[key].hidden = key !== tab;
-      });
+      if (tab === currentTab()) return;
+
+      var leaving = tabPanels[currentTab()];
+      if (!(await confirmDiscard(leaving))) return;
+      discardPendingEdits(leaving);
+
+      activateTab(tab);
     });
   });
+
+  // ---- Refresh ------------------------------------------------------------
+  // Nothing short of a full page reload showed a lead that arrived while the
+  // tab was already open.
+  document.addEventListener('click', async function (e) {
+    var btn = e.target.closest('.admin-refresh-btn');
+    if (!btn) return;
+
+    var tab = btn.getAttribute('data-refresh');
+    var panel = tabPanels[tab];
+    // A refresh re-renders the list, which is exactly what would throw away an
+    // open editor — so it asks first.
+    if (!(await confirmDiscard(panel))) return;
+    discardPendingEdits(panel);
+
+    btn.disabled = true;
+    try {
+      tabLoaded[tab] = true;
+      await tabLoaders[tab]();
+      showToast(REFRESH_LABELS[tab] + ' refreshed.', 'success');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  var REFRESH_LABELS = { photos: 'Photos', leads: 'Leads', business: 'Business info', reviews: 'Reviews' };
 
   // ---- Leads ----
   var leadsTbody = document.getElementById('leads-tbody');
@@ -938,16 +1122,44 @@
 
   var NOTES_PLACEHOLDER = 'e.g. Quoted $2,400, calling back Tuesday';
 
-  // Counted from the rows already in memory, so the badge is correct the
-  // instant a status changes — no refetch and no manual refresh.
-  function updateNewLeadBadge() {
-    var count = 0;
-    leadsData.forEach(function (lead) { if (lead.status === 'new') count++; });
+  // The badge has to be right before the Leads tab has ever been opened, and
+  // deferring that tab's fetch (item 10) would have left it blank until then.
+  // head + exact asks the server for the count and no rows at all.
+  // Counts without pulling the table. Deliberately a GET capped at one row
+  // rather than the tidier `head: true`: the HEAD form returned 503 from the
+  // REST edge on *every* first paint while this was being built (the same
+  // query over GET, and the same HEAD once the page had warmed up, both
+  // answered 200). One row of overhead beats a badge that needs a retry to
+  // appear. The retry stays as a safety net.
+  async function loadNewLeadCount(isRetry) {
+    var res = await supabaseClient
+      .from('leads')
+      .select('id', { count: 'exact' })
+      .eq('status', 'new')
+      .limit(1);
+    if (res.error) {
+      // A badge that silently reads zero is worse than one that arrives a
+      // second late — a missed new lead is the whole thing this prevents.
+      if (!isRetry) window.setTimeout(function () { loadNewLeadCount(true); }, 1500);
+      return;
+    }
+    renderNewLeadBadge(res.count || 0);
+  }
+
+  function renderNewLeadBadge(count) {
     leadsNewBadge.textContent = count;
     leadsNewBadge.hidden = count === 0;
     // The pill is aria-hidden, so the count goes in the button's accessible
     // name — "Leads, 3 new" rather than the run-together "Leads 3".
     leadsTabBtn.setAttribute('aria-label', count ? 'Leads, ' + count + ' new' : 'Leads');
+  }
+
+  // Once the rows are in memory the count comes from them, so a status change
+  // moves the badge with no request at all.
+  function updateNewLeadBadge() {
+    var count = 0;
+    leadsData.forEach(function (lead) { if (lead.status === 'new') count++; });
+    renderNewLeadBadge(count);
   }
 
   function updateCachedLead(lead) {
@@ -1277,6 +1489,7 @@
     // until then also means the fetch can no longer land mid-edit and
     // overwrite something Joe was typing.
     businessForm.hidden = false;
+    snapshotBusinessForm();
   }
 
   businessForm.addEventListener('submit', async function (e) {
@@ -1380,6 +1593,9 @@
       bizPhotoPreviewWrap.hidden = true;
     }
 
+    // Saved values become the new clean baseline, so leaving the tab straight
+    // after a successful save does not claim there is something to discard.
+    snapshotBusinessForm();
     flashInline(businessSuccess, 'Saved. The site is updated.');
     showToast('Business info saved.', 'success');
   });
@@ -1710,10 +1926,13 @@
   (async function init() {
     var session = await requireSession();
     if (!session) return;
+    // Active tab only. The other three load when first opened; the leads badge
+    // gets its own count-only query so it is correct before that happens.
+    document.getElementById('category').innerHTML = categoryOptions('');
+
+    tabLoaded.photos = true;
     loadProjects();
-    loadLeads();
-    loadBusinessInfo();
-    loadReviews();
+    loadNewLeadCount();
   })();
 })();
 </script>

@@ -663,6 +663,59 @@
   outline-offset: 2px;
 }
 
+/* ---- Refresh control ----
+   Sits inside the section <h2>, so it has to opt out of the display heading's
+   font and case rather than inherit them. */
+.admin-refresh-btn {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 12px;
+  padding: 11px 14px;
+  min-height: 44px;
+  background: transparent;
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-label);
+  line-height: 1;
+  cursor: pointer;
+}
+.admin-refresh-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.admin-refresh-btn:disabled { opacity: 0.5; cursor: default; }
+@media (hover: hover) {
+  .admin-refresh-btn:hover { background: rgba(245, 245, 240, 0.07); }
+}
+.admin-refresh-btn:active { background: rgba(245, 245, 240, 0.14); }
+
+/* ---- Text-styled button ----
+   "Forgot password?" is a button, not a link — it triggers a request rather
+   than navigating — but it should read as a link. */
+.admin-link-btn {
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  min-height: 44px;
+  color: var(--ink-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: var(--fs-small);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .admin-link-btn:hover { color: var(--ink); }
+}
+.admin-link-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ---- Section hint ---- */
 .admin-hint {
   color: var(--ink-dim);
@@ -969,6 +1022,7 @@
   .admin-lead-actions { justify-content: flex-end; margin-top: 8px; }
   .admin-modal-actions { justify-content: flex-end; }
   .admin-modal-actions button { flex: 0 1 auto; min-height: 38px; }
+  .admin-refresh-btn { min-height: 38px; padding: 8px 14px; }
   .admin-table-message {
     max-width: 260px;
     white-space: pre-wrap;

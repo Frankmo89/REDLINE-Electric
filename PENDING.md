@@ -115,27 +115,198 @@ list changes.
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
-### 8. Admin dashboard audit — remaining items (held)
-
-From the 2026-08-17 audit, deferred until batches 1–4 and 5 land. Numbered as in
-the audit, so a gap means resolved (7 shipped as batch 6, 8 as batch 7, 9 as
-batch 8 — all 2026-08-18):
-
-- **6.** Business Info race guard — *mostly closed already* by batch 4: the form
-  is now gated behind its load, so the fetch can no longer overwrite mid-edit.
-  What remains is an unsaved-changes guard when switching tabs.
-- **10.** Performance: `loading="lazy"` on admin photo `<img>` (the public site
-  already does this), Supabase image transforms (full 1920px images render into
-  220px cards), per-tab loading instead of four queries on first paint, a
-  refresh control, preconnect to jsdelivr and Supabase.
-- **11.** Category dropdown instead of free text — `work.html` builds its public
-  filter pills from these values, so one typo creates a duplicate pill.
-- **12.** Password reset on `admin/login.html`, plus `try/catch` hardening.
-
 
 ---
 
 ## Resolved
+
+### 2026-08-18 — Password reset verified in production (closes items 7 and 12)
+
+Verified manually, end to end, against the real deployment: reset requested from
+the live login page, link opened from Gmail, it landed on the live page, a new
+password was set, logout, the old password was correctly rejected and the new
+one accepted. The flow is fully functional.
+
+**Open item 7 was my error, and is retracted.** I reported that the reset link
+"arrives malformed" because the `=` after `token` was wrong in the two emails I
+inspected — missing in one, a comma in the other — and because requesting the
+URL exactly as I had read it returned 400. Both parts were true of *what I read
+back*, and neither was true of the email itself. **The corruption was in the
+retrieval path** — reading the message through the Gmail API — not in the
+Supabase template and not in what was delivered. The real link, clicked from a
+real mail client, works.
+
+The clue was in the evidence at the time and I under-weighted it: a static
+template typo produces the *same* wrong character every send, and I saw two
+different ones. That should have pointed at the reading rather than the sending
+before I wrote it up as a probable template defect. **No change is needed in
+Supabase → Email Templates.**
+
+**The `ERR_CONNECTION_REFUSED` was also mine, not a defect.** The two test
+emails I generated carried `redirect_to=http://127.0.0.1:8788/admin/login.html`,
+because that was the origin they were requested from. Once the local test server
+was stopped, clicking those particular links had nothing to connect to. Reset
+links point at whatever origin requested them; links generated from the live
+site point at the live site.
+
+**Lessons worth keeping:**
+
+- Do not trust a URL read back through an email API for character-exact
+  testing. Confirm the click in a real mail client before concluding the link
+  is broken.
+- Reset emails are origin-bound. A link generated from a local test server is
+  only ever openable against that server.
+- The built-in SMTP allows **2 reset emails per hour**. Hitting that limit looks
+  like a failure and is not one.
+
+**Item 12 stands as shipped in batch 9**, including the `<head>` recovery
+detection added afterwards — that race was real and measured (supabase-js clears
+the recovery parameters out of the URL during initialisation, before a page
+script can read them), and the production run exercised the fixed code.
+
+### 2026-08-18 — Admin dashboard audit, batch 9 (closes items 6, 10, 11, 12)
+
+The last of the 2026-08-17 audit. Every item from it is now shipped.
+
+**Item 6 — unsaved-changes guard.** Three things count as unsaved: a photo or
+review card in its edit form, a lead note typed but not saved, and the Business
+Info form differing from the row it loaded (tracked with a snapshot taken on
+load and reset on save). Switching tabs with any of them pending opens the
+batch-8 `confirmDialog`; Cancel stays put with everything intact, Discard closes
+the editors without writing and then switches.
+
+*One correction to the premise.* Switching tabs only toggles `hidden`, so an
+open edit was **not** being lost — the DOM and everything typed into it
+survived. What destroys it is a re-render, which until now only happened on
+save. The guard's real value is on the Refresh control added in this same batch,
+which re-renders on demand; on tab switch it turns a half-typed form silently
+lingering on a hidden tab into an explicit choice.
+
+**Item 10 — performance.**
+
+- `loading="lazy"` on admin thumbnails.
+- Supabase image transforms at `width=440` (cards render ~300px; 440 covers a
+  1.5x display). Measured across all 8 photos: **12.97 MB → 237 KB, a 98.2%
+  reduction.** Transforms are a paid feature and are enabled here, verified
+  before building on them — but if that ever lapses the render endpoint starts
+  erroring, so each `<img>` falls back to the original file on error rather than
+  leaving a grid of broken images.
+- **Per-tab loading — the audit was right, batch 4 had not done this.** First
+  paint fired all four queries; three were for tabs not on screen. Verified by
+  network log, not assumption. Now only the active tab loads and the rest load
+  on first open — confirmed afterwards that `reviews` and `business_info` are
+  never requested until their tab is opened.
+- The badge would have gone blank under that change, since it needs the lead
+  count before the Leads tab is ever opened. It now issues a count-only query.
+  **Deliberately a GET capped at one row rather than the tidier `head: true`:**
+  the HEAD form returned **503 on every first paint**, reproducibly, while the
+  same query over GET returned 206 and the same HEAD returned 200 once the page
+  had warmed up. A retry stays as a safety net, but the badge no longer depends
+  on it.
+- Refresh control per tab, since nothing short of a full reload showed a lead
+  that arrived while the tab was open. It runs the unsaved guard first, because
+  re-rendering is exactly what would discard an open editor.
+- `preconnect` for jsdelivr and the Supabase origin on both admin pages.
+
+**Item 11 — category is a dropdown.**
+
+*No shared source of truth existed*, so one was created:
+`assets/js/service-categories.js`. It is deliberately **not** derived from
+`i18n.js`, even though the same six names live there as
+`service_1_title..service_6_title` — those are translated, `i18n.t()` returns
+"Remodelaciones" in Spanish, and a stored category must not change with the
+viewer's language. `i18n.js` says the same thing at the top of its own file.
+
+**The stored data does not match the six services, which matters here.** Of 8
+photos: `Art Lighting` (3) and `New Construction` (1) are canonical, but
+`Remodel` (2), `Lighting` (1) and `Commercial` (1) are not — and `work.html`
+builds its public filter pills straight from those values, so all five are pills
+on the live site today. A strict dropdown would have silently reassigned four
+photos the first time anyone opened their edit form. Instead the select keeps
+an off-list value as a selected option labelled "(no service page)", so editing
+never changes a category by accident and the odd ones out are visible.
+
+**Not migrated, deliberately — this needs a decision.** `Remodel` → `Remodels`
+looks like a plain typo worth fixing, but `Lighting` and `Commercial` are not
+services at all and mapping them is a content call. Renaming any of them
+changes the pills on the live site.
+
+**Item 12 — login hardening + password reset.**
+
+- Every path through the login form is now wrapped, with the button re-enabled
+  in a `finally`. The bug was specific: a *thrown* error (network down, CDN
+  blocked) never produced a returned `{error}`, so the old code skipped its
+  error branch entirely and left the button disabled with no message and no way
+  out but a page reload. Both shapes verified — returned error and thrown.
+- "Forgot password?" sends a reset through Supabase Auth. The success message
+  does not reveal whether the address has an account, matching what Supabase
+  itself does, so the form cannot be used to probe for accounts.
+- The reset link had to be handled somewhere, so `login.html` handles it: it
+  detects `type=recovery`, shows a set-a-new-password form, and **suppresses the
+  usual redirect to the dashboard** — a recovery link signs the user in, so
+  without that guard it would bounce straight past the password change it was
+  sent for. Verified.
+
+**Config still needed when the domain goes live:** the reset `redirectTo` uses
+the current origin, so `https://redlinesd.com/admin/login.html` has to be added
+to the Supabase Auth redirect allowlist. Until then reset links only work from
+whatever origin the admin is served on.
+
+**Verification.** Guard: all three unsaved sources detected, Cancel keeps tab
+and content, Discard reverts (business phone confirmed restored to its stored
+value), and a clean form does not prompt. Perf: network log shows 2 requests on
+first paint instead of 4, `reviews`/`business_info` absent until opened, all 8
+thumbnails served from the render endpoint at exactly 440px natural width, and
+Refresh surfaced a lead inserted while the tab was open (1 → 2 rows, badge
+1 → 2). Categories: uploaded a test photo with `EV Chargers` from the dropdown,
+edited it to `Service Calls`, confirmed in the database; `Remodel` confirmed
+preserved and flagged. Login: both failure shapes re-enable the button, reset
+request exercised against an undeliverable `.invalid` address so no real email
+was sent, recovery mode confirmed not to bounce past the password change.
+
+**One real bug caught in testing.** The Refresh button rendered at **38px on a
+phone**, under batch 1's 44px floor: its mobile override sat in the
+`max-width: 759px` block, which appears *earlier* in `admin.css` than the base
+rule, so at equal specificity the base won. Rewritten mobile-first like the rest
+of the file, with the desktop block stepping it down. Re-verified at both
+widths — 44px at 390px, 38px at 1200px.
+
+Test data cleaned up: `projects` 8, `reviews` 3, `leads` 0, no leftover rows and
+no orphaned storage object.
+
+**Follow-ups completed 2026-08-18, after review:**
+
+*Category migration.* `Remodel` → `Remodels` on the two photos holding it, at
+Joe's instruction. `Lighting` and `Commercial` were left alone deliberately —
+he is recategorising those two by hand once he has looked at them. Worth
+recording that this changed **less than expected**: `hero-bg.js` `normalize()`
+lowercases and strips a trailing `s`, so `Remodel` already matched the Remodels
+service page hero. The only thing that moved was `work.html`'s filter pill,
+which compares exactly — verified the "Remodel" pill is gone, "Remodels" is
+there, and filtering by it returns the right two photos.
+
+*Recovery-mode detection was losing a race.* Testing the real reset link
+exposed it: the link verified and redirected to `login.html` correctly, and the
+page then bounced straight to the dashboard anyway — past the password change.
+The cause was that supabase-js **consumes the recovery parameters and clears
+the URL during initialisation**, so the page script reading `location.hash`
+afterwards saw nothing. Detection moved into a tiny `<head>` script that runs
+before supabase-js is fetched, and the redirect now waits for the
+`PASSWORD_RECOVERY` event when the URL carries a PKCE `code` instead. Verified
+against a reconstruction of the exact redirect shape: page stays on
+`login.html`, the head script reports `isRecovery: true`, and supabase-js is
+confirmed to have already cleared the hash by the time the page script runs —
+which is precisely why the original check failed. Recovery form checked at
+390px: 16px field, 50px tall, no overflow.
+
+*Two test artifacts worth remembering:* an earlier run of this same test
+appeared to fail because the browser served a **cached** `login.html` without
+the new head script — the fix was already correct, the cache was not, so
+force-refresh before re-testing auth redirects. And the "malformed reset link"
+reported alongside this turned out to be a fault in how the email was read
+back, not in the email; see the 2026-08-18 entry above.
+
+**The 2026-08-17 audit is now fully closed.** Held item 8 is retired with it.
 
 ### 2026-08-18 — Admin dashboard audit, batch 8 (closes audit item 9)
 

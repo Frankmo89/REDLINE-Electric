@@ -7,9 +7,24 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://hvesaitxkwlufbljnupy.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/styles.css">
 <link rel="stylesheet" href="admin.css">
+<script>
+  // Runs before supabase-js is even fetched. It strips the recovery
+  // parameters out of the URL while initialising, so by the time the page
+  // script below runs they can already be gone — which sent a user arriving
+  // from a reset email straight to the dashboard, past the password change.
+  (function () {
+    var loc = window.location;
+    window.__redlineAuthEntry = {
+      isRecovery: /type=recovery/.test(loc.hash) || /type=recovery/.test(loc.search),
+      hasCode: /[?&]code=/.test(loc.search)
+    };
+  })();
+</script>
 </head>
 <body class="admin-body">
 
@@ -24,7 +39,21 @@
       <input type="password" id="password" required autocomplete="current-password">
     </label>
     <button type="submit" class="btn-primary" id="login-btn">Log In</button>
+    <button type="button" class="admin-link-btn" id="forgot-btn">Forgot password?</button>
     <p id="login-error" class="admin-error" hidden></p>
+    <p id="login-success" class="admin-success" hidden></p>
+  </form>
+
+  <!-- Shown only when the page is opened from a password-reset email. The
+       recovery link signs the user in, so without this they would land on the
+       dashboard with the old password still set and no way to change it. -->
+  <form id="recovery-form" class="admin-form" hidden>
+    <p class="admin-hint">Choose a new password for your admin account.</p>
+    <label>New Password
+      <input type="password" id="new-password" required autocomplete="new-password" minlength="8">
+    </label>
+    <button type="submit" class="btn-primary" id="recovery-btn">Set New Password</button>
+    <p id="recovery-error" class="admin-error" hidden></p>
   </form>
 </div>
 
@@ -34,32 +63,144 @@
 (function () {
   var form = document.getElementById('login-form');
   var errorMsg = document.getElementById('login-error');
+  var successMsg = document.getElementById('login-success');
   var loginBtn = document.getElementById('login-btn');
+  var forgotBtn = document.getElementById('forgot-btn');
+  var recoveryForm = document.getElementById('recovery-form');
+  var recoveryBtn = document.getElementById('recovery-btn');
+  var recoveryError = document.getElementById('recovery-error');
+  var emailInput = document.getElementById('email');
 
-  supabaseClient.auth.getSession().then(function (res) {
-    if (res.data.session) {
-      window.location.replace('dashboard.html');
-    }
+  // Captured by the <head> script above, before supabase-js could clear it.
+  var authEntry = window.__redlineAuthEntry || { isRecovery: false, hasCode: false };
+  var isRecovery = authEntry.isRecovery;
+
+  function show(el, message) {
+    el.textContent = message;
+    el.hidden = false;
+  }
+
+  function hide() {
+    errorMsg.hidden = true;
+    successMsg.hidden = true;
+  }
+
+  // Anything thrown rather than returned — the CDN blocked, DNS down, a
+  // malformed response — used to skip the error branch entirely, so the button
+  // stayed disabled with no message and no way back except a page reload.
+  // Every path now reports, and every path re-enables in a finally.
+  function describe(err) {
+    var detail = err && err.message ? err.message : 'Unknown error';
+    return 'Could not reach the login service. Check your connection and try again. (' + detail + ')';
+  }
+
+  function enterRecoveryMode() {
+    isRecovery = true;
+    form.hidden = true;
+    recoveryForm.hidden = false;
+    document.getElementById('new-password').focus();
+  }
+
+  // The hash may already have been consumed; this fires either way.
+  supabaseClient.auth.onAuthStateChange(function (event) {
+    if (event === 'PASSWORD_RECOVERY') enterRecoveryMode();
   });
+
+  if (isRecovery) enterRecoveryMode();
+
+  function redirectIfAlreadySignedIn() {
+    supabaseClient.auth.getSession().then(function (res) {
+      // A recovery link signs the user in too. Bouncing to the dashboard on
+      // that session would skip the password change the email was sent for.
+      if (res.data.session && !isRecovery) window.location.replace('dashboard.html');
+    }).catch(function () {
+      // No session to restore is not an error worth showing — the form is
+      // already the right thing to be looking at.
+    });
+  }
+
+  if (authEntry.hasCode) {
+    // PKCE flow: the URL carries an opaque code and says nothing about why.
+    // Only the PASSWORD_RECOVERY event can tell us, so give it a moment to
+    // arrive before deciding whether this is a normal signed-in visit.
+    window.setTimeout(redirectIfAlreadySignedIn, 1500);
+  } else {
+    redirectIfAlreadySignedIn();
+  }
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
-    errorMsg.hidden = true;
+    hide();
     loginBtn.disabled = true;
 
-    var email = document.getElementById('email').value.trim();
+    var email = emailInput.value.trim();
     var password = document.getElementById('password').value;
 
-    var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
-
-    if (result.error) {
-      errorMsg.textContent = result.error.message;
-      errorMsg.hidden = false;
+    try {
+      var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+      if (result.error) {
+        show(errorMsg, result.error.message);
+        return;
+      }
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      show(errorMsg, describe(err));
+    } finally {
       loginBtn.disabled = false;
+    }
+  });
+
+  forgotBtn.addEventListener('click', async function () {
+    hide();
+    var email = emailInput.value.trim();
+    if (!email) {
+      show(errorMsg, 'Enter your email address above first, then tap Forgot password?');
+      emailInput.focus();
       return;
     }
 
-    window.location.href = 'dashboard.html';
+    forgotBtn.disabled = true;
+    try {
+      var res = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+      if (res.error) {
+        show(errorMsg, res.error.message);
+        return;
+      }
+      // Deliberately does not say whether the address exists — Supabase
+      // answers the same either way so a stranger cannot probe for accounts.
+      show(successMsg, 'If that address has an account, a reset link is on its way. Open it on this device.');
+    } catch (err) {
+      show(errorMsg, describe(err));
+    } finally {
+      forgotBtn.disabled = false;
+    }
+  });
+
+  recoveryForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    recoveryError.hidden = true;
+    var password = document.getElementById('new-password').value;
+
+    if (password.length < 8) {
+      show(recoveryError, 'Use at least 8 characters.');
+      return;
+    }
+
+    recoveryBtn.disabled = true;
+    try {
+      var res = await supabaseClient.auth.updateUser({ password: password });
+      if (res.error) {
+        show(recoveryError, res.error.message);
+        return;
+      }
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      show(recoveryError, describe(err));
+    } finally {
+      recoveryBtn.disabled = false;
+    }
   });
 })();
 </script>
