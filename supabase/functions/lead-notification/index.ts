@@ -26,10 +26,10 @@ const NOTIFY_TO = "joe.britt1979@gmail.com";
 // Verified sending domain in Resend -- used as the From for both the
 // internal notification and the customer confirmation below.
 const FROM_ADDRESS = "Redline Electric Website <leads@redlinesd.com>";
-// Live site is served by the Cloudflare Worker's workers.dev subdomain
-// (redlinesd.com isn't live yet) -- used so the logo resolves to a
-// public URL that email clients can actually load.
-const LOGO_URL = "https://redline-electric.alonsosky617.workers.dev/assets/redline-electric-logo.png";
+// Must be an absolute, publicly reachable URL: email clients can't resolve
+// relative paths, and many fetch images without a session. Points at the live
+// domain (verified serving 200 image/png since 2026-08-21).
+const LOGO_URL = "https://redlinesd.com/assets/redline-electric-logo.png";
 const PHONE_DISPLAY = "(619) 748-0662";
 const PHONE_TEL = "tel:+16197480662";
 

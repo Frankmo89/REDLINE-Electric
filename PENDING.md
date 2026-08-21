@@ -120,6 +120,30 @@ issue, visible change, so it is logged rather than guessed at.
 
 ## Resolved
 
+### 2026-08-21 — Email logo now loads from the live domain
+
+Not a numbered item; flagged while closing item 1. The customer confirmation
+email's `LOGO_URL` still pointed at the `workers.dev` subdomain, carried over from
+a comment claiming redlinesd.com was not live yet. Repointed to
+`https://redlinesd.com/assets/redline-electric-logo.png` and replaced the stale
+comment with a note on why the URL must stay absolute and publicly reachable
+(email clients cannot resolve relative paths). Deployed as version 6,
+`verify_jwt` left on. No `workers.dev` reference remains anywhere in the repo.
+
+**Verified before deploying, then again after:** the new URL returns 200 with
+`content-type: image/png` and the same 67,991 bytes the old one served, so it is
+the same asset and not a redirect or an error page. After deploying, a real lead
+insert produced a delivered email whose rendered source contains
+`<img src="https://redlinesd.com/assets/redline-electric-logo.png">` — read back
+from the inbox, not inferred from the template. Test row deleted afterwards.
+
+**Worth knowing:** the logo lives only in the customer confirmation. The internal
+notification to Joe is plain HTML with no images, so `LOGO_URL` never appears in
+it — that email was unaffected by this change.
+
+**Also checked:** every `og:image` in the site already pointed at redlinesd.com,
+so the Edge Function was the only place still referencing workers.dev.
+
 ### 2026-08-21 — Canonical URLs and sitemap switched to extensionless form
 
 Found while verifying item 1, not tracked as a numbered item before. Every
