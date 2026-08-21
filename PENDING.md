@@ -16,48 +16,6 @@ Last updated: 2026-08-18
 Item numbers are stable — when something resolves it moves to the bottom and
 its number is retired, so a gap in this list means "resolved", not "missing".
 
-### 1. Domain — redlinesd.com transfer
-
-Transfer from Wix to Namecheap is still in progress; Wix hasn't released the
-domain yet.
-
-Once the transfer completes:
-
-- Point nameservers at Cloudflare: `fay.ns.cloudflare.com` /
-  `moura.ns.cloudflare.com`
-- Connect the domain to the `redline-electric` Worker (see `wrangler.jsonc`)
-
-**Current state:** `https://redlinesd.com/` resolves to a Wix "this domain is
-not connected to a site" parking page.
-
-**Note — the repo does not use a workers.dev URL anywhere.** Every canonical,
-`og:url`, `sitemap.xml` entry, and the `Sitemap:` line in `robots.txt` already
-points at `https://redlinesd.com`. So there is nothing to find-and-replace once
-the domain is live — but until then those URLs advertise a domain that serves a
-parking page. Worth re-verifying they resolve correctly the moment DNS cuts
-over.
-
-Files that reference the domain: `index.html`, `work.html`, `404.html`,
-`services/*.html`, `sitemap.xml`, `robots.txt`.
-
-### 2. Email alias — info@redlinesd.com
-
-Blocked on item 1.
-
-Once the domain is live:
-
-- Set up Cloudflare Email Routing for `info@redlinesd.com` (or similar)
-  forwarding to Joe's Gmail
-- Re-add the email to `business_info.email` in Supabase — the contact block on
-  the site reveals itself automatically when that field is non-empty
-  (`assets/js/business-info.js:51-57`); no code change needed either way
-
-**Why it's empty right now:** `joe.britt1979@gmail.com` was rendering publicly
-next to the C-10 license number, which undercut the credibility the license is
-there to establish. Rather than ship a personal Gmail, the field was cleared on
-2026-08-17 so the contact block shows phone + text only until a proper
-alias exists.
-
 ### 4. About section profile photo — new upload needs a look
 
 **A new photo was uploaded on 2026-08-17 at 22:57 UTC**, during the Tier 2
@@ -161,6 +119,95 @@ issue, visible change, so it is logged rather than guessed at.
 ---
 
 ## Resolved
+
+### 2026-08-21 — Canonical URLs and sitemap switched to extensionless form
+
+Found while verifying item 1, not tracked as a numbered item before. Every
+`<link rel="canonical">` and every sitemap `<loc>` pointed at the `.html` path,
+which is exactly the URL the Worker 307s away from — so the canonical named a
+redirect rather than the final URL, and the sitemap was a list of redirects.
+
+Stripped `.html` from the canonical tag on `work.html` and the six service pages
+(`index.html` was already the bare domain and was left alone), and from all seven
+non-root `<loc>` entries in `sitemap.xml`. 14 lines changed across 8 files;
+nothing else touched — `robots.txt`, the Worker's redirect rules, and every
+`og:url` are unchanged.
+
+**Verified against the live site:** all 8 canonical URLs and all 8 sitemap URLs
+return 200 **directly**, with an empty redirect target — no 307, no redirect
+chain — and each serves its own distinct page (titles confirmed, so these are
+real pages and not a soft-200 fallback). Checked both with `curl -L` and without.
+
+**`og:url` brought in line too:** the same seven pages had the identical `.html`
+problem in their Open Graph URL, so those were stripped to match; all eight pages
+now have `og:url` and `canonical` in exact agreement, each resolving 200 directly.
+
+### 2026-08-21 — Domain live on Cloudflare (closes item 1)
+
+Namecheap confirms `redlinesd.com` is fully ACTIVE (Aug 21, 2026 – Mar 31, 2029)
+with no transfer in progress, so the Wix release completed.
+
+**Current state:** nameservers point at Cloudflare (`fay.ns.cloudflare.com` /
+`moura.ns.cloudflare.com`), the domain is active at the registrar, and the live
+site serves 200 across `index.html`, `work.html`, `sitemap.xml`, `robots.txt`, and
+all six service pages.
+
+Both of item 1's action bullets are done: nameservers are the exact two it
+specified, and the domain is connected to the `redline-electric` Worker.
+
+**Precision on those 200s:** `sitemap.xml` and `robots.txt` return 200 directly.
+The `.html` paths return 307 first and land on 200 — the Worker redirects them to
+extensionless canonical URLs (`/work.html` → `/work`, `/services/ev-chargers.html`
+→ `/services/ev-chargers`, `/index.html` → `/`). Every page resolves; none 404.
+
+**Item 1's "nothing to find-and-replace" note was half right.** The domain in
+those URLs is correct — no `workers.dev` anywhere. But the *path form* is not:
+every `<link rel="canonical">` and every sitemap `<loc>` still points at the
+`.html` variant, which is exactly the URL the Worker 307s away from. A canonical
+should name the final, non-redirecting URL, and a sitemap should not be a list of
+redirects. This was invisible while the domain was parked and only became
+checkable once it went live. Nothing was changed for it here; it needs a
+decision on whether to rewrite the canonicals and sitemap to the extensionless
+form or to stop redirecting the `.html` paths.
+
+### 2026-08-21 — Email alias live on redlinesd.com (closes item 2)
+
+Cloudflare Email Routing is live: `info@redlinesd.com`, `joe@redlinesd.com`, and
+`billing@redlinesd.com` all forward to Joe's Gmail, which is verified as an
+active destination address. Catch-all stays disabled (drop). MX confirmed from
+here as `route1/2/3.mx.cloudflare.net`. `business_info.email` is set to
+`info@redlinesd.com` (was null) — confirmed by reading the row, not assumed.
+
+**Item 2's assumption was correct — the contact block reveals itself with no
+code change.** Traced the whole path rather than trusting the note:
+`assets/js/business-info.js` fetches the row, and under `if (info.email)` sets the
+`mailto:` href and link text on `[data-email-link]`, then sets `hidden = false` on
+`[data-email-item]`. Both hooks are present on `index.html` and all six service
+pages, and `business-info.js` is loaded on every public page.
+
+**The part that makes it actually work is easy to miss.** `.contact-info-item` is
+`display: flex` (`css/styles.css:692`), which on its own would override the
+`hidden` attribute and show the email row even while empty. It stays hidden only
+because of the global `[hidden] { display: none !important; }` guard at
+`css/styles.css:43`. That guard is load-bearing for this feature — worth knowing
+before anyone "tidies" it.
+
+**Line reference corrected:** item 2 cited `business-info.js:51-57` for the reveal;
+the code has since drifted and now lives at lines 58-64.
+
+**Not a defect, but worth recording:** `work.html` and `404.html` load
+`business-info.js` but have no `[data-email-item]` markup — just a footer phone
+link. The email will not appear on those two pages. That matches how they are
+built; only the contact block on the home and service pages carries it.
+
+### 2026-08-21 — Supabase Auth URL configuration confirmed for the live domain
+
+Site URL is `https://redlinesd.com` and Redirect URLs contains the wildcard
+`https://redlinesd.com/*`, which covers `/admin/login.html` and the password
+recovery redirect. This was never a numbered item — the flow itself was closed
+on 2026-08-18 ("Password reset verified in production"), but that verification
+predates the domain going live, so the URL config is recorded here as its own
+confirmation.
 
 ### 2026-08-21 — Resend sending domain verified, lead emails restored (closes item 3)
 

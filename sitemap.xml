@@ -6,37 +6,37 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://redlinesd.com/work.html</loc>
+    <loc>https://redlinesd.com/work</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://redlinesd.com/services/new-construction.html</loc>
+    <loc>https://redlinesd.com/services/new-construction</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://redlinesd.com/services/remodels.html</loc>
+    <loc>https://redlinesd.com/services/remodels</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://redlinesd.com/services/retrofits.html</loc>
+    <loc>https://redlinesd.com/services/retrofits</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://redlinesd.com/services/art-lighting.html</loc>
+    <loc>https://redlinesd.com/services/art-lighting</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://redlinesd.com/services/ev-chargers.html</loc>
+    <loc>https://redlinesd.com/services/ev-chargers</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://redlinesd.com/services/service-calls.html</loc>
+    <loc>https://redlinesd.com/services/service-calls</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
