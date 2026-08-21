@@ -97,20 +97,19 @@ body.nav-locked { overflow: hidden; }
 /* ---- Focus ----
    There was no :focus-visible rule anywhere in this file, so keyboard focus
    fell back to the UA ring everywhere except the quote form, which explicitly
-   removed it. One accent ring, applied globally. */
+   removed it.
+
+   Two-tone ring: a dark band hugging the element, then a light band outside it.
+   Whichever surface the control sits on, one of the two bands contrasts against
+   it — --ink on --bg is 13.82:1 for dark sections, --bg on --panel is 13.82:1
+   for the light ones — so a single rule covers every surface. This replaces the
+   old single accent ring (2.74:1 on dark, under the 3:1 non-text threshold) and
+   the per-surface override it needed for controls sitting on accent fills; the
+   dark band is what makes those readable now, so no special case is required. */
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-/* Controls that sit on the accent red need a light ring instead — a red ring
-   on a red fill is invisible. */
-.emergency-band-cta:focus-visible,
-.cookie-banner-accept:focus-visible,
-.lang-banner-switch:focus-visible,
-.filter-pill.is-active:focus-visible,
-.lang-btn.is-active:focus-visible,
-.sticky-call-btn:focus-visible {
-  outline-color: var(--ink);
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--bg);
 }
 
 section {
@@ -351,7 +350,7 @@ section {
 }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
-  color: var(--accent); font-family: 'Oswald', sans-serif; font-size: var(--fs-micro); font-weight: 600;
+  color: var(--ink-dim); font-family: 'Oswald', sans-serif; font-size: var(--fs-micro); font-weight: 600;
   letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 18px;
 }
 .eyebrow::before {
@@ -626,7 +625,7 @@ section {
   padding: 28px 26px 24px;
 }
 .testimonial-stars {
-  color: var(--accent);
+  color: var(--ink-dim);
   font-size: var(--fs-small);
   letter-spacing: 3px;
   margin-bottom: 16px;
@@ -707,7 +706,10 @@ section {
   color: var(--ink);
   text-decoration: none;
 }
-a.contact-info-value:hover { color: var(--accent); }
+/* Sits on --bg2 (dark), where the old accent hover measured 2.45:1. The resting
+   colour is already --ink, so there is no brighter colour to move to — the hover
+   is carried by an underline instead, which keeps the 12.38:1 contrast. */
+a.contact-info-value:hover { text-decoration: underline; }
 /* The .areas-served pill block that lived here was removed — the service-area
    list now renders once, in the footer (.footer-areas). It previously appeared
    three times within ~600px of scroll: as pills here, as the wrapped third
@@ -737,7 +739,7 @@ a.contact-info-value:hover { color: var(--accent); }
 .badge .swatch {
   width: 44px; height: 44px; border: 2px solid var(--accent); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Oswald', sans-serif; color: var(--accent); font-weight: 700; flex: none;
+  font-family: 'Oswald', sans-serif; color: var(--ink-dim); font-weight: 700; flex: none;
 }
 .badge div span { display: block; font-size: var(--fs-label); color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
 .badge div strong { font-family: 'Oswald', sans-serif; font-size: var(--fs-body); }
@@ -771,7 +773,13 @@ a.contact-info-value:hover { color: var(--accent); }
   font-size: var(--fs-small);
   color: var(--ink);
   background: var(--bg);
-  border: 1px solid var(--line);
+  /* --line (#3A3E48) measured 1.41:1 against the --bg field fill, so the
+     boundary of every input was effectively invisible. --ink-dim is the only
+     existing token that clears the 3:1 non-text threshold here (6.84:1) without
+     being pure white, so the palette gains nothing new. Scoped to form controls
+     deliberately: --line is used for 15 dividers and panel edges elsewhere, and
+     lightening those is a different decision. */
+  border: 1px solid var(--ink-dim);
   border-radius: 2px;
   padding: 12px 14px;
 }
@@ -789,8 +797,9 @@ a.contact-info-value:hover { color: var(--accent); }
 .quote-form input:focus-visible,
 .quote-form select:focus-visible,
 .quote-form textarea:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--bg);
   border-color: var(--accent);
 }
 .quote-form select {
@@ -978,7 +987,9 @@ a.contact-info-value:hover { color: var(--accent); }
   letter-spacing: 0.03em;
   font-size: var(--fs-small);
 }
-.footer-contact a:hover { color: var(--accent); }
+/* Same reasoning as a.contact-info-value:hover — resting colour is --ink, so the
+   hover is an underline rather than a colour change. */
+.footer-contact a:hover { text-decoration: underline; }
 .footer-heading {
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
@@ -989,7 +1000,7 @@ a.contact-info-value:hover { color: var(--accent); }
 }
 .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 .footer-links a { color: var(--ink-dim); text-decoration: none; font-size: var(--fs-small); }
-.footer-links a:hover { color: var(--accent); }
+.footer-links a:hover { color: var(--ink); }
 .footer-info p { font-size: var(--fs-small); margin-bottom: 8px; }
 /* The single canonical rendering of the service-area list. Driven by
    business_info.service_areas via [data-service-areas-text], so the DB stays
@@ -1235,7 +1246,7 @@ a.contact-info-value:hover { color: var(--accent); }
   font-size: var(--fs-micro);
   letter-spacing: 0.04em;
 }
-.not-found-links a:hover { color: var(--accent); }
+.not-found-links a:hover { color: var(--ink); }
 
 /* ---- Larger screens ---- */
 @media (min-width: 760px) {
@@ -1319,7 +1330,7 @@ a.contact-info-value:hover { color: var(--accent); }
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
-  .nav-dropdown-menu a:hover { color: var(--accent); }
+  .nav-dropdown-menu a:hover { color: var(--ink); }
 
   .services-grid { grid-template-columns: repeat(3, 1fr); }
 

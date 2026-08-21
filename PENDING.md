@@ -55,70 +55,59 @@ list changes.
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
-
-### 8. Accessibility — three contrast decisions that need a human call
-
-From the 2026-08-18 WCAG 2.1 AA pass. Everything mechanical was fixed in that
-batch; these three need a decision because the fix changes how the site looks,
-and the audit brief said not to guess on those.
-
-**8a. The brand red fails as text on dark — this is the big one.**
-`--accent` `#CC2029` on `--bg` `#23262F` is **2.74:1**. AA needs 4.5:1 for body
-text and 3.0:1 even for large text, so it fails both. It is used as text in 22
-places in `css/styles.css` — section eyebrows, `.card .num`, the hero's
-`POWER YOU CAN **TRUST.**`, list markers, and every `:hover` colour change.
-
-Measured options, keeping the brand hue and saturation and raising lightness:
-
-| candidate | on `--bg` | on `--bg2` | on light panel | verdict |
-|---|---|---|---|---|
-| `#CC2029` (today) | 2.74 | 2.45 | 5.04 | fails on dark |
-| `#DF353E` | 3.39 | 3.04 | 4.07 | passes **large text only** |
-| `#E97379` | 5.18 | 4.64 | 2.67 | passes on dark, **now fails on light** |
-
-There is no single red that passes 4.5:1 on the dark surfaces and still works on
-the light panel, so this cannot be solved by editing one token. The realistic
-choices are:
-
-1. **Two tokens** — keep `#CC2029` for fills, logo and light-panel text; add an
-   `--accent-text-dark` at `#E97379` used only for accent text sitting on dark.
-   Fixes it properly; the small red text turns noticeably salmon.
-2. **`#DF353E` everywhere** — closest to the current red, and enough for the
-   large hero word, but small accent text still fails.
-3. **Stop using red for small text on dark** — keep the palette, switch eyebrows
-   and `.card .num` to `--ink-dim` (6.84:1, already used elsewhere) and keep red
-   for fills and large display only.
-
-Option 3 changes the palette not at all and is probably the least invasive, but
-it changes where red appears, which is a brand-feel call.
-
-*Already fixed without waiting for this:* the quote form's error text, which was
-this same red. It now uses `#F1808A` — the red the admin already uses for error
-text — at 5.90:1. That one was not worth leaving broken: it is the message a
-visitor must read when a submission fails.
-
-**8b. Focus ring is 2.74:1 against the page background.**
-`:focus-visible` draws `2px solid var(--accent)`. WCAG 2.1 does not set an
-explicit ratio for focus indicators (that is 2.4.11 in WCAG 2.2), but 1.4.11
-Non-text Contrast is commonly read as covering focus state, and 2.74:1 is under
-3.0 either way. The ring is clearly visible in practice — verified by real
-keyboard tabbing — so this is a "meets the spirit, misses a strict reading"
-case. Options: switch the ring to `--ink` (13.82:1, but invisible on the light
-panel), or use a two-tone ring (dark inner, light outer) that works on any
-background. The file already switches to `--ink` for elements sitting on accent
-fills, so a per-surface rule has precedent.
-
-**8c. Form field borders are 1.41:1.**
-`--line` `#3A3E48` on `--bg` is 1.41:1, and the field fill `--bg2` differs from
-the page by only 1.12:1 — so the boundary of every input is essentially
-invisible to a low-vision user. 1.4.11 wants 3.0:1 for the boundary of a control
-that needs one to be identified. Reaching it needs roughly `#6B7280` (3.13:1),
-which visibly lightens every field outline on the site and in the admin. Real
-issue, visible change, so it is logged rather than guessed at.
-
 ---
 
 ## Resolved
+
+### 2026-08-21 — Contrast decisions implemented (closes item 8)
+
+All three sub-items landed in `css/styles.css`. Ratios below were recomputed from
+the tokens after the change, not carried over from the audit.
+
+**8a — accent red retired from small text on dark (Option 3).** Switched to
+`--ink-dim`: `.eyebrow` (6.84:1), `.testimonial-stars` (6.84:1), `.badge .swatch`
+glyph (6.13:1). Accent hovers on dark went to `--ink`: `.footer-links a` (15.22:1),
+`.not-found-links a` (13.82:1), `.nav-dropdown-menu a` (12.38:1). `--accent` is
+untouched for fills, the logo, borders and the hero word.
+
+**Scoped to dark surfaces on purpose — a blanket swap would have broken things.**
+`.card` sets `background: var(--panel)`, so `.card .num` sits on the *light* panel
+where accent is 5.04:1 and already passes; `--ink-dim` there measures **2.02:1**,
+so switching it as originally listed would have introduced a worse failure than
+the one being fixed. Same for `.faq-question:hover`, `.about-us .check`,
+`.service-content-list li::before` and both card-title hovers — all on light
+panels at 4.66–5.04:1 and all left alone. Six accent-text uses stay red because
+red is correct there.
+
+**Two hovers needed a non-colour cue.** `.footer-contact a` and
+`a.contact-info-value` already rest at `--ink`, so recolouring the hover to `--ink`
+would have erased the hover state entirely. Both now underline on hover and keep
+their 12–15:1 contrast.
+
+**8b — two-tone focus ring.** `:focus-visible` is now a `2px` `--ink` outline at
+`2px` offset over a `2px` `--bg` `box-shadow`: dark band against the element, light
+band outside it. Whichever surface a control sits on, one band contrasts — 13.82:1
+on `--bg`, 12.38:1 on `--bg2`, 13.82:1 on `--panel`, 5.04:1 on accent fills. The
+per-surface override for controls on accent red was deleted, since the dark band
+covers that case. The quote form's own focus rule got the same treatment. Verified
+with real keyboard tabbing on both a dark header link and a light service card.
+
+**8c — form field borders.** `--line` was 1.41:1 against the `--bg` field fill.
+Now `--ink-dim` at **6.84:1**. `--ink-dim` is the only existing token clearing 3:1
+without being pure white, so no token was added. Changed on the form controls
+only, not on the `--line` token itself — `--line` draws 15 dividers and panel
+edges elsewhere, and lightening those is a separate call.
+
+**Still failing, by decision:** the hero word `.hero h1 span` stays `--accent` at
+**2.74:1**, under even the 3.0:1 large-text threshold. Keeping it was the explicit
+choice; item 8 is closed as implemented, not as "site fully clean" — 1.4.3 has one
+known exception. Also unchanged: `.testimonial-text::before`, a purely decorative
+quote glyph at 42px and `opacity: 0.5`.
+
+**Smaller than expected in practice for the eyebrow:** `.hero.has-hero-bg .eyebrow`
+already overrode the colour to `--ink`, so on image-backed heroes the eyebrow was
+white before this change and still is. The new `--ink-dim` governs the 404 page
+(a real fix: it was red at 2.74:1) and the brief pre-image-load state elsewhere.
 
 ### 2026-08-21 — Email logo now loads from the live domain
 
