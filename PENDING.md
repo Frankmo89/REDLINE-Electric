@@ -58,24 +58,6 @@ there to establish. Rather than ship a personal Gmail, the field was cleared on
 2026-08-17 so the contact block shows phone + text only until a proper
 alias exists.
 
-### 3. Resend — verified domain required
-
-Lead-notification and customer-confirmation emails currently only deliver to
-the verified sandbox address `alonsosky617@gmail.com`, because Resend won't
-send to arbitrary recipients until a custom domain is verified.
-
-Once `redlinesd.com` is verified in Resend:
-
-- Switch the lead-notification recipient back to `joe.britt1979@gmail.com`
-- Confirm customer confirmation emails actually deliver to real submitted
-  addresses (the quote form already promises this — see the
-  `form_success_with_email` string shown when a visitor supplies an email)
-
-**Where this lives:** the `lead-notification` Supabase Edge Function
-(project `hvesaitxkwlufbljnupy`, currently version 4). It is **not** in this
-repo — it can't be edited from the working tree and has to be changed via
-Supabase.
-
 ### 4. About section profile photo — new upload needs a look
 
 **A new photo was uploaded on 2026-08-17 at 22:57 UTC**, during the Tier 2
@@ -179,6 +161,52 @@ issue, visible change, so it is logged rather than guessed at.
 ---
 
 ## Resolved
+
+### 2026-08-21 — Resend sending domain verified, lead emails restored (closes item 3)
+
+`redlinesd.com` is verified in Resend for sending — DKIM and SPF both pass — so
+the `lead-notification` Edge Function was moved off the sandbox sender and its
+recipient restored: from `Redline Electric Website <onboarding@resend.dev>` to
+`<leads@redlinesd.com>`, and `NOTIFY_TO` from `alonsosky617@gmail.com` back to
+`joe.britt1979@gmail.com`. Deployed as version 5, `verify_jwt` left on.
+
+**One correction to how item 3 described this.** `form_success_with_email` is not
+an email-sending path — it is an i18n string key (`assets/js/i18n.js:136`, used at
+`index.html:726` and on the six service pages) that only picks which success
+message the visitor sees. The customer confirmation is the `if (email)` branch
+inside the Edge Function, which sends to the address on the lead row. Same
+outcome, but the promise the form makes is kept in the function, not the page.
+
+**The from-address is shared by both emails.** `sendEmail()` reads one
+module-level `FROM_ADDRESS`, so the customer confirmation now sends from
+`leads@redlinesd.com` too. That was the point — customer mail should not come
+from `onboarding@resend.dev` — but it does mean the confirmation path changed,
+not just the internal notification. Its logic, recipient, and template are
+untouched.
+
+**Verified by a real insert, not a simulated call.** A test row in `public.leads`
+fired the `notify_new_lead` trigger over pg_net exactly as a website submission
+does. `net._http_response` returned 200 with
+`{"success":true,"customerEmailSent":true}` — under the old sandbox any non-signup
+recipient was rejected outright, so an accepted send to `joe.britt1979@gmail.com`
+is itself the proof the restriction is gone. The customer confirmation was then
+confirmed *delivered*, not merely accepted: it arrived in the inbox from
+`leads@redlinesd.com` with the correct subject and service interest. The test row
+was deleted afterwards so it does not surface as a real lead.
+
+**Not independently confirmed:** that the internal notification physically landed
+in Joe's inbox — that inbox isn't readable from here. Resend accepted it and
+returned a message id; worth a glance from Joe to rule out spam filing on the
+first send from a new domain.
+
+**Still pending, deliberately not waited on:** Resend's inbound Receiving MX
+record. That governs receiving mail at the domain and has no bearing on sending.
+
+**Note for next time:** the function source still lives only in Supabase — there
+is no `supabase/` directory in this repo, and the CLI on this machine is
+installed (v2.104.0) but not authenticated, so `supabase functions` commands fail.
+This edit went through the authenticated Supabase connection. Vendoring the
+function into the repo would put it under version control instead.
 
 ### 2026-08-18 — WCAG 2.1 AA audit and remediation, public site + admin
 

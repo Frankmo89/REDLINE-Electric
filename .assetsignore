@@ -4,8 +4,17 @@
 wrangler.jsonc
 .gitignore
 .assetsignore
+# Internal working notes. Was served publicly (200 on /PENDING.md) until
+# 2026-08-21 and quotes the personal email address that item 2 deliberately
+# removed from the public site on 2026-08-17.
+PENDING.md
 **/.git
 **/.claude
 **/node_modules
 **/.DS_Store
 assets/photos/TODO.txt
+# Supabase Edge Function source, vendored for version control only. It is
+# deployed to Supabase, never served by the Worker, and contains the internal
+# notification recipient -- publishing it would put that address back on the
+# public site.
+supabase/
