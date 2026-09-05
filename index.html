@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="css/styles.css?v=5">
 
 <script type="application/ld+json">
 {
@@ -730,14 +730,68 @@
         '</div>';
       grid.appendChild(card);
     });
+
+    // Add Read more only where the six-line clamp actually cut something off.
+    // Measured after the cards are in the document, because nothing has a
+    // height before layout. Short reviews get no button, which is why this
+    // cannot be decided from character count at render time.
+    //
+    // Detection is by toggling the clamp off and comparing heights, NOT by
+    // scrollHeight > clientHeight. Under -webkit-line-clamp the two are equal
+    // even when text is visibly cut — the clamp does not create scroll
+    // overflow the way max-height does — so the usual check silently reports
+    // that nothing overflows and no button is ever added.
+    // Gated on fonts.ready: measuring in fallback font metrics measures the
+    // wrong text, since Inter wraps differently and a review that fits six
+    // lines in the fallback may not in the real face. Promise.resolve() keeps
+    // this working in any browser without the Font Loading API.
+    //
+    // Deliberately NOT wrapped in requestAnimationFrame. rAF callbacks are
+    // suspended while a tab is backgrounded, so the buttons simply never
+    // appeared until the tab was focused. getBoundingClientRect() forces a
+    // synchronous layout by itself, so there was nothing to wait for a paint
+    // frame for in the first place.
+    var fontsReady = (document.fonts && document.fonts.ready) || Promise.resolve();
+    fontsReady.then(function () {
+      grid.querySelectorAll('.testimonial-card').forEach(function (card) {
+        var text = card.querySelector('.testimonial-text');
+        if (!text) return;
+
+        var clamped = text.getBoundingClientRect().height;
+        card.classList.add('is-expanded');
+        var full = text.getBoundingClientRect().height;
+        card.classList.remove('is-expanded');
+        if (full - clamped <= 1) return;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'testimonial-more';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.textContent = t('reviews_read_more', 'Read more');
+        btn.addEventListener('click', function () {
+          var open = card.classList.toggle('is-expanded');
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          btn.textContent = open
+            ? t('reviews_read_less', 'Read less')
+            : t('reviews_read_more', 'Read more');
+        });
+        text.insertAdjacentElement('afterend', btn);
+      });
+    });
   }
 
   supabaseClient
     .from('reviews')
     .select('*')
     .eq('is_published', true)
+    // review_date is when the customer wrote the review; created_at is when
+    // the row landed in our table. For the imported Google reviews the two are
+    // months apart, and all ten share a single created_at, so ordering by
+    // created_at alone would both mis-date them and scramble their order.
+    // nullsFirst:false keeps the three hand-entered rows, which have no
+    // review_date, after the dated ones instead of ahead of everything.
+    .order('review_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
-    .limit(6)
     .then(function (res) {
       if (res.error || !res.data || res.data.length === 0) {
         showEmpty();

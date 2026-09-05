@@ -158,6 +158,11 @@
       en: '{rating} out of 5 stars',
       es: '{rating} de 5 estrellas'
     },
+    // Expander on review cards whose text the six-line clamp cut off. Applied
+    // by the reviews script, not data-i18n, because the button only exists on
+    // the cards that actually overflow.
+    reviews_read_more: { en: 'Read more', es: 'Leer más' },
+    reviews_read_less: { en: 'Read less', es: 'Leer menos' },
 
     quote_heading: { en: 'Request a Quote', es: 'Solicite una Cotización' },
     quote_subheading: { en: "Tell us about the job and we'll get back to you.", es: 'Cuéntenos sobre el trabajo y nos pondremos en contacto.' },

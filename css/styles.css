@@ -779,12 +779,41 @@ section {
 /* The decorative 42px red opening quote that used to sit above this text is
    gone. With a red star row now leading the card it was a second accent doing
    no work, and it cost ~46px of height in every card. */
+/* Imported Google reviews run from 16 characters ("Reasonable price") to 662.
+   Allowed to size themselves the cards measured 171px to 592px, and because
+   the grid is align-items:start that 421px spread tore large voids between
+   rows. Six lines is enough to carry a review's substance while keeping rows
+   close to even; anything longer gets a Read more button (added by the render
+   only when the text actually overflows, so short reviews never show one). */
 .testimonial-text {
   color: var(--ink);
   font-size: var(--fs-small);
   line-height: 1.65;
   margin-bottom: 20px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
 }
+.testimonial-card.is-expanded .testimonial-text {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+.testimonial-more {
+  display: inline-block;
+  margin: -8px 0 18px;
+  padding: 0 0 2px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--accent);
+  cursor: pointer;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-label);
+  color: var(--ink);
+}
+.testimonial-more:hover { border-bottom-color: var(--ink); }
 .testimonial-author {
   padding-top: 16px;
   border-top: 1px solid var(--line);
