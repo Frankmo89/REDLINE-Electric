@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=5">
+<link rel="stylesheet" href="css/styles.css?v=7">
 
 <script type="application/ld+json">
 {
@@ -224,6 +224,23 @@
     <span class="eyebrow" data-i18n="hero_eyebrow">San Diego · License C-10 #1153394</span>
     <h1 class="display" data-i18n-html="hero_title">Power you can <span>trust.</span></h1>
     <p data-i18n="hero_subtitle">Redline Electric — residential and commercial installation, repair, and maintenance across San Diego. Emergency service available.</p>
+
+    <!-- Google rating, filled by the same google-reviews fetch that feeds the
+         testimonials aggregate — one request, two renders.
+         Deliberately NOT [hidden]. The row holds its own height from first
+         paint via a min-height and is merely invisible, so filling it in shifts
+         nothing: measured, the CTA row moved 80px when this appeared from
+         display:none. Only a definitive failure collapses it (.is-unavailable),
+         so the one remaining shift is on the rare path rather than every load.
+         Nothing is written here until the aggregate resolves, so there is no
+         placeholder text at any point. -->
+    <p class="hero-rating" id="hero-rating">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12.24 10.4V14h5.05c-.22 1.42-1.65 4.17-5.05 4.17-3.04 0-5.52-2.52-5.52-5.62s2.48-5.62 5.52-5.62c1.73 0 2.89.74 3.55 1.37l2.42-2.33C16.66 4.4 14.62 3.5 12.24 3.5c-4.9 0-8.87 3.97-8.87 8.87s3.97 8.87 8.87 8.87c5.12 0 8.51-3.6 8.51-8.67 0-.58-.06-1.03-.14-1.47h-8.37z"/></svg>
+      <span id="hero-rating-stars" aria-hidden="true"></span>
+      <span id="hero-rating-text" aria-hidden="true"></span>
+      <span class="visually-hidden" id="hero-rating-label"></span>
+    </p>
+
     <div class="cta-row">
       <a href="tel:+16197480662" class="btn-primary" data-phone-link data-i18n="cta_call_now">Call Now</a>
       <a href="sms:+16197480662" class="btn-ghost" data-sms-link data-i18n="cta_text_us">Text Us</a>
@@ -813,10 +830,15 @@
   var lastAggregate = null;
 
   function renderAggregate(a) {
-    if (!aggBox || !a) return;
     // The whole contract has to be present. total 0 means "no aggregate",
     // not "zero stars" — the Edge Function nulls the rating in that case.
-    if (typeof a.rating !== 'number' || !(a.total > 0) || !a.profileUrl) return;
+    // A response that arrives but does not satisfy it is a definitive answer,
+    // so the hero row gives its reserved height back here too.
+    if (!a || typeof a.rating !== 'number' || !(a.total > 0) || !a.profileUrl) {
+      collapseHeroRating();
+      return;
+    }
+    if (!aggBox) { collapseHeroRating(); return; }
 
     var score = a.rating.toFixed(1);
     var one = a.total === 1;
@@ -843,12 +865,35 @@
 
     document.getElementById('reviews-source-link').href = a.profileUrl;
 
-    document.getElementById('reviews-aggregate-caption').textContent =
+    var ariaSentence =
       t(one ? 'reviews_aria_one' : 'reviews_aria', '{rating} out of 5 stars, based on {n} Google reviews.')
         .replace('{rating}', score)
         .replace('{n}', a.total);
 
+    document.getElementById('reviews-aggregate-caption').textContent = ariaSentence;
     aggBox.hidden = false;
+
+    // Same aggregate, second render: the hero row. Driven from here rather
+    // than from its own fetch, so there is exactly one request to
+    // google-reviews per page load and the two can never disagree.
+    var heroRow = document.getElementById('hero-rating');
+    if (heroRow) {
+      document.getElementById('hero-rating-stars').innerHTML = starsSvg(a.rating, 'sm');
+      // Composed from reviews_eyebrow rather than a new key: it already holds
+      // "Google Reviews" / "Reseñas de Google", and both languages read
+      // correctly as "<score> · <count> <label>".
+      document.getElementById('hero-rating-text').textContent =
+        score + ' · ' + a.total + ' ' + t('reviews_eyebrow', 'Google Reviews');
+      document.getElementById('hero-rating-label').textContent = ariaSentence;
+      heroRow.classList.add('is-ready');
+    }
+  }
+
+  // Give back the height the hero row was holding. Called only when we know
+  // no aggregate is coming — never while a request is still outstanding.
+  function collapseHeroRating() {
+    var heroRow = document.getElementById('hero-rating');
+    if (heroRow) heroRow.classList.add('is-unavailable');
   }
 
   if (aggBox && supabaseClient.functions) {
@@ -857,9 +902,15 @@
         if (res && !res.error && res.data) {
           lastAggregate = res.data;
           renderAggregate(lastAggregate);
+        } else {
+          collapseHeroRating();
         }
       })
-      .catch(function () { /* stays hidden */ });
+      .catch(function () { collapseHeroRating(); });
+  } else {
+    // No endpoint to ask (older supabase-js, or the aggregate block is absent
+    // from this page) — nothing is coming, so do not hold the space.
+    collapseHeroRating();
   }
 
   // These strings are built in JS rather than via data-i18n, so applyLanguage

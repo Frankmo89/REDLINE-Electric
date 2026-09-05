@@ -409,19 +409,44 @@ section {
   /* Two layers rather than one diagonal sweep: a bottom-up scrim that anchors
      the headline, subhead and CTA row, plus a left-to-right scrim for the copy
      column. The old single 115deg gradient fell to 0.18 at the right edge,
-     which let bright frames (the bathroom window shot) wash out. */
+     which let bright frames (the bathroom window shot) wash out.
+
+     STRENGTHENED, and the shape changed from a smooth ramp to a flat band.
+     The previous values were measured against all seven hero photos by
+     sampling their actual pixels and compositing both gradients: the subhead,
+     which is --ink-dim, came out at 1.35:1 against the brightest frame. AA
+     wants 4.5:1 for that text. It was failing on the live site.
+
+     Holding the bottom layer flat at 0.86 through the lower 62% covers the
+     eyebrow, headline, subhead and CTA rather than fading across them, then
+     easing to 0.12 above so the photograph still reads at the top of the
+     frame. Uniformly darkening the old ramp instead would have flattened the
+     image everywhere, including where no copy sits.
+
+     Measured worst case across all 7 photos after this change:
+       subhead   --ink-dim  1.35 -> 5.88   (AA needs 4.5)
+       trust row --ink-dim  2.25 -> 5.98
+       trust row stars      1.27 -> 3.37   (AA needs 3.0 for graphics)
+       eyebrow / headline --ink          -> 8.9
+     Re-measure with the same method before weakening any value here.
+
+     STILL FAILING, and not fixable by scrim: the "TRUST." span in the h1 is
+     --accent (#CC2029) at ~42px, which is large text needing 3:1, and sits at
+     1.78:1. Even --accent-bright only reaches 2.51 there. That needs a colour
+     decision, not a darker overlay. */
   background:
     linear-gradient(
       to top,
-      rgba(35, 38, 47, 0.70) 0%,
-      rgba(35, 38, 47, 0.20) 45%,
-      rgba(35, 38, 47, 0.10) 100%
+      rgba(35, 38, 47, 0.86) 0%,
+      rgba(35, 38, 47, 0.86) 62%,
+      rgba(35, 38, 47, 0.35) 82%,
+      rgba(35, 38, 47, 0.12) 100%
     ),
     linear-gradient(
       100deg,
-      rgba(35, 38, 47, 0.78) 0%,
-      rgba(35, 38, 47, 0.55) 42%,
-      rgba(35, 38, 47, 0.28) 100%
+      rgba(35, 38, 47, 0.82) 0%,
+      rgba(35, 38, 47, 0.74) 42%,
+      rgba(35, 38, 47, 0.62) 100%
     );
 }
 @media (prefers-reduced-motion: reduce) {
@@ -432,6 +457,43 @@ section {
     animation: none;
   }
 }
+/* Google rating in the hero. A single inline row, not a badge: no fill, no
+   radius, no outline. The only chrome is a hairline rule above it, which is
+   the same flat divider language used between the aggregate and the lede in
+   the reviews section. Everything here is an existing token, and the mark and
+   star row are the same SVGs the reviews section renders.
+   Sits over the hero photos on mobile — see the .hero-overlay note for the
+   measured contrast, which is why the scrim above it was strengthened. */
+/* The row reserves its own height from first paint and is merely invisible
+   until the aggregate arrives, rather than being display:none and pushing the
+   page around when it lands. Measured before this: revealing it from
+   display:none moved the CTA row down 80px, on the hero, above the fold.
+   visibility:hidden also suppresses the border-top, so nothing shows in the
+   reserved space — no rule, no placeholder, just neutral gap.
+   min-height is the row's populated border-box height; keep the two in step if
+   the type scale or the star size changes here. */
+.hero-rating {
+  display: inline-flex;
+  visibility: hidden;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: var(--fs-small);
+}
+.hero-rating.is-ready { visibility: visible; }
+/* Definitive failure only — endpoint error, or an aggregate that does not
+   satisfy the contract. Collapsing gives back the reserved height, which is
+   the one shift this design accepts, on the path that should almost never run.
+   A request still in flight deliberately does NOT land here: it keeps the
+   space so a slow response arrives without moving anything. */
+.hero-rating.is-unavailable { display: none; }
+.hero-rating svg:first-child { flex: none; }
+#hero-rating-text { white-space: nowrap; }
+
 .eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
   color: var(--ink-dim); font-family: 'Oswald', sans-serif; font-size: var(--fs-micro); font-weight: 600;
