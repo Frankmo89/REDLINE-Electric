@@ -334,7 +334,15 @@
     <div class="reviews-head">
       <div class="reviews-head-lede">
         <p class="reviews-eyebrow">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12.24 10.4V14h5.05c-.22 1.42-1.65 4.17-5.05 4.17-3.04 0-5.52-2.52-5.52-5.62s2.48-5.62 5.52-5.62c1.73 0 2.89.74 3.55 1.37l2.42-2.33C16.66 4.4 14.62 3.5 12.24 3.5c-4.9 0-8.87 3.97-8.87 8.87s3.97 8.87 8.87 8.87c5.12 0 8.51-3.6 8.51-8.67 0-.58-.06-1.03-.14-1.47h-8.37z"/></svg>
+          <!-- width/height/fill are ATTRIBUTES, not only CSS, and must stay that
+               way. css/styles.css is served with max-age=86400 and is not
+               content-hashed, so a returning visitor can hold a pre-deploy
+               stylesheet against freshly deployed HTML. An SVG with a viewBox
+               and no intrinsic size fills its container: this rendered at
+               831x831 in solid black when .reviews-eyebrow svg was missing.
+               Presentation attributes are the lowest-specificity layer, so the
+               stylesheet still wins whenever it is present. -->
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12.24 10.4V14h5.05c-.22 1.42-1.65 4.17-5.05 4.17-3.04 0-5.52-2.52-5.52-5.62s2.48-5.62 5.52-5.62c1.73 0 2.89.74 3.55 1.37l2.42-2.33C16.66 4.4 14.62 3.5 12.24 3.5c-4.9 0-8.87 3.97-8.87 8.87s3.97 8.87 8.87 8.87c5.12 0 8.51-3.6 8.51-8.67 0-.58-.06-1.03-.14-1.47h-8.37z"/></svg>
           <span data-i18n="reviews_eyebrow">Google Reviews</span>
         </p>
         <h2 class="display" data-i18n="testimonials_heading">What Customers Say</h2>
@@ -652,6 +660,21 @@
     return out;
   }
 
+  // Pixel sizes matching .reviews-stars--lg/md/sm, emitted as width/height
+  // ATTRIBUTES as well as being set in CSS. Same reason as the Google mark in
+  // the eyebrow above: styles.css is cached for a day and is not
+  // content-hashed, so new HTML can meet an old stylesheet. Without an
+  // intrinsic size a viewBox'd SVG expands to its container — these would
+  // render ~831px wide instead of 100. Attributes are lower specificity than
+  // the stylesheet, so they only take effect when the CSS is missing.
+  //
+  // The fill attributes below DUPLICATE --star-empty and --accent-bright from
+  // css/styles.css. Change one, change the other. The duplication buys the
+  // no-CSS case: an unpainted star defaults to black, and black on the #23262F
+  // card is about 1.35:1 — the rating would look blank rather than merely
+  // off-colour. Worth two literals; the stylesheet still wins when it loads.
+  var STAR_SIZES = { lg: [100, 20], md: [75, 15], sm: [60, 12] };
+
   function starsSvg(rating, size) {
     // Same defensive contract as the old starString: a null or unparseable
     // rating falls back to 5, not to 1. Unlike it, there is no rounding, and
@@ -659,13 +682,15 @@
     var n = Number(rating);
     var safe = isFinite(n) && n > 0 ? Math.max(0, Math.min(5, n)) : 5;
     var id = 'star-clip-' + (++starUid);
+    var dim = STAR_SIZES[size] || STAR_SIZES.md;
     return '<svg class="reviews-stars reviews-stars--' + size + '" viewBox="0 0 100 20"' +
+      ' width="' + dim[0] + '" height="' + dim[1] + '"' +
       ' preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false">' +
       '<defs><clipPath id="' + id + '">' +
       '<rect x="0" y="0" width="' + ((safe / 5) * 100) + '" height="20"/>' +
       '</clipPath></defs>' +
-      '<g class="stars-empty">' + starRow() + '</g>' +
-      '<g class="stars-fill" clip-path="url(#' + id + ')">' + starRow() + '</g>' +
+      '<g class="stars-empty" fill="#4A4F5C">' + starRow() + '</g>' +
+      '<g class="stars-fill" fill="#E5484D" clip-path="url(#' + id + ')">' + starRow() + '</g>' +
       '</svg>';
   }
 
