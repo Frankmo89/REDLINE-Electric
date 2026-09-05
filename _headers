@@ -51,5 +51,11 @@
 /assets/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
+# styles.css is linked as css/styles.css?v=N from all 11 HTML files, and that
+# N MUST be incremented whenever the file changes. The TTL below is why: HTML
+# is not cached, so new markup otherwise meets a stylesheet up to a day old
+# (a week, counting stale-while-revalidate). That mismatch shipped a visibly
+# broken reviews section on 2026-09-05 — see the block at the top of
+# css/styles.css for the procedure and the incident.
 /css/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800

@@ -1,6 +1,47 @@
 /* Redline Electric — Industrial Volt
    Charcoal + red accent, condensed industrial type */
 
+/* ==========================================================================
+   EDITING THIS FILE? BUMP THE CACHE-BUSTING VERSION IN THE SAME COMMIT.
+
+   Every page links this stylesheet with a version query string:
+
+       <link rel="stylesheet" href="css/styles.css?v=2">      (root pages)
+       <link rel="stylesheet" href="../css/styles.css?v=2">   (services, admin)
+
+   The rule is simply: increment the integer by one. From the repo root,
+
+       find . -name '*.html' -not -path './.git/*' -not -path './node_modules/*' \
+         -print0 | xargs -0 sed -i 's|styles\.css?v=2|styles.css?v=3|g'
+
+   then confirm all 11 files moved together:
+
+       grep -rho 'styles\.css?v=[0-9]*' --include='*.html' . | sort | uniq -c
+
+   One line of output means you are done. Two means a file was missed.
+
+   WHY THIS EXISTS
+   _headers serves /css/* with max-age=86400, stale-while-revalidate=604800,
+   and this filename is not content-hashed. HTML carries no such header, so
+   without a version string a returning visitor receives freshly deployed HTML
+   against a stylesheet up to a day old — and up to a week old while
+   stale-while-revalidate is still serving it. The query string is part of the
+   cache key, so changing it forces a fresh fetch.
+
+   This is not hypothetical. On 2026-09-05 the Google mark in the reviews
+   eyebrow rendered at 831x831px in solid black on production, because neither
+   .reviews-eyebrow nor .reviews-eyebrow svg existed in the CSS those visitors
+   still held. Fixed in 41df659; the versioning here is what stops the next one.
+
+   FORGETTING IS SILENT. Your own browser fetches the new CSS, so the site
+   looks correct to you while it is broken for everyone holding the old copy.
+   Treat the bump as part of the edit, not a follow-up.
+
+   NOT VERSIONED: admin/admin.css. _headers gives /admin/* a Cache-Control of
+   no-store, so it is never cached and cannot skew. If that policy ever
+   changes, admin.css needs this treatment too.
+   ========================================================================== */
+
 :root {
   --bg: #23262F;
   --bg2: #2B2E38;
