@@ -1,0 +1,10 @@
+# core.autocrlf is true on the Windows clone this repo is developed from, so
+# text files are checked out with CRLF by default. That is fine for HTML and
+# CSS and fatal for shell scripts: a script whose shebang line ends in CRLF
+# fails to execute at all, with `bad interpreter: /bin/sh^M`. Git hooks are
+# the case that matters here — a hook that cannot run is a hook that silently
+# stops enforcing anything.
+#
+# Pin every shell script to LF regardless of platform or local git config.
+hooks/* text eol=lf
+*.sh text eol=lf

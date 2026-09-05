@@ -1,0 +1,102 @@
+#!/bin/sh
+#
+# Enforces the css/styles.css cache-busting version bump.
+#
+# The hazard, in short: _headers serves /css/* with max-age=86400 and
+# stale-while-revalidate=604800, and the filename is not content-hashed, while
+# HTML carries no cache header. A returning visitor therefore gets new markup
+# against a stylesheet up to a week old. On 2026-09-05 that shipped an 831x831
+# black Google mark on the live reviews section. The fix is the ?v=N string on
+# every <link>; this hook is what stops someone forgetting to bump it.
+#
+# See the block at the top of css/styles.css for the full procedure.
+#
+# INSTALL (per clone — core.hooksPath is local config, not committed):
+#     git config core.hooksPath hooks
+#
+# Deliberate bypass, when you really mean it:
+#     git commit --no-verify
+#
+# Two checks, both against the STAGED state, so what is verified is exactly
+# what would land in the commit:
+#   1. If css/styles.css changed, the version must have changed too.
+#   2. Every tracked HTML file must carry the same version — catches a sed
+#      that missed a directory, which is the likelier mistake of the two.
+
+set -e
+
+CSS_PATH="css/styles.css"
+VERSION_RE='styles\.css\?v=[0-9]+'
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+# Only HTML or the stylesheet itself can move a version, so anything else
+# commits without paying for these checks.
+echo "$staged" | grep -qE "(\.html$|^$CSS_PATH$)" || exit 0
+
+# No HEAD yet (initial commit): nothing to compare against.
+git rev-parse --verify HEAD >/dev/null 2>&1 || exit 0
+
+# Read the version out of a file as it currently sits in the index.
+staged_version() {
+  git show ":$1" 2>/dev/null | grep -oE "$VERSION_RE" | head -1 | sed 's/.*v=//'
+}
+
+# ---------------------------------------------------------------- check 2 --
+# Every tracked HTML that links the stylesheet must agree on one version.
+mismatch=""
+seen=""
+for f in $(git ls-files '*.html'); do
+  v=$(staged_version "$f")
+  [ -n "$v" ] || continue           # file does not link styles.css — fine
+  mismatch="$mismatch$v $f\n"
+  case " $seen " in
+    *" $v "*) ;;
+    *) seen="$seen $v" ;;
+  esac
+done
+
+count=$(echo "$seen" | wc -w | tr -d ' ')
+if [ "$count" -gt 1 ]; then
+  echo "pre-commit: styles.css?v= is inconsistent across HTML files." >&2
+  echo >&2
+  printf "$mismatch" | sort | sed 's/^/  v=/' >&2
+  echo >&2
+  echo "  All of them must carry the same version. From the repo root:" >&2
+  echo >&2
+  echo "    OLD=<the wrong one>; NEW=<the right one>" >&2
+  echo "    find . -name '*.html' -not -path './.git/*' -not -path './node_modules/*' \\" >&2
+  echo "      -print0 | xargs -0 sed -i \"s|styles\\.css?v=\$OLD|styles.css?v=\$NEW|g\"" >&2
+  echo >&2
+  exit 1
+fi
+
+# ---------------------------------------------------------------- check 1 --
+# If the stylesheet changed, the version must have changed with it.
+if ! git diff --cached --quiet -- "$CSS_PATH" 2>/dev/null; then
+  new_v=$(git show ":index.html" 2>/dev/null | grep -oE "$VERSION_RE" | head -1 | sed 's/.*v=//')
+  old_v=$(git show "HEAD:index.html" 2>/dev/null | grep -oE "$VERSION_RE" | head -1 | sed 's/.*v=//')
+
+  if [ -n "$old_v" ] && [ "$new_v" = "$old_v" ]; then
+    next=$((old_v + 1))
+    echo "pre-commit: $CSS_PATH changed but styles.css?v=$old_v was not bumped." >&2
+    echo >&2
+    echo "  The rule is unconditional — comment-only edits included. Judging" >&2
+    echo "  whether a change 'affects rendering' is where the silent breakage" >&2
+    echo "  comes from. A needless bump costs one download; a missed one ships" >&2
+    echo "  a broken page for up to a week." >&2
+    echo >&2
+    echo "  Run this, then stage the HTML and commit again:" >&2
+    echo >&2
+    echo "    OLD=$old_v; NEW=$next" >&2
+    echo "    find . -name '*.html' -not -path './.git/*' -not -path './node_modules/*' \\" >&2
+    echo "      -print0 | xargs -0 sed -i \"s|styles\\.css?v=\$OLD|styles.css?v=\$NEW|g\"" >&2
+    echo "    git add -u" >&2
+    echo >&2
+    echo "  Genuinely need to skip this? git commit --no-verify" >&2
+    echo >&2
+    exit 1
+  fi
+fi
+
+exit 0

@@ -4,6 +4,15 @@
 /* ==========================================================================
    EDITING THIS FILE? BUMP THE CACHE-BUSTING VERSION IN THE SAME COMMIT.
 
+   This is enforced by hooks/pre-commit, which refuses a commit that changes
+   this file without moving the version, and also refuses one where the HTML
+   files disagree about which version they are on. Install it once per clone —
+   core.hooksPath is local config and does not travel with the repository:
+
+       git config core.hooksPath hooks
+
+   Without that line the hook is inert and the rule below is yours to keep.
+
    Every page links this stylesheet with a version query string:
 
        <link rel="stylesheet" href="css/styles.css?v=N">      (root pages)
