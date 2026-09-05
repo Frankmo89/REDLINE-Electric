@@ -6,13 +6,21 @@
 
    Every page links this stylesheet with a version query string:
 
-       <link rel="stylesheet" href="css/styles.css?v=2">      (root pages)
-       <link rel="stylesheet" href="../css/styles.css?v=2">   (services, admin)
+       <link rel="stylesheet" href="css/styles.css?v=N">      (root pages)
+       <link rel="stylesheet" href="../css/styles.css?v=N">   (services, admin)
 
-   The rule is simply: increment the integer by one. From the repo root,
+   The rule is: increment the integer by one. UNCONDITIONALLY — including for
+   comment-only edits like this block. Do not stop to judge whether a change
+   affects rendering. That judgement is exactly where the silent failures come
+   from, and it is not worth making: a needless bump costs one 50KB download
+   per visitor, cached again for a day. A missed one ships a broken page.
 
+   From the repo root, set OLD to the version currently in the files and NEW to
+   OLD + 1:
+
+       OLD=3; NEW=4
        find . -name '*.html' -not -path './.git/*' -not -path './node_modules/*' \
-         -print0 | xargs -0 sed -i 's|styles\.css?v=2|styles.css?v=3|g'
+         -print0 | xargs -0 sed -i "s|styles\.css?v=$OLD|styles.css?v=$NEW|g"
 
    then confirm all 11 files moved together:
 
