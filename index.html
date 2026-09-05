@@ -803,12 +803,27 @@
     .eq('is_published', true)
     // review_date is when the customer wrote the review; created_at is when
     // the row landed in our table. For the imported Google reviews the two are
-    // months apart, and all ten share a single created_at, so ordering by
-    // created_at alone would both mis-date them and scramble their order.
-    // nullsFirst:false keeps the three hand-entered rows, which have no
-    // review_date, after the dated ones instead of ahead of everything.
+    // months apart, so review_date leads.
+    //
+    // nullsFirst:false is defensive rather than load-bearing: every row now
+    // carries a review_date. It keeps any future row inserted without one
+    // sorting last instead of jumping to the head of the grid.
     .order('review_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
+    // The id tiebreak is what makes this grid deterministic, and it is not
+    // decoration. Nine of the ten reviews share review_date 2026-05-02, and
+    // because they were inserted by a single migration statement they share
+    // one created_at too — so the two clauses above leave nine rows with no
+    // defined order at all. That was not visible while all rows rendered, but
+    // adding .limit(6) let Postgres switch to a top-N sort and it returned a
+    // DIFFERENT six than the first six of the uncapped query. Which reviews
+    // appeared on the homepage was effectively arbitrary and could change on
+    // any plan change. id is arbitrary between same-day reviews but fixed
+    // forever, which is the property that matters here.
+    .order('id', { ascending: true })
+    // Six-card grid, as originally designed: a teaser, not the archive.
+    // "Read all on Google" in the section header carries anyone wanting all 17.
+    .limit(6)
     .then(function (res) {
       if (res.error || !res.data || res.data.length === 0) {
         showEmpty();
