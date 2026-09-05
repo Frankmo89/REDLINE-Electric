@@ -57,5 +57,10 @@
 # (a week, counting stale-while-revalidate). That mismatch shipped a visibly
 # broken reviews section on 2026-09-05 — see the block at the top of
 # css/styles.css for the procedure and the incident.
+#
+# The bump works on the visitor's browser, which keys its cache on the full URL
+# including the query. Cloudflare's edge normalises the query away here, so
+# ?v=2 and ?v=99 both hit the same cached object — harmless, since the edge is
+# refreshed by each deploy and was never the layer that served stale CSS.
 /css/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800

@@ -25,8 +25,18 @@
    and this filename is not content-hashed. HTML carries no such header, so
    without a version string a returning visitor receives freshly deployed HTML
    against a stylesheet up to a day old — and up to a week old while
-   stale-while-revalidate is still serving it. The query string is part of the
-   cache key, so changing it forces a fresh fetch.
+   stale-while-revalidate is still serving it.
+
+   The layer this protects is the VISITOR'S BROWSER. An HTTP cache keys on the
+   full request URL, query string included (RFC 9111), so a browser holding
+   /css/styles.css simply cannot serve it for /css/styles.css?v=3 — it must
+   refetch. That is the whole mechanism, and it is guaranteed by spec.
+
+   Cloudflare's edge is a separate layer and does NOT behave this way: it
+   normalises the query away for this asset, so ?v=2 and ?v=99 both return the
+   same cached object (verified — both report CF-Cache-Status: HIT). That is
+   harmless. The edge holds the current file after every deploy, so what it
+   serves is already correct; it was never the layer that went stale.
 
    This is not hypothetical. On 2026-09-05 the Google mark in the reviews
    eyebrow rendered at 831x831px in solid black on production, because neither
