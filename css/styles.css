@@ -13,6 +13,18 @@
   --line: #3A3E48;
   --header-h: 106px;
 
+  /* Graphics-on-dark tint of --accent, for star rows.
+     A star row is a graphical object, so WCAG 1.4.11 asks for 3:1 against its
+     background. Measured, --accent (#CC2029) is 2.45:1 on --bg2 and 2.74:1 on
+     --bg — it fails both. This is the same hue (358 vs 357) lifted until it
+     passes: 3.46:1 on --bg2, 3.86:1 on --bg.
+     Use it for star fills only. Text and buttons keep --accent. */
+  --accent-bright: #E5484D;
+  /* The unfilled remainder of a star row. --line (#3A3E48) is 1.41:1 on the
+     card and reads as nothing at all; this is lifted far enough to register
+     as an empty slot without competing with the filled stars. */
+  --star-empty: #4A4F5C;
+
   /* Type scale — ~1.25 ratio anchored on a 16px body.
      Fluid steps interpolate between a 360px and a 1280px viewport, so the
      ratio between heading levels stays constant at every width instead of
@@ -28,6 +40,10 @@
   --fs-h2: clamp(1.75rem, 1.36rem + 1.74vw, 2.75rem);   /* 28 → 44 */
   --fs-h1-page: clamp(2.125rem, 1.49rem + 2.83vw, 3.75rem); /* 34 → 60 — interior page heroes */
   --fs-h1: clamp(2.5rem, 1.62rem + 3.91vw, 4.75rem);    /* 40 → 76 — home hero only */
+  /* 40 → 56 — a bare number read as a figure, not a heading. Currently just
+     the Google rating score. Lives here rather than inline because the note
+     above is right: a one-off px value is a bug, not a decision. */
+  --fs-display-num: clamp(2.5rem, 2rem + 2.2vw, 3.5rem);
 
   /* Section rhythm — three tiers instead of one padding value for every
      section regardless of density. Set per-section via --section-pad so a
@@ -611,41 +627,95 @@ section {
 /* ---- Testimonials ---- */
 .testimonials { background: var(--bg2); color: var(--ink); }
 .testimonials h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 8px; }
-.testimonials .sub { color: var(--ink-dim); font-size: var(--fs-lead); margin-bottom: 40px; max-width: 46ch; }
+.testimonials .sub { color: var(--ink-dim); font-size: var(--fs-lead); max-width: 46ch; }
+
+/* Section header — lede left, Google aggregate right.
+   Stacked below 760px, two columns above; see the media query further down.
+   The aggregate is rendered by the google-reviews fetch and stays [hidden]
+   until it resolves, so a failed or unconfigured endpoint degrades to exactly
+   the heading and subhead this section had before. */
+.reviews-head { margin-bottom: 40px; }
+
+.reviews-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
+  color: var(--ink-dim);
+  margin-bottom: 10px;
+}
+/* Monochrome deliberately: a full-colour Google mark on charcoal reads as a
+   sticker stuck onto the page rather than part of it. */
+.reviews-eyebrow svg { width: 14px; height: 14px; flex: none; fill: currentColor; }
+
+.reviews-aggregate {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.reviews-score {
+  display: block;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: var(--fs-display-num);
+  line-height: 1;
+  color: var(--ink);
+}
+.reviews-aggregate .reviews-stars { margin: 10px 0 12px; }
+.reviews-count { font-size: var(--fs-small); font-weight: 600; color: var(--ink); }
+.reviews-asof { font-size: var(--fs-label); color: var(--ink-dim); margin-top: 2px; }
+.reviews-source-link {
+  display: inline-block;
+  margin-top: 14px;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-micro);
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 2px;
+}
+.reviews-source-link:hover { border-bottom-color: var(--ink); }
+
+/* ---- Star rating ---- */
+/* One SVG per rating: five stars painted in the empty colour, then the same
+   five painted in the fill colour inside a clip whose width is a percentage
+   of the row. The clip is what makes a fractional rating honest — the old
+   glyph version rounded first, so 4.5 rendered as a clean 5.
+   The graphic is aria-hidden; the accessible name is a sibling .visually-hidden
+   span, which is read reliably where a label on an <svg> is not. */
+.reviews-stars { display: block; height: auto; }
+.reviews-stars--lg { width: 100px; }
+.reviews-stars--md { width: 75px; }
+.reviews-stars--sm { width: 60px; }
+.reviews-stars .stars-empty { fill: var(--star-empty); }
+.reviews-stars .stars-fill { fill: var(--accent-bright); }
+
 .testimonials-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   align-items: start;
-  gap: 20px;
+  gap: 24px;
 }
 .testimonial-card {
   background: var(--bg);
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
-  padding: 28px 26px 24px;
+  padding: 32px 26px 24px;
 }
-.testimonial-stars {
-  color: var(--ink-dim);
-  font-size: var(--fs-small);
-  letter-spacing: 3px;
-  margin-bottom: 16px;
-}
+.testimonial-card .reviews-stars { margin-bottom: 16px; }
+/* The decorative 42px red opening quote that used to sit above this text is
+   gone. With a red star row now leading the card it was a second accent doing
+   no work, and it cost ~46px of height in every card. */
 .testimonial-text {
-  position: relative;
   color: var(--ink);
   font-size: var(--fs-small);
   line-height: 1.65;
   margin-bottom: 20px;
-}
-.testimonial-text::before {
-  content: '\201C';
-  display: block;
-  font-family: 'Oswald', sans-serif;
-  font-size: 42px;
-  line-height: 1;
-  color: var(--accent);
-  opacity: 0.5;
-  margin-bottom: 4px;
 }
 .testimonial-author {
   padding-top: 16px;
@@ -674,6 +744,25 @@ section {
   font-size: var(--fs-small);
   color: var(--ink-dim);
   padding: 40px 0;
+}
+
+/* Two columns once there is room: the lede keeps its 46ch measure on the left
+   and the aggregate sits right, sharing the heading's baseline. The rule that
+   separates them when stacked is redundant here, so it comes off. */
+@media (min-width: 760px) {
+  .reviews-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 48px;
+    align-items: start;
+  }
+  .reviews-aggregate {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    text-align: right;
+  }
+  .reviews-aggregate .reviews-stars { margin-left: auto; }
 }
 
 /* ---- Trust / Contact ---- */

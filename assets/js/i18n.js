@@ -115,6 +115,50 @@
     },
     testimonials_empty: { en: 'Reviews coming soon.', es: 'Reseñas próximamente.' },
 
+    // Google aggregate block. These are UI chrome, not review content — the
+    // reviews themselves stay in whatever language they were written in, per
+    // the note at the top of this file.
+    //
+    // {n} and {date} are substituted by the caller, not by t(). t() returns a
+    // flat string and applyTranslations assigns it with textContent, so there
+    // is no interpolation in this layer; the reviews script does its own
+    // replace on the template it gets back. Singular and plural are separate
+    // keys because English needs review/reviews and Spanish reseña/reseñas —
+    // a bare '{n} reviews' reads wrong at exactly 1 in both languages.
+    reviews_eyebrow: { en: 'Google Reviews', es: 'Reseñas de Google' },
+    reviews_count: {
+      en: 'Based on {n} Google reviews',
+      es: 'Basado en {n} reseñas de Google'
+    },
+    reviews_count_one: {
+      en: 'Based on 1 Google review',
+      es: 'Basado en 1 reseña de Google'
+    },
+    // {date} arrives from toLocaleDateString as a bare month + year
+    // ('September 2026' / 'septiembre de 2026'). Spanish cannot use 'al' here
+    // -- 'al' is a + el and needs a day ('al 5 de septiembre'), so 'al
+    // septiembre de 2026' is wrong. 'actualizado en' reads naturally with a
+    // bare month and carries the same meaning: these numbers are from then.
+    reviews_asof: { en: 'as of {date}', es: 'actualizado en {date}' },
+    reviews_read_all: { en: 'Read all on Google', es: 'Ver todas en Google' },
+    // Single spoken sentence for the aggregate; the visible pieces are
+    // aria-hidden so this is not announced three times over.
+    reviews_aria: {
+      en: '{rating} out of 5 stars, based on {n} Google reviews.',
+      es: '{rating} de 5 estrellas, basado en {n} reseñas de Google.'
+    },
+    reviews_aria_one: {
+      en: '{rating} out of 5 stars, based on 1 Google review.',
+      es: '{rating} de 5 estrellas, basado en 1 reseña de Google.'
+    },
+    opens_new_tab: { en: ' (opens in a new tab)', es: ' (se abre en una pestaña nueva)' },
+    // Card star rows. {rating} is an integer 1-5 — the reviews table has a
+    // check constraint to that effect — so no plural handling is needed.
+    reviews_card_aria: {
+      en: '{rating} out of 5 stars',
+      es: '{rating} de 5 estrellas'
+    },
+
     quote_heading: { en: 'Request a Quote', es: 'Solicite una Cotización' },
     quote_subheading: { en: "Tell us about the job and we'll get back to you.", es: 'Cuéntenos sobre el trabajo y nos pondremos en contacto.' },
     form_label_name: { en: 'Name*', es: 'Nombre*' },
