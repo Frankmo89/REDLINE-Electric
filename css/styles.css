@@ -31,7 +31,7 @@
        find . -name '*.html' -not -path './.git/*' -not -path './node_modules/*' \
          -print0 | xargs -0 sed -i "s|styles\.css?v=$OLD|styles.css?v=$NEW|g"
 
-   then confirm all 11 files moved together:
+   then confirm all 13 files moved together:
 
        grep -rho 'styles\.css?v=[0-9]*' --include='*.html' . | sort | uniq -c
 
@@ -1290,6 +1290,27 @@ a.contact-info-value:hover { text-decoration: underline; }
 .footer-bottom { border-top: 1px solid var(--line); padding: 20px; }
 .footer-bottom .wrap { text-align: center; }
 .footer-bottom p { font-size: var(--fs-label); color: var(--ink-dim); }
+/* Privacy and Terms sit under the copyright line rather than in Quick Links —
+   they are obligations a visitor goes looking for, not part of the site's
+   navigation. Reuses the exact pair the copyright line already uses:
+   --ink-dim on the #1C1E25 footer is 7.5:1, well clear of AA at this size. */
+.footer-legal {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 20px;
+  margin-top: 10px;
+}
+.footer-legal a {
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-size: var(--fs-label);
+}
+.footer-legal a:hover { color: var(--ink); }
+/* The current page is still a link, so it stays reachable; it just stops
+   looking like somewhere else to go. */
+.footer-legal a[aria-current="page"] { color: var(--ink); }
 
 /* ---- Nav services dropdown ---- */
 .nav-dropdown { position: relative; }
@@ -1355,6 +1376,100 @@ a.contact-info-value:hover { text-decoration: underline; }
   color: var(--accent);
   font-weight: 700;
 }
+
+/* ---- Legal pages (privacy.html, terms.html) ---- */
+/* Same light panel and the same two text colours as .service-content, on
+   purpose: these are the pairs already measured on this ground, and a policy
+   page is the last place to introduce an untested one. Against --panel
+   (#F5F5F0): #23262F is 13.8:1, #45494F is 8.3:1, #5C6169 is 5.7:1, and
+   --accent (#CC2029) is 5.0:1 — all clear of the 4.5:1 AA floor for body text.
+   #E2E1DB is a separator rule only, never text, so it carries no requirement.
+
+   Not folded into .service-content itself. That class sets a service page's
+   heading rhythm around short marketing sections; a policy is long-form
+   reading that needs a visible break between numbered-feeling sections and a
+   looser line-height, and merging the two would compromise both. */
+.legal { background: var(--panel); color: #23262F; }
+.legal h1 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 6px; }
+/* The rule above each h2 is what makes a wall of policy text scannable — it
+   gives the eye a place to stop without resorting to section numbering. */
+.legal h2 {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  margin: 40px 0 14px;
+  padding-top: 22px;
+  border-top: 1px solid #E2E1DB;
+}
+.legal h3 {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: var(--fs-lead);
+  font-weight: 500;
+  margin: 26px 0 10px;
+}
+/* 1.75 rather than the 1.7 of .service-content: these pages ask for sustained
+   reading of dense sentences, which is exactly where leading earns its keep. */
+.legal p {
+  color: #45494F;
+  font-size: var(--fs-body);
+  line-height: 1.75;
+  max-width: 68ch;
+  margin-bottom: 16px;
+}
+/* Both of these are <p>, so they need to outrank .legal p on specificity. */
+.legal .legal-updated {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-micro);
+  color: #5C6169;
+  margin-bottom: 26px;
+}
+.legal .legal-intro { font-size: var(--fs-lead); }
+.legal-list { list-style: none; max-width: 68ch; margin-bottom: 16px; }
+.legal-list li {
+  position: relative;
+  padding-left: 26px;
+  color: #45494F;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+/* A square rather than the ✓ of .service-content-list. That checkmark reads as
+   an endorsement, which is right for "What's Included" and wrong for a list of
+   things you may not do. Empty content:"" keeps it out of the accessibility
+   tree entirely — the ✓ is announced by some screen readers as "check mark"
+   before every item. */
+.legal-list li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.72em;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+}
+/* Underlined, not colour-only: --accent against the #45494F running text is
+   under 3:1, so colour alone would not distinguish a link (WCAG 1.4.1). */
+.legal a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legal a:hover { color: var(--accent-hover); }
+.legal-contact {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin-bottom: 8px;
+}
+.legal-contact a { font-weight: 600; }
+.legal-crosslink { margin-top: 44px; padding-top: 22px; border-top: 1px solid #E2E1DB; }
 
 .process { background: var(--bg2); color: var(--ink); }
 .process h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 40px; }

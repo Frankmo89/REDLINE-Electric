@@ -511,7 +511,274 @@
     svc_servicecalls_step3_title: { en: 'On-Site Diagnosis & Repair', es: 'Diagnóstico y Reparación en el Sitio' },
     svc_servicecalls_step3_desc: { en: 'We find the cause, quote the repair, and complete the work.', es: 'Encontramos la causa, cotizamos la reparación y hacemos el trabajo.' },
     svc_servicecalls_step4_title: { en: 'Walkthrough & Code Check', es: 'Recorrido Final y Verificación de Código' },
-    svc_servicecalls_step4_desc: { en: "We walk you through what was fixed and confirm it meets code.", es: 'Le explicamos qué se reparó y confirmamos que cumple con el código.' }
+    svc_servicecalls_step4_desc: { en: "We walk you through what was fixed and confirm it meets code.", es: 'Le explicamos qué se reparó y confirmamos que cumple con el código.' },
+
+    // ======================================================================
+    // Legal pages — privacy.html and terms.html.
+    //
+    // Written against what this site actually does as of 2026-09-07: the quote
+    // form (Supabase), owner-uploaded job photos (Supabase storage), GA4 behind
+    // Consent Mode v2, Resend notification email from a verified domain, and
+    // the server-side Places API rating fetch. Nothing here describes a feature
+    // that does not exist — when one ships, updating this text is part of
+    // shipping it.
+    //
+    // Spanish is a translation for comprehension, not a second legal instrument.
+    // terms_s12_p says the English version controls where the two diverge, which
+    // is what keeps a bilingual policy from becoming two different policies.
+    // ======================================================================
+
+    footer_legal: { en: 'Legal', es: 'Legal' },
+    nav_privacy: { en: 'Privacy Policy', es: 'Política de Privacidad' },
+    nav_terms: { en: 'Terms of Service', es: 'Términos de Servicio' },
+    legal_updated: { en: 'Last updated: September 7, 2026', es: 'Última actualización: 7 de septiembre de 2026' },
+    legal_contact_heading: { en: 'How to Reach Us', es: 'Cómo Contactarnos' },
+
+    // ---- Privacy Policy ----
+    privacy_page_title: { en: 'Privacy Policy', es: 'Política de Privacidad' },
+    privacy_intro: {
+      en: 'This policy explains what information Redline Electric collects through redlinesd.com, why we collect it, who else handles it, and what choices you have. It covers this website. It does not cover what you tell us in person, on a phone call, or in a signed work agreement — we treat that information with the same care, but it sits outside this document.',
+      es: 'Esta política explica qué información recopila Redline Electric a través de redlinesd.com, por qué la recopilamos, quién más la maneja y qué opciones tiene usted. Cubre este sitio web. No cubre lo que usted nos diga en persona, por teléfono o en un acuerdo de trabajo firmado — esa información la tratamos con el mismo cuidado, pero queda fuera de este documento.'
+    },
+
+    privacy_s1_h: { en: 'Who We Are', es: 'Quiénes Somos' },
+    privacy_s1_p: {
+      en: 'Redline Electric is a licensed electrical contractor serving San Diego County, California, holding CSLB license C-10 #1153394. We are the business responsible for the information described below, and we are the ones who decide what is done with it.',
+      es: 'Redline Electric es un contratista eléctrico licenciado que atiende el condado de San Diego, California, con la licencia CSLB C-10 #1153394. Somos el negocio responsable de la información descrita a continuación y quienes decidimos qué se hace con ella.'
+    },
+
+    privacy_s2_h: { en: 'What We Collect', es: 'Qué Recopilamos' },
+    privacy_s2a_h: { en: 'What you send us', es: 'Lo que usted nos envía' },
+    privacy_s2a_p1: {
+      en: 'The quote form asks for your name and phone number, and optionally your email address, the service you are interested in, and a description of the job. That is the whole list. No field is pre-filled from another source, and nothing on this site asks for payment details, account numbers, a Social Security number, or any other government identifier.',
+      es: 'El formulario de cotización pide su nombre y número de teléfono, y de forma opcional su correo electrónico, el servicio que le interesa y una descripción del trabajo. Esa es la lista completa. Ningún campo se llena previamente desde otra fuente, y en este sitio no se pide información de pago, números de cuenta, número de Seguro Social ni ningún otro identificador gubernamental.'
+    },
+    privacy_s2a_p2: {
+      en: 'What you submit is stored in our database, which is hosted by Supabase, and a copy is emailed to us so we can respond. If you gave an email address, an automatic confirmation is also sent back to you.',
+      es: 'Lo que usted envía se guarda en nuestra base de datos, alojada por Supabase, y se nos envía una copia por correo electrónico para poder responderle. Si proporcionó un correo electrónico, también se le envía una confirmación automática.'
+    },
+    privacy_s2b_h: { en: 'What is collected automatically', es: 'Lo que se recopila automáticamente' },
+    privacy_s2b_p1: {
+      en: 'If you accept analytics, Google Analytics 4 records ordinary usage data: which pages you viewed, an approximate region derived from your connection, your device and browser type, and a small set of actions such as tapping a call button, submitting the quote form, or switching the site to Spanish. If you do not accept, none of that is recorded.',
+      es: 'Si usted acepta las estadísticas, Google Analytics 4 registra datos de uso comunes: qué páginas vio, una región aproximada derivada de su conexión, el tipo de dispositivo y navegador, y un pequeño conjunto de acciones como presionar un botón de llamada, enviar el formulario de cotización o cambiar el sitio a español. Si no acepta, nada de eso se registra.'
+    },
+    privacy_s2b_p2: {
+      en: 'Separately, Cloudflare — the company that hosts and delivers this site — processes technical request data, including your IP address, as a normal part of serving the page and protecting the site from abuse. This happens for every visitor, before any choice about analytics, because it is the mechanism by which the page reaches you at all.',
+      es: 'Por separado, Cloudflare — la empresa que aloja y distribuye este sitio — procesa datos técnicos de la solicitud, incluida su dirección IP, como parte normal de entregar la página y proteger el sitio contra abusos. Esto ocurre con cada visitante, antes de cualquier decisión sobre estadísticas, porque es el mecanismo por el cual la página llega a usted.'
+    },
+    privacy_s2c_h: { en: 'What stays in your browser', es: 'Lo que queda en su navegador' },
+    privacy_s2c_p: {
+      en: 'This site keeps three small values in your browser storage: whether you accepted analytics, which language you chose, and whether we have already offered to switch you to Spanish. They stay on your device, only this site can read them, and clearing your browsing data removes them.',
+      es: 'Este sitio guarda tres valores pequeños en el almacenamiento de su navegador: si aceptó las estadísticas, qué idioma eligió y si ya le ofrecimos cambiar a español. Permanecen en su dispositivo, solo este sitio puede leerlos, y borrar los datos de navegación los elimina.'
+    },
+
+    privacy_s3_h: { en: 'Photos of Completed Work', es: 'Fotos de Trabajos Terminados' },
+    privacy_s3_p: {
+      en: 'The photo galleries on this site are uploaded by us and show electrical work we have completed. There is no photo upload for visitors — nothing you do on this site puts an image anywhere. The photos are stored in Supabase storage. We photograph the work rather than the people or belongings around it, and we do not caption a photo with a customer name or address. If a photo of your project shows something you would rather not have published, tell us and we will take it down.',
+      es: 'Las galerías de fotos de este sitio las subimos nosotros y muestran trabajos eléctricos que hemos completado. No hay carga de fotos para visitantes — nada de lo que usted haga en este sitio coloca una imagen en ningún lado. Las fotos se guardan en el almacenamiento de Supabase. Fotografiamos el trabajo, no a las personas ni las pertenencias a su alrededor, y no acompañamos una foto con el nombre o la dirección de un cliente. Si una foto de su proyecto muestra algo que usted preferiría no publicar, díganos y la quitamos.'
+    },
+
+    privacy_s4_h: { en: 'The Google Rating on This Site', es: 'La Calificación de Google en Este Sitio' },
+    privacy_s4_p1: {
+      en: 'The star rating and review count shown on this site come from our Google Business Profile. Our own server requests those two numbers from the Google Places API and caches them for a day at a time. That request is made by us, on our own behalf. Your visit sends nothing to Google through this feature, and Google is not told that you looked at the page.',
+      es: 'La calificación de estrellas y el número de reseñas que aparecen en este sitio provienen de nuestro Perfil de Empresa en Google. Nuestro propio servidor solicita esos dos números a la API de Google Places y los guarda en caché por un día a la vez. Esa solicitud la hacemos nosotros, por nuestra cuenta. Su visita no envía nada a Google mediante esta función, y a Google no se le informa que usted vio la página.'
+    },
+    privacy_s4_p2: {
+      en: 'The review text and reviewer names shown on the site were written by our customers and published publicly by them on Google. Because that content originates with a third party, we do not control it and cannot correct it. If a review is yours and you want it changed or removed, that is done through Google rather than through us.',
+      es: 'El texto de las reseñas y los nombres de quienes las escribieron fueron redactados por nuestros clientes y publicados públicamente por ellos en Google. Como ese contenido se origina con un tercero, no lo controlamos ni podemos corregirlo. Si una reseña es suya y quiere cambiarla o eliminarla, eso se hace a través de Google y no con nosotros.'
+    },
+
+    privacy_s5_h: { en: 'What We Use It For', es: 'Para Qué la Usamos' },
+    privacy_s5_i1: { en: 'Responding to your quote request and answering your questions', es: 'Responder a su solicitud de cotización y contestar sus preguntas' },
+    privacy_s5_i2: { en: 'Contacting you about the job, scheduling, and follow-up work', es: 'Contactarlo sobre el trabajo, la programación y el seguimiento' },
+    privacy_s5_i3: { en: 'Sending you a confirmation that your request came through', es: 'Enviarle una confirmación de que su solicitud llegó' },
+    privacy_s5_i4: { en: 'Understanding, in aggregate, which pages and services people actually use', es: 'Entender, de forma agregada, qué páginas y servicios usa realmente la gente' },
+    privacy_s5_i5: { en: 'Keeping the site working, and keeping records of work we have performed', es: 'Mantener el sitio funcionando y conservar registros del trabajo que hemos realizado' },
+    privacy_s5_i6: { en: 'Meeting legal, licensing, tax, and insurance obligations', es: 'Cumplir obligaciones legales, de licencia, fiscales y de seguros' },
+    privacy_s5_p: {
+      en: 'We do not sell your personal information. We do not share it for cross-context behavioral advertising, and we do not run advertising retargeting on this site.',
+      es: 'No vendemos su información personal. No la compartimos para publicidad conductual entre contextos, y no usamos remarketing publicitario en este sitio.'
+    },
+
+    privacy_s6_h: { en: 'Who Else Handles It', es: 'Quién Más la Maneja' },
+    privacy_s6_intro: {
+      en: 'Running this site takes a handful of outside services. Each one handles information on our instructions and for our purposes, not for its own:',
+      es: 'Operar este sitio requiere algunos servicios externos. Cada uno maneja la información siguiendo nuestras instrucciones y para nuestros fines, no para los suyos:'
+    },
+    privacy_s6_i1: { en: 'Supabase — the database that holds quote requests, and the storage that holds job photos', es: 'Supabase — la base de datos que guarda las solicitudes de cotización y el almacenamiento con las fotos de trabajos' },
+    privacy_s6_i2: { en: 'Resend — sends the notification email to us and the confirmation email to you, from a verified redlinesd.com address', es: 'Resend — envía el correo de notificación a nosotros y el de confirmación a usted, desde una dirección verificada de redlinesd.com' },
+    privacy_s6_i3: { en: 'Google Analytics — usage statistics, and only after you accept', es: 'Google Analytics — estadísticas de uso, y solo después de que usted acepte' },
+    privacy_s6_i4: { en: 'Cloudflare — hosting and content delivery for the site itself', es: 'Cloudflare — alojamiento y distribución de contenido del sitio' },
+    privacy_s6_p: {
+      en: 'Beyond those, we disclose information only where the law requires it, or where we need it to establish or defend a legal claim. If the business is ever sold or merged, customer records would transfer as part of that, and the new owner would be bound by this policy for information collected under it.',
+      es: 'Aparte de esos, divulgamos información únicamente cuando la ley lo exige, o cuando la necesitamos para presentar o defender una reclamación legal. Si el negocio llegara a venderse o fusionarse, los registros de clientes se transferirían como parte de eso, y el nuevo propietario quedaría sujeto a esta política respecto de la información recopilada bajo ella.'
+    },
+
+    privacy_s7_h: { en: 'Analytics and Your Choice', es: 'Estadísticas y Su Decisión' },
+    privacy_s7_p1: {
+      en: 'Analytics is off until you turn it on. Every page sets Google Consent Mode v2 to denied before any analytics call is made, so no analytics identifier is stored and no measurable hit is sent until you press Accept on the notice at the bottom of the screen. Ignoring the notice, or scrolling past it, leaves analytics off.',
+      es: 'Las estadísticas están desactivadas hasta que usted las activa. Cada página establece el Modo de Consentimiento v2 de Google en denegado antes de cualquier llamada de estadísticas, así que no se guarda ningún identificador ni se envía ninguna medición hasta que usted presione Aceptar en el aviso al pie de la pantalla. Ignorar el aviso, o pasar de largo, deja las estadísticas desactivadas.'
+    },
+    privacy_s7_p2: {
+      en: 'To reverse a choice you already made, clear this site’s stored data in your browser settings. The notice will appear again on your next visit, and analytics stays off until you accept again. Most browsers also offer a setting that blocks analytics scripts outright, and this site works normally with that enabled.',
+      es: 'Para revertir una decisión que ya tomó, borre los datos guardados de este sitio en la configuración de su navegador. El aviso volverá a aparecer en su próxima visita y las estadísticas seguirán desactivadas hasta que acepte de nuevo. La mayoría de los navegadores también ofrecen una opción que bloquea los scripts de estadísticas, y este sitio funciona normalmente con esa opción activada.'
+    },
+
+    privacy_s8_h: { en: 'How Long We Keep It', es: 'Cuánto Tiempo la Conservamos' },
+    privacy_s8_p: {
+      en: 'We keep quote requests and job records for as long as we need them to serve the customer and to document work we performed — electrical work carries obligations that outlast the visit, and a job can come back years later. Analytics data is kept according to the retention setting on our Google Analytics property. If you want a quote request you sent us deleted, ask and we will delete it, unless we are required to keep it.',
+      es: 'Conservamos las solicitudes de cotización y los registros de trabajo mientras los necesitemos para atender al cliente y documentar el trabajo realizado — el trabajo eléctrico conlleva obligaciones que duran más que la visita, y un trabajo puede volver años después. Los datos de estadísticas se conservan según la configuración de retención de nuestra propiedad de Google Analytics. Si desea que eliminemos una solicitud de cotización que nos envió, pídalo y la eliminaremos, salvo que estemos obligados a conservarla.'
+    },
+
+    privacy_s9_h: { en: 'Security', es: 'Seguridad' },
+    privacy_s9_p: {
+      en: 'The site is served only over HTTPS, so what you type into the form is encrypted in transit. Our database is configured so the public site can write a quote request but cannot read any back — a visitor’s browser has no path to anyone else’s submission. The area where we manage photos and requests is password-protected and is not indexed by search engines. No system is perfectly secure, and we will not tell you otherwise.',
+      es: 'El sitio se entrega únicamente por HTTPS, así que lo que usted escribe en el formulario viaja cifrado. Nuestra base de datos está configurada de modo que el sitio público puede escribir una solicitud de cotización pero no puede leer ninguna — el navegador de un visitante no tiene forma de llegar al envío de otra persona. El área donde administramos fotos y solicitudes está protegida con contraseña y no se indexa en buscadores. Ningún sistema es perfectamente seguro, y no le diremos lo contrario.'
+    },
+
+    privacy_s10_h: { en: 'California Privacy Rights', es: 'Derechos de Privacidad en California' },
+    privacy_s10_p1: {
+      en: 'We are a San Diego business and most of the people who contact us are California residents, so we extend the rights below to anyone who asks, whether or not the law obligates us in a particular case. Under the California Consumer Privacy Act, as amended by the California Privacy Rights Act, you may ask us to tell you what personal information we have collected about you, to give you a copy of it, to correct it if it is wrong, or to delete it. You may also limit the use of sensitive personal information — though as described above, we do not collect any.',
+      es: 'Somos un negocio de San Diego y la mayoría de quienes nos contactan residen en California, así que extendemos los derechos siguientes a cualquier persona que los solicite, la ley nos obligue o no en un caso particular. Bajo la Ley de Privacidad del Consumidor de California, reformada por la Ley de Derechos de Privacidad de California, usted puede pedirnos que le digamos qué información personal hemos recopilado sobre usted, que le demos una copia, que la corrijamos si está mal, o que la eliminemos. También puede limitar el uso de información personal sensible — aunque, como se describe arriba, no recopilamos ninguna.'
+    },
+    privacy_s10_p2: {
+      en: 'In the categories that statute uses, we collect identifiers (your name, phone number, and email address), commercial information (the service you asked about and what you described), and internet activity (the analytics described above, and only with your consent). We collect them for the business purposes listed under What We Use It For. We have not sold or shared personal information in the preceding twelve months, and we do not knowingly collect or sell the personal information of anyone under 16.',
+      es: 'En las categorías que usa esa ley, recopilamos identificadores (su nombre, teléfono y correo electrónico), información comercial (el servicio que consultó y lo que describió) y actividad en internet (las estadísticas descritas arriba, y solo con su consentimiento). Las recopilamos para los fines comerciales enumerados en Para Qué la Usamos. No hemos vendido ni compartido información personal en los doce meses anteriores, y no recopilamos ni vendemos a sabiendas información personal de menores de 16 años.'
+    },
+    privacy_s10_p3: {
+      en: 'To make a request, write to the privacy address below, or call or text us, and say what you want. We will ask you enough to confirm you are the person whose information it is — usually the phone number you used to contact us — and we will not use what you give us for that verification for anything else. You will not be charged, and you will not be treated differently for asking. We aim to respond within 45 days.',
+      es: 'Para hacer una solicitud, escriba a la dirección de privacidad que aparece abajo, o llámenos o envíenos un mensaje, y diga qué desea. Le pediremos lo suficiente para confirmar que usted es la persona a la que corresponde la información — normalmente el número de teléfono con el que nos contactó — y no usaremos para nada más lo que nos dé para esa verificación. No se le cobrará ni se le tratará distinto por preguntar. Buscamos responder dentro de 45 días.'
+    },
+
+    privacy_s11_h: { en: 'Children', es: 'Menores de Edad' },
+    privacy_s11_p: {
+      en: 'This site is for adults arranging electrical work on a property. It is not directed at children, and we do not knowingly collect information from anyone under 16. If you believe a child sent us something through this site, tell us and we will delete it.',
+      es: 'Este sitio es para adultos que gestionan trabajo eléctrico en una propiedad. No está dirigido a menores, y no recopilamos a sabiendas información de personas menores de 16 años. Si cree que un menor nos envió algo a través de este sitio, avísenos y lo eliminaremos.'
+    },
+
+    privacy_s12_h: { en: 'Changes to This Policy', es: 'Cambios a Esta Política' },
+    privacy_s12_p: {
+      en: 'When this site gains a feature that handles information differently, this policy is updated in the same release. The date at the top of the page is the date of the most recent change. Continuing to use the site after a change means the current version applies to you.',
+      es: 'Cuando este sitio incorpore una función que maneje información de otra manera, esta política se actualiza en la misma publicación. La fecha en la parte superior de la página es la del cambio más reciente. Seguir usando el sitio después de un cambio significa que la versión vigente le aplica.'
+    },
+
+    privacy_s13_p: {
+      en: 'Questions about this policy, or a request about your own information, can go to the privacy address below. Phone and text reach us as well, and are quicker for anything urgent.',
+      es: 'Las preguntas sobre esta política, o una solicitud sobre su propia información, pueden dirigirse a la dirección de privacidad que aparece abajo. El teléfono y los mensajes también nos llegan, y son más rápidos para cualquier asunto urgente.'
+    },
+
+    // ---- Terms of Service ----
+    terms_page_title: { en: 'Terms of Service', es: 'Términos de Servicio' },
+    terms_intro: {
+      en: 'These terms govern your use of redlinesd.com. By using the site, you accept them. If you do not accept them, please do not use the site. They are about the website — the work we perform for you is governed by the written agreement you sign for that work.',
+      es: 'Estos términos rigen su uso de redlinesd.com. Al usar el sitio, usted los acepta. Si no los acepta, por favor no use el sitio. Se refieren al sitio web — el trabajo que realizamos para usted se rige por el acuerdo escrito que usted firma para ese trabajo.'
+    },
+
+    terms_s1_h: { en: 'Contractor License Disclosure', es: 'Divulgación de Licencia de Contratista' },
+    terms_s1_p: {
+      en: 'Redline Electric is a licensed electrical contractor in the State of California, holding CSLB license C-10 #1153394. The license, its current status, its classification, and any disciplinary history are public record and can be checked directly with the Contractors State License Board at cslb.ca.gov. We encourage you to check it before hiring anyone, ourselves included.',
+      es: 'Redline Electric es un contratista eléctrico licenciado en el Estado de California, con la licencia CSLB C-10 #1153394. La licencia, su estado actual, su clasificación y cualquier historial disciplinario son registro público y pueden consultarse directamente con el Contractors State License Board en cslb.ca.gov. Le recomendamos verificarlo antes de contratar a cualquiera, nosotros incluidos.'
+    },
+
+    terms_s2_h: { en: 'This Site Is Information, Not Electrical Advice', es: 'Este Sitio Es Información, No Asesoría Eléctrica' },
+    terms_s2_p1: {
+      en: 'Everything published here — service descriptions, the explanations of what a job typically involves, the answers in the FAQ — is general information written to help you understand the kind of work we do and what to expect. It is not professional advice about your property, your panel, or your wiring, and it is not a substitute for having a licensed electrician look at the actual system in front of you.',
+      es: 'Todo lo publicado aquí — descripciones de servicios, explicaciones de lo que normalmente implica un trabajo, las respuestas de las preguntas frecuentes — es información general escrita para ayudarle a entender el tipo de trabajo que hacemos y qué esperar. No es asesoría profesional sobre su propiedad, su panel o su cableado, ni sustituye que un electricista licenciado revise el sistema real que usted tiene enfrente.'
+    },
+    terms_s2_p2: {
+      en: 'Electrical work is dangerous, and conditions vary enormously from one building to the next. Do not use anything on this site to decide whether something in your home or business is safe, and do not use it as instructions for doing the work yourself. If you think you have an active hazard — sparking, a burning smell, exposed conductors, heat at an outlet or panel — stop using the circuit and call a licensed electrician, your utility, or emergency services.',
+      es: 'El trabajo eléctrico es peligroso y las condiciones varían enormemente de un edificio a otro. No use nada de este sitio para decidir si algo en su casa o negocio es seguro, ni lo use como instrucciones para hacer el trabajo usted mismo. Si cree que tiene un peligro activo — chispas, olor a quemado, conductores expuestos, calor en un contacto o panel — deje de usar el circuito y llame a un electricista licenciado, a su compañía de servicios o a los servicios de emergencia.'
+    },
+
+    terms_s3_h: { en: 'Quotes and Estimates', es: 'Cotizaciones y Estimados' },
+    terms_s3_p1: {
+      en: 'Any figure we give you through this site, by phone, or by text before we have seen the property is a preliminary estimate based on what you described. It is not a fixed price, it is not an offer you can accept to form a contract, and it does not obligate either of us.',
+      es: 'Cualquier cifra que le demos por este sitio, por teléfono o por mensaje antes de haber visto la propiedad es un estimado preliminar basado en lo que usted describió. No es un precio fijo, no es una oferta que pueda aceptar para formar un contrato, y no obliga a ninguna de las partes.'
+    },
+    terms_s3_p2: {
+      en: 'The price is set after an on-site assessment, because that is the first point at which the job is actually knowable. Panel capacity, the condition and type of existing wiring, what is behind a wall, access, material costs, and what the permit and inspection require can each move a number substantially, and some of it is not visible until work begins. If the scope changes once we are underway, we tell you before we proceed rather than after.',
+      es: 'El precio se fija después de una evaluación en el sitio, porque ese es el primer momento en que el trabajo se puede conocer de verdad. La capacidad del panel, el estado y tipo del cableado existente, lo que hay detrás de una pared, el acceso, el costo de materiales y lo que exijan el permiso y la inspección pueden mover una cifra de forma sustancial, y parte de eso no es visible hasta que empieza el trabajo. Si el alcance cambia una vez comenzado, se lo decimos antes de continuar, no después.'
+    },
+    terms_s3_p3: {
+      en: 'Work is performed under a separate written agreement. Where that agreement and anything on this site differ, the agreement controls.',
+      es: 'El trabajo se realiza bajo un acuerdo escrito por separado. Donde ese acuerdo y cualquier cosa de este sitio difieran, prevalece el acuerdo.'
+    },
+
+    terms_s4_h: { en: 'Calls and Text Messages', es: 'Llamadas y Mensajes de Texto' },
+    terms_s4_p1: {
+      en: 'When you give us your phone number through this site, you are asking us to get back to you, and you agree that we may contact you at that number by phone call and by text message about your request and the work related to it. That is the purpose of the number and the only thing we use it for.',
+      es: 'Cuando usted nos da su número de teléfono a través de este sitio, nos está pidiendo que le respondamos, y acepta que podamos contactarlo a ese número por llamada telefónica y por mensaje de texto sobre su solicitud y el trabajo relacionado. Ese es el propósito del número y lo único para lo que lo usamos.'
+    },
+    terms_s4_p2: {
+      en: 'Message and data rates may apply, depending on your plan. Message frequency depends entirely on your job — there is no campaign and no recurring series. Reply STOP to any text to stop texts, or HELP for help. Opting out of texts does not stop us from returning your call about a request you sent, and it does not withdraw or change a quote.',
+      es: 'Pueden aplicar tarifas de mensajes y datos, según su plan. La frecuencia de los mensajes depende enteramente de su trabajo — no hay campaña ni serie recurrente. Responda STOP a cualquier mensaje para dejar de recibirlos, o HELP para obtener ayuda. Darse de baja de los mensajes no impide que le devolvamos la llamada sobre una solicitud que envió, ni retira ni modifica una cotización.'
+    },
+    terms_s4_p3: {
+      en: 'We do not use your number for marketing campaigns, we do not add it to a promotional list, and we do not sell or rent it to anyone.',
+      es: 'No usamos su número para campañas de marketing, no lo agregamos a una lista promocional, y no lo vendemos ni lo rentamos a nadie.'
+    },
+
+    terms_s5_h: { en: 'Using the Site', es: 'Uso del Sitio' },
+    terms_s5_intro: { en: 'Ordinary use is welcome. What is not:', es: 'El uso normal es bienvenido. Lo que no lo es:' },
+    terms_s5_i1: { en: 'Attempting to reach any part of the site, database, or account that is not public', es: 'Intentar acceder a cualquier parte del sitio, la base de datos o una cuenta que no sea pública' },
+    terms_s5_i2: { en: 'Automated scraping, bulk copying, or commercial reuse of the content or photographs', es: 'Extracción automatizada, copia masiva o reutilización comercial del contenido o las fotografías' },
+    terms_s5_i3: { en: 'Submitting false information, or someone else’s contact details without their permission', es: 'Enviar información falsa, o los datos de contacto de otra persona sin su permiso' },
+    terms_s5_i4: { en: 'Using the forms to send unsolicited commercial messages, or to interfere with the operation of the site', es: 'Usar los formularios para enviar mensajes comerciales no solicitados o para interferir con el funcionamiento del sitio' },
+
+    terms_s6_h: { en: 'Content and Ownership', es: 'Contenido y Propiedad' },
+    terms_s6_p: {
+      en: 'The text, photographs, logo, and layout of this site belong to Redline Electric. The project photographs are of our own completed work. You are welcome to link to any page here. You may not republish, redistribute, or present this content as your own, and you may not use our name, logo, or license number in a way that suggests we performed work we did not perform or endorse something we do not.',
+      es: 'El texto, las fotografías, el logotipo y el diseño de este sitio pertenecen a Redline Electric. Las fotografías de proyectos son de trabajo terminado por nosotros. Puede enlazar libremente a cualquier página de aquí. No puede republicar, redistribuir ni presentar este contenido como propio, y no puede usar nuestro nombre, logotipo o número de licencia de manera que sugiera que realizamos un trabajo que no hicimos o que respaldamos algo que no respaldamos.'
+    },
+
+    terms_s7_h: { en: 'Third-Party Content', es: 'Contenido de Terceros' },
+    terms_s7_p: {
+      en: 'The rating, review count, and review text shown on this site originate with Google and were written by our customers. We display them as published: we do not control them, we cannot edit them, and they change over time independently of us. Any link from this site to another site is a convenience, and we are not responsible for what is on the other end of it.',
+      es: 'La calificación, el número de reseñas y el texto de las reseñas que se muestran en este sitio se originan en Google y fueron escritos por nuestros clientes. Los mostramos tal como fueron publicados: no los controlamos, no podemos editarlos y cambian con el tiempo de forma independiente a nosotros. Cualquier enlace desde este sitio a otro sitio es una conveniencia, y no somos responsables de lo que haya del otro lado.'
+    },
+
+    terms_s8_h: { en: 'No Warranty About the Site', es: 'Sin Garantía Sobre el Sitio' },
+    terms_s8_p1: {
+      en: 'We work to keep this site accurate and available, but we provide it as it is. We do not warrant that it will be uninterrupted or error-free, that every description reflects current code or current pricing, or that it will meet a particular need of yours.',
+      es: 'Trabajamos para mantener este sitio exacto y disponible, pero lo proporcionamos tal como está. No garantizamos que funcione sin interrupciones ni errores, que cada descripción refleje el código o los precios vigentes, ni que satisfaga alguna necesidad particular suya.'
+    },
+    terms_s8_p2: {
+      en: 'This section is about the website only. It has nothing to do with the workmanship warranty on electrical work we perform, which is set out in your work agreement and is not limited by anything on this page.',
+      es: 'Esta sección se refiere únicamente al sitio web. No tiene relación con la garantía de mano de obra del trabajo eléctrico que realizamos, la cual se establece en su acuerdo de trabajo y no está limitada por nada en esta página.'
+    },
+
+    terms_s9_h: { en: 'Limitation of Liability', es: 'Limitación de Responsabilidad' },
+    terms_s9_p1: {
+      en: 'To the fullest extent California law allows, Redline Electric is not liable for indirect, incidental, special, consequential, or punitive damages arising from your use of this website or from reliance on information published on it. Our total liability arising from the website is limited to one hundred dollars.',
+      es: 'En la máxima medida que permita la ley de California, Redline Electric no es responsable de daños indirectos, incidentales, especiales, consecuentes o punitivos derivados de su uso de este sitio web o de su confianza en la información publicada en él. Nuestra responsabilidad total derivada del sitio web se limita a cien dólares.'
+    },
+    terms_s9_p2: {
+      en: 'Nothing in this section limits liability that cannot be limited under California law, and nothing in it limits or affects our obligations under a signed work agreement, our workmanship warranty, our license, or our insurance.',
+      es: 'Nada en esta sección limita la responsabilidad que no pueda limitarse conforme a la ley de California, y nada en ella limita ni afecta nuestras obligaciones bajo un acuerdo de trabajo firmado, nuestra garantía de mano de obra, nuestra licencia o nuestro seguro.'
+    },
+
+    terms_s10_h: { en: 'Governing Law', es: 'Ley Aplicable' },
+    terms_s10_p: {
+      en: 'These terms are governed by the laws of the State of California, without regard to its conflict-of-law rules. Any dispute about this website is to be brought in the state or federal courts located in San Diego County, California, and both of us consent to the jurisdiction of those courts.',
+      es: 'Estos términos se rigen por las leyes del Estado de California, sin considerar sus reglas de conflicto de leyes. Cualquier disputa sobre este sitio web deberá presentarse en los tribunales estatales o federales ubicados en el condado de San Diego, California, y ambas partes aceptamos la jurisdicción de esos tribunales.'
+    },
+
+    terms_s11_h: { en: 'Changes to These Terms', es: 'Cambios a Estos Términos' },
+    terms_s11_p: {
+      en: 'We may update these terms as the site changes. The date at the top of the page is the date of the most recent version, and that version applies to your use of the site from the moment it is posted.',
+      es: 'Podemos actualizar estos términos conforme el sitio cambie. La fecha en la parte superior de la página es la de la versión más reciente, y esa versión aplica a su uso del sitio desde el momento en que se publica.'
+    },
+
+    terms_s12_h: { en: 'Language and Severability', es: 'Idioma y Divisibilidad' },
+    terms_s12_p: {
+      en: 'This site is published in English and Spanish. The Spanish version is provided so these terms can be read and understood; if the two versions ever conflict, the English version controls. If any provision here is held unenforceable, the rest stays in force and the unenforceable provision is narrowed only as far as necessary.',
+      es: 'Este sitio se publica en inglés y español. La versión en español se ofrece para que estos términos puedan leerse y entenderse; si alguna vez las dos versiones se contradicen, prevalece la versión en inglés. Si alguna disposición aquí resulta inaplicable, el resto permanece vigente y la disposición inaplicable se reduce solo en lo necesario.'
+    },
+
+    terms_s13_p: {
+      en: 'Questions about these terms, or about a quote you received:',
+      es: 'Preguntas sobre estos términos o sobre una cotización que recibió:'
+    }
   };
 
   var currentLang = 'en';

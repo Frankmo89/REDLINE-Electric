@@ -22,17 +22,24 @@
 #   1. If css/styles.css changed, the version must have changed too.
 #   2. Every tracked HTML file must carry the same version — catches a sed
 #      that missed a directory, which is the likelier mistake of the two.
+#   3. Every data-i18n fallback must match its English value in i18n.js. Same
+#      class of hazard as 1 and 2: the script overwrites the inline text almost
+#      immediately, so a stale fallback is invisible to whoever left it there,
+#      while crawlers and a failed script load both see it. Delegated to
+#      scripts/check-i18n-fallbacks.py, which explains itself at the top.
 
 set -e
 
 CSS_PATH="css/styles.css"
+I18N_PATH="assets/js/i18n.js"
+FALLBACK_CHECK="scripts/check-i18n-fallbacks.py"
 VERSION_RE='styles\.css\?v=[0-9]+'
 
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
 
-# Only HTML or the stylesheet itself can move a version, so anything else
-# commits without paying for these checks.
-echo "$staged" | grep -qE "(\.html$|^$CSS_PATH$)" || exit 0
+# Only HTML, the stylesheet, or the translation table can trip any of these,
+# so anything else commits without paying for the checks.
+echo "$staged" | grep -qE "(\.html$|^$CSS_PATH$|^$I18N_PATH$)" || exit 0
 
 # No HEAD yet (initial commit): nothing to compare against.
 git rev-parse --verify HEAD >/dev/null 2>&1 || exit 0
@@ -95,6 +102,28 @@ if ! git diff --cached --quiet -- "$CSS_PATH" 2>/dev/null; then
     echo >&2
     echo "  Genuinely need to skip this? git commit --no-verify" >&2
     echo >&2
+    exit 1
+  fi
+fi
+
+# ---------------------------------------------------------------- check 3 --
+# Inline data-i18n fallbacks must agree with the English in i18n.js.
+#
+# Python rather than sh because this parses JS string literals (both quote
+# styles, escaped quotes) against HTML element bodies, and sh would turn that
+# into something nobody wants to maintain. Python is already part of the dev
+# setup here -- it is what serves the site locally. If it is genuinely absent,
+# this check steps aside rather than blocking the commit: checks 1 and 2 are
+# the load-bearing ones and they are pure sh.
+if [ -f "$FALLBACK_CHECK" ]; then
+  PY=""
+  for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
+  done
+
+  if [ -z "$PY" ]; then
+    echo "pre-commit: no python found; skipping $FALLBACK_CHECK." >&2
+  elif ! "$PY" "$FALLBACK_CHECK"; then
     exit 1
   fi
 fi

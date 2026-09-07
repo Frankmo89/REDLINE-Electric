@@ -2,6 +2,7 @@
 # wrangler.jsonc sets assets.directory to "./", so without this every tracked
 # file at the root would be fetchable (e.g. /wrangler.jsonc, /assets/photos/TODO.txt).
 wrangler.jsonc
+.gitattributes
 .gitignore
 .assetsignore
 # Internal working notes. Was served publicly (200 on /PENDING.md) until
@@ -13,6 +14,12 @@ PENDING.md
 **/node_modules
 **/.DS_Store
 assets/photos/TODO.txt
+# Developer tooling. Neither is needed to SERVE the site, but both were being
+# served: assets.directory is "./", so a directory is published unless it is
+# named here -- which is why the supabase/ entry below exists too.
+# /hooks/pre-commit was publicly fetchable until this entry was added.
+hooks/
+scripts/
 # Supabase Edge Function source, vendored for version control only. It is
 # deployed to Supabase, never served by the Worker, and contains the internal
 # notification recipient -- publishing it would put that address back on the

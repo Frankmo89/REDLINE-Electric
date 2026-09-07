@@ -51,7 +51,7 @@
 /assets/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
-# styles.css is linked as css/styles.css?v=N from all 11 HTML files, and that
+# styles.css is linked as css/styles.css?v=N from all 13 HTML files, and that
 # N MUST be incremented whenever the file changes. The TTL below is why: HTML
 # is not cached, so new markup otherwise meets a stylesheet up to a day old
 # (a week, counting stale-while-revalidate). That mismatch shipped a visibly

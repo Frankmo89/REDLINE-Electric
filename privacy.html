@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QEQXZJNNBB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  // Consent Mode v2. Everything is DENIED before the config call below, so no
+  // analytics cookie is written and no identifiable hit is sent until the
+  // visitor accepts via the cookie banner (assets/js/analytics.js).
+  // Previously the banner was purely decorative: gtag('config') fired here
+  // unconditionally, so GA4 tracked every visitor regardless of their choice.
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied'
+  });
+  try {
+    if (localStorage.getItem('redline-analytics-consent') === '1') {
+      gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+  } catch (e) { /* localStorage blocked (private mode) — stay denied */ }
+
+  gtag('js', new Date());
+  gtag('config', 'G-QEQXZJNNBB');
+</script>
+
+<title>Privacy Policy | Redline Electric</title>
+<meta name="description" content="How Redline Electric handles information collected through redlinesd.com — the quote form, analytics, job photos, and California privacy rights. Licensed C-10 #1153394, San Diego.">
+<link rel="canonical" href="https://redlinesd.com/privacy">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Privacy Policy | Redline Electric">
+<meta property="og:description" content="What information redlinesd.com collects, who handles it, and the choices available to you — including California privacy rights.">
+<meta property="og:image" content="https://redlinesd.com/assets/redline-electric-logo.png">
+<meta property="og:url" content="https://redlinesd.com/privacy">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css?v=8">
+</head>
+<body>
+<a class="skip-link" href="#main-content" data-i18n="skip_to_content">Skip to main content</a>
+
+
+<div class="lang-banner" id="lang-banner" hidden>
+  <div class="wrap lang-banner-inner">
+    <p class="lang-banner-text">Parece que prefieres español. ¿Quieres ver este sitio en español?</p>
+    <div class="lang-banner-actions">
+      <button type="button" class="lang-banner-switch" data-lang-banner-switch>Sí, cambiar</button>
+      <button type="button" class="lang-banner-dismiss" data-lang-banner-dismiss aria-label="Cerrar">&times;</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-stack" id="bottom-stack">
+  <div class="cookie-banner" id="cookie-banner" hidden>
+    <div class="wrap cookie-banner-inner">
+      <p class="cookie-banner-text" data-i18n="cookie_banner_text">We use analytics to improve this site.</p>
+      <button type="button" class="cookie-banner-accept" data-cookie-accept data-i18n="cookie_banner_accept">Accept</button>
+    </div>
+  </div>
+  <a href="tel:+16197480662" class="sticky-call-btn" data-phone-link data-i18n="cta_call_now">Call Now</a>
+</div>
+
+<header class="site-header" id="site-header">
+  <div class="wrap header-inner">
+    <a href="index.html#home" class="logo-link" aria-label="Redline Electric — Home">
+      <img src="assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188">
+    </a>
+
+    <nav class="main-nav" id="main-nav">
+      <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
+      <ul>
+        <li><a href="index.html#home" class="nav-link" data-i18n="nav_home">Home</a></li>
+        <li class="nav-dropdown" id="nav-services-dropdown">
+          <div class="nav-dropdown-inner">
+            <a href="index.html#services" class="nav-link" data-i18n="nav_services">Services</a>
+            <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-label="Toggle services menu">&#9662;</button>
+          </div>
+          <ul class="nav-dropdown-menu">
+            <li><a href="services/new-construction.html" data-i18n="service_1_title">New Construction</a></li>
+            <li><a href="services/remodels.html" data-i18n="service_2_title">Remodels</a></li>
+            <li><a href="services/retrofits.html" data-i18n="service_3_title">Retrofits</a></li>
+            <li><a href="services/art-lighting.html" data-i18n="service_4_title">Art Lighting</a></li>
+            <li><a href="services/ev-chargers.html" data-i18n="service_5_title">EV Chargers</a></li>
+            <li><a href="services/service-calls.html" data-i18n="service_6_title">Service Calls</a></li>
+          </ul>
+        </li>
+        <li><a href="index.html#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+        <li class="nav-lang-item">
+          <div class="lang-switch" role="group" aria-label="Language / Idioma">
+            <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+            <button type="button" class="lang-btn" data-lang-btn="es">ES</button>
+          </div>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <a href="tel:+16197480662" class="btn-primary btn-header-cta" data-phone-link data-i18n="cta_call_now">Call Now</a>
+      <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main-content">
+
+<!--
+  PRIVACY POLICY
+
+  Every claim below is checked against the code in this repository as of
+  2026-09-07, not against a template. If a statement here stops being true of
+  the site, it is a bug in this page, not a formality:
+
+    - quote form fields ............ index.html + the six services/*.html forms
+    - what is stored ............... the leads insert in index.html
+    - notification + confirmation .. supabase/functions/lead-notification
+    - GA4 + Consent Mode v2 ........ the <head> snippet on every page,
+                                     assets/js/analytics.js
+    - browser storage keys ......... redline-analytics-consent (analytics.js),
+                                     redline-lang + redline-lang-suggested (i18n.js)
+    - job photos ................... admin/dashboard.html upload, work.html render
+    - Google rating ................ supabase/functions/google-reviews (server-side,
+                                     cached 24h, no visitor data leaves the page)
+
+  Deliberately absent: any mention of an AI chat assistant. None exists yet.
+  When one ships, this page gets a section covering what it collects and where
+  the transcript goes, and legal_updated moves.
+
+  Uncertainties are flagged inline with UNCERTAIN comments rather than papered
+  over with confident boilerplate.
+-->
+<section class="legal">
+  <div class="wrap">
+    <h1 class="display" data-i18n="privacy_page_title">Privacy Policy</h1>
+    <p class="legal-updated" data-i18n="legal_updated">Last updated: September 7, 2026</p>
+    <p class="legal-intro" data-i18n="privacy_intro">This policy explains what information Redline Electric collects through redlinesd.com, why we collect it, who else handles it, and what choices you have. It covers this website. It does not cover what you tell us in person, on a phone call, or in a signed work agreement — we treat that information with the same care, but it sits outside this document.</p>
+
+    <h2 data-i18n="privacy_s1_h">Who We Are</h2>
+    <p data-i18n="privacy_s1_p">Redline Electric is a licensed electrical contractor serving San Diego County, California, holding CSLB license C-10 #1153394. We are the business responsible for the information described below, and we are the ones who decide what is done with it.</p>
+
+    <h2 data-i18n="privacy_s2_h">What We Collect</h2>
+
+    <h3 data-i18n="privacy_s2a_h">What you send us</h3>
+    <p data-i18n="privacy_s2a_p1">The quote form asks for your name and phone number, and optionally your email address, the service you are interested in, and a description of the job. That is the whole list. No field is pre-filled from another source, and nothing on this site asks for payment details, account numbers, a Social Security number, or any other government identifier.</p>
+    <p data-i18n="privacy_s2a_p2">What you submit is stored in our database, which is hosted by Supabase, and a copy is emailed to us so we can respond. If you gave an email address, an automatic confirmation is also sent back to you.</p>
+
+    <h3 data-i18n="privacy_s2b_h">What is collected automatically</h3>
+    <p data-i18n="privacy_s2b_p1">If you accept analytics, Google Analytics 4 records ordinary usage data: which pages you viewed, an approximate region derived from your connection, your device and browser type, and a small set of actions such as tapping a call button, submitting the quote form, or switching the site to Spanish. If you do not accept, none of that is recorded.</p>
+    <!--
+      UNCERTAIN — Cloudflare log detail. We know Cloudflare fronts the site and
+      that a CDN necessarily processes the request, IP included. What we have
+      not verified is which logs are retained on this account, for how long, or
+      whether any Cloudflare security/bot product is enabled that would set a
+      cookie of its own (__cf_bm and cf_clearance are the usual ones). The
+      sentence below is written to be true either way — it describes the
+      processing, not a retention period we have not checked. If bot management
+      or Turnstile is ever turned on, this needs a cookie disclosure.
+    -->
+    <p data-i18n="privacy_s2b_p2">Separately, Cloudflare — the company that hosts and delivers this site — processes technical request data, including your IP address, as a normal part of serving the page and protecting the site from abuse. This happens for every visitor, before any choice about analytics, because it is the mechanism by which the page reaches you at all.</p>
+
+    <h3 data-i18n="privacy_s2c_h">What stays in your browser</h3>
+    <p data-i18n="privacy_s2c_p">This site keeps three small values in your browser storage: whether you accepted analytics, which language you chose, and whether we have already offered to switch you to Spanish. They stay on your device, only this site can read them, and clearing your browsing data removes them.</p>
+
+    <!--
+      UNCERTAIN — photo consent. The claim that we take photos down on request
+      is a commitment the business can keep. What is NOT claimed here is that
+      written permission is obtained before publishing a photo of a client's
+      property, because nothing in this repo establishes that such a process
+      exists. If Joe does collect permission (in the work agreement, say), this
+      section should say so — it is a stronger position than the one below.
+    -->
+    <h2 data-i18n="privacy_s3_h">Photos of Completed Work</h2>
+    <p data-i18n="privacy_s3_p">The photo galleries on this site are uploaded by us and show electrical work we have completed. There is no photo upload for visitors — nothing you do on this site puts an image anywhere. The photos are stored in Supabase storage. We photograph the work rather than the people or belongings around it, and we do not caption a photo with a customer name or address. If a photo of your project shows something you would rather not have published, tell us and we will take it down.</p>
+
+    <h2 data-i18n="privacy_s4_h">The Google Rating on This Site</h2>
+    <p data-i18n="privacy_s4_p1">The star rating and review count shown on this site come from our Google Business Profile. Our own server requests those two numbers from the Google Places API and caches them for a day at a time. That request is made by us, on our own behalf. Your visit sends nothing to Google through this feature, and Google is not told that you looked at the page.</p>
+    <p data-i18n="privacy_s4_p2">The review text and reviewer names shown on the site were written by our customers and published publicly by them on Google. Because that content originates with a third party, we do not control it and cannot correct it. If a review is yours and you want it changed or removed, that is done through Google rather than through us.</p>
+
+    <h2 data-i18n="privacy_s5_h">What We Use It For</h2>
+    <ul class="legal-list">
+      <li data-i18n="privacy_s5_i1">Responding to your quote request and answering your questions</li>
+      <li data-i18n="privacy_s5_i2">Contacting you about the job, scheduling, and follow-up work</li>
+      <li data-i18n="privacy_s5_i3">Sending you a confirmation that your request came through</li>
+      <li data-i18n="privacy_s5_i4">Understanding, in aggregate, which pages and services people actually use</li>
+      <li data-i18n="privacy_s5_i5">Keeping the site working, and keeping records of work we have performed</li>
+      <li data-i18n="privacy_s5_i6">Meeting legal, licensing, tax, and insurance obligations</li>
+    </ul>
+    <p data-i18n="privacy_s5_p">We do not sell your personal information. We do not share it for cross-context behavioral advertising, and we do not run advertising retargeting on this site.</p>
+
+    <!--
+      UNCERTAIN — processor terms. "on our instructions and for our purposes"
+      is the service-provider framing the CCPA expects, and it matches how these
+      four vendors are actually used. It is NOT a statement that a signed DPA /
+      service-provider addendum is in place with each of them. Supabase, Resend,
+      Cloudflare and Google all publish one; whether they have been accepted for
+      this account is an administrative fact nobody has checked. A lawyer will
+      ask. See the note in the handoff list.
+    -->
+    <h2 data-i18n="privacy_s6_h">Who Else Handles It</h2>
+    <p data-i18n="privacy_s6_intro">Running this site takes a handful of outside services. Each one handles information on our instructions and for our purposes, not for its own:</p>
+    <ul class="legal-list">
+      <li data-i18n="privacy_s6_i1">Supabase — the database that holds quote requests, and the storage that holds job photos</li>
+      <li data-i18n="privacy_s6_i2">Resend — sends the notification email to us and the confirmation email to you, from a verified redlinesd.com address</li>
+      <li data-i18n="privacy_s6_i3">Google Analytics — usage statistics, and only after you accept</li>
+      <li data-i18n="privacy_s6_i4">Cloudflare — hosting and content delivery for the site itself</li>
+    </ul>
+    <p data-i18n="privacy_s6_p">Beyond those, we disclose information only where the law requires it, or where we need it to establish or defend a legal claim. If the business is ever sold or merged, customer records would transfer as part of that, and the new owner would be bound by this policy for information collected under it.</p>
+
+    <!--
+      The consent notice has an Accept button and no Reject button, and once
+      accepted there is no in-page way to withdraw. That is why the second
+      paragraph explains the browser-settings route instead of pointing at a
+      control that does not exist — describing a "manage preferences" link we
+      have not built would be the wrong kind of confident. A real preferences
+      control is the cleanest fix; it is in the handoff list.
+    -->
+    <h2 data-i18n="privacy_s7_h">Analytics and Your Choice</h2>
+    <p data-i18n="privacy_s7_p1">Analytics is off until you turn it on. Every page sets Google Consent Mode v2 to denied before any analytics call is made, so no analytics identifier is stored and no measurable hit is sent until you press Accept on the notice at the bottom of the screen. Ignoring the notice, or scrolling past it, leaves analytics off.</p>
+    <p data-i18n="privacy_s7_p2">To reverse a choice you already made, clear this site’s stored data in your browser settings. The notice will appear again on your next visit, and analytics stays off until you accept again. Most browsers also offer a setting that blocks analytics scripts outright, and this site works normally with that enabled.</p>
+
+    <!--
+      UNCERTAIN — retention. There is no retention policy in the codebase: no
+      TTL on the leads table, no scheduled deletion, and the GA4 property's
+      retention setting has not been read. The paragraph below therefore states
+      a purpose-bound standard and an honest on-request deletion commitment
+      rather than inventing "we keep it for 24 months." A fixed period is
+      better and a lawyer will likely want one — see the handoff list.
+    -->
+    <h2 data-i18n="privacy_s8_h">How Long We Keep It</h2>
+    <p data-i18n="privacy_s8_p">We keep quote requests and job records for as long as we need them to serve the customer and to document work we performed — electrical work carries obligations that outlast the visit, and a job can come back years later. Analytics data is kept according to the retention setting on our Google Analytics property. If you want a quote request you sent us deleted, ask and we will delete it, unless we are required to keep it.</p>
+
+    <h2 data-i18n="privacy_s9_h">Security</h2>
+    <p data-i18n="privacy_s9_p">The site is served only over HTTPS, so what you type into the form is encrypted in transit. Our database is configured so the public site can write a quote request but cannot read any back — a visitor’s browser has no path to anyone else’s submission. The area where we manage photos and requests is password-protected and is not indexed by search engines. No system is perfectly secure, and we will not tell you otherwise.</p>
+
+    <!--
+      UNCERTAIN — CCPA applicability. A single-owner San Diego electrical
+      contractor almost certainly falls under all three CCPA thresholds
+      (gross revenue, 100k consumers, 50% of revenue from selling PI), which
+      would mean the statute does not obligate this business at all. Rather
+      than assert coverage that may not apply, or omit the section and leave a
+      California consumer with nothing, the first paragraph offers the rights
+      voluntarily and says so. A lawyer should confirm the framing and decide
+      whether the offer should be narrowed.
+
+      Also not implemented, and therefore not claimed anywhere on this page:
+      an authorized-agent process, a "Do Not Sell or Share" link (nothing is
+      sold or shared, so none is required), and Global Privacy Control signal
+      handling. The site does not read the Sec-GPC header today.
+    -->
+    <h2 data-i18n="privacy_s10_h">California Privacy Rights</h2>
+    <p data-i18n="privacy_s10_p1">We are a San Diego business and most of the people who contact us are California residents, so we extend the rights below to anyone who asks, whether or not the law obligates us in a particular case. Under the California Consumer Privacy Act, as amended by the California Privacy Rights Act, you may ask us to tell you what personal information we have collected about you, to give you a copy of it, to correct it if it is wrong, or to delete it. You may also limit the use of sensitive personal information — though as described above, we do not collect any.</p>
+    <p data-i18n="privacy_s10_p2">In the categories that statute uses, we collect identifiers (your name, phone number, and email address), commercial information (the service you asked about and what you described), and internet activity (the analytics described above, and only with your consent). We collect them for the business purposes listed under What We Use It For. We have not sold or shared personal information in the preceding twelve months, and we do not knowingly collect or sell the personal information of anyone under 16.</p>
+    <p data-i18n="privacy_s10_p3">To make a request, write to the privacy address below, or call or text us, and say what you want. We will ask you enough to confirm you are the person whose information it is — usually the phone number you used to contact us — and we will not use what you give us for that verification for anything else. You will not be charged, and you will not be treated differently for asking. We aim to respond within 45 days.</p>
+
+    <h2 data-i18n="privacy_s11_h">Children</h2>
+    <p data-i18n="privacy_s11_p">This site is for adults arranging electrical work on a property. It is not directed at children, and we do not knowingly collect information from anyone under 16. If you believe a child sent us something through this site, tell us and we will delete it.</p>
+
+    <h2 data-i18n="privacy_s12_h">Changes to This Policy</h2>
+    <p data-i18n="privacy_s12_p">When this site gains a feature that handles information differently, this policy is updated in the same release. The date at the top of the page is the date of the most recent change. Continuing to use the site after a change means the current version applies to you.</p>
+
+    <!--
+      RESOLVED (2026-09-07) — privacy@redlinesd.com is a Cloudflare Email
+      Routing alias, added alongside info@/joe@/billing@, so this is a real
+      monitored inbox rather than the dead end the earlier draft declined to
+      publish. It is listed first because it is the dedicated channel for the
+      requests this page describes, and because a rights request wants a
+      written record on both sides.
+
+      Do NOT add data-email-link or data-email-item to it. Those hooks are
+      driven by business_info.email in Supabase, and business-info.js
+      overwrites both the href and the text of every [data-email-link] on load
+      — this address would be silently replaced by the general business one.
+      It is hardcoded here on purpose.
+
+      leads@redlinesd.com is unrelated and is deliberately not published on
+      this page: it is the Resend SENDING identity in
+      supabase/functions/lead-notification, not an address anyone should write
+      to. Inbound receiving was never configured for it.
+    -->
+    <h2 data-i18n="legal_contact_heading">How to Reach Us</h2>
+    <p data-i18n="privacy_s13_p">Questions about this policy, or a request about your own information, can go to the privacy address below. Phone and text reach us as well, and are quicker for anything urgent.</p>
+    <ul class="legal-contact">
+      <li><a href="mailto:privacy@redlinesd.com">privacy@redlinesd.com</a></li>
+      <li><a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a></li>
+      <li><a href="sms:+16197480662" data-sms-link data-i18n="cta_text_us">Text Us</a></li>
+      <li><a href="index.html#contact" data-i18n="nav_contact">Contact</a></li>
+    </ul>
+
+    <p class="legal-crosslink"><a href="terms.html" data-i18n="nav_terms">Terms of Service</a></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
+      <div class="footer-contact">
+        <a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a>
+        <a href="sms:+16197480662" data-sms-link data-i18n="cta_text_us">Text Us</a>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <h2 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h2>
+      <ul>
+        <li><a href="index.html#home" data-i18n="nav_home">Home</a></li>
+        <li><a href="index.html#services" data-i18n="nav_services">Services</a></li>
+        <li><a href="index.html#why-us" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" data-i18n="nav_contact">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-info">
+      <h2 class="footer-heading" data-i18n="footer_credentials">Credentials</h2>
+      <p data-i18n="footer_license">C-10 License #1153394</p>
+    </div>
+  </div>
+
+  <div class="footer-areas">
+    <div class="wrap">
+      <h2 class="footer-heading" data-i18n="areas_served_heading">Areas We Serve</h2>
+      <p class="footer-areas-list" data-service-areas-text>San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, Escondido</p>
+    </div>
+  </div>
+
+  <div class="footer-wordmark" aria-hidden="true">Redline Electric</div>
+
+  <div class="footer-bottom">
+    <div class="wrap">
+      <p>&copy; <span id="footer-year"></span> Redline Electric. <span data-i18n="footer_rights">All rights reserved.</span></p>
+      <ul class="footer-legal" aria-label="Legal">
+        <li><a href="privacy.html" aria-current="page" data-i18n="nav_privacy">Privacy Policy</a></li>
+        <li><a href="terms.html" data-i18n="nav_terms">Terms of Service</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+})();
+</script>
+
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/analytics.js"></script>
+
+<script>
+(function () {
+  var header = document.getElementById('site-header');
+  var toggle = document.getElementById('nav-toggle');
+  var closeBtn = document.getElementById('nav-close');
+  var nav = document.getElementById('main-nav');
+  var navLinks = nav.querySelectorAll('a');
+
+  function updateScrolledState() {
+    if (window.scrollY > 40) {
+      header.classList.add('is-scrolled');
+    } else {
+      header.classList.remove('is-scrolled');
+    }
+  }
+  window.addEventListener('scroll', updateScrolledState, { passive: true });
+  updateScrolledState();
+
+  function closeNav() {
+    nav.classList.remove('is-open');
+    toggle.classList.remove('is-active');
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('nav-locked');
+  }
+  function openNav() {
+    nav.classList.add('is-open');
+    toggle.classList.add('is-active');
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('nav-locked');
+  }
+
+  toggle.addEventListener('click', function () {
+    if (nav.classList.contains('is-open')) {
+      closeNav();
+    } else {
+      openNav();
+    }
+  });
+  closeBtn.addEventListener('click', closeNav);
+  navLinks.forEach(function (link) {
+    link.addEventListener('click', closeNav);
+  });
+
+  var dropdown = document.getElementById('nav-services-dropdown');
+  var dropdownToggle = dropdown && dropdown.querySelector('.nav-dropdown-toggle');
+  if (dropdownToggle) {
+    dropdownToggle.addEventListener('click', function () {
+      var isOpen = dropdown.classList.toggle('is-open');
+      dropdownToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/business-info.js"></script>
+
+</body>
+</html>

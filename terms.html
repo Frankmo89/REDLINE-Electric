@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QEQXZJNNBB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  // Consent Mode v2. Everything is DENIED before the config call below, so no
+  // analytics cookie is written and no identifiable hit is sent until the
+  // visitor accepts via the cookie banner (assets/js/analytics.js).
+  // Previously the banner was purely decorative: gtag('config') fired here
+  // unconditionally, so GA4 tracked every visitor regardless of their choice.
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied'
+  });
+  try {
+    if (localStorage.getItem('redline-analytics-consent') === '1') {
+      gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+  } catch (e) { /* localStorage blocked (private mode) — stay denied */ }
+
+  gtag('js', new Date());
+  gtag('config', 'G-QEQXZJNNBB');
+</script>
+
+<title>Terms of Service | Redline Electric</title>
+<meta name="description" content="Terms for using redlinesd.com — site content is general information rather than electrical advice, quotes are estimates subject to on-site assessment, and California law governs. CSLB C-10 #1153394.">
+<link rel="canonical" href="https://redlinesd.com/terms">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Terms of Service | Redline Electric">
+<meta property="og:description" content="The terms that apply to redlinesd.com — general information rather than electrical advice, estimates subject to on-site assessment, and California governing law.">
+<meta property="og:image" content="https://redlinesd.com/assets/redline-electric-logo.png">
+<meta property="og:url" content="https://redlinesd.com/terms">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css?v=8">
+</head>
+<body>
+<a class="skip-link" href="#main-content" data-i18n="skip_to_content">Skip to main content</a>
+
+
+<div class="lang-banner" id="lang-banner" hidden>
+  <div class="wrap lang-banner-inner">
+    <p class="lang-banner-text">Parece que prefieres español. ¿Quieres ver este sitio en español?</p>
+    <div class="lang-banner-actions">
+      <button type="button" class="lang-banner-switch" data-lang-banner-switch>Sí, cambiar</button>
+      <button type="button" class="lang-banner-dismiss" data-lang-banner-dismiss aria-label="Cerrar">&times;</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-stack" id="bottom-stack">
+  <div class="cookie-banner" id="cookie-banner" hidden>
+    <div class="wrap cookie-banner-inner">
+      <p class="cookie-banner-text" data-i18n="cookie_banner_text">We use analytics to improve this site.</p>
+      <button type="button" class="cookie-banner-accept" data-cookie-accept data-i18n="cookie_banner_accept">Accept</button>
+    </div>
+  </div>
+  <a href="tel:+16197480662" class="sticky-call-btn" data-phone-link data-i18n="cta_call_now">Call Now</a>
+</div>
+
+<header class="site-header" id="site-header">
+  <div class="wrap header-inner">
+    <a href="index.html#home" class="logo-link" aria-label="Redline Electric — Home">
+      <img src="assets/redline-electric-logo.png" alt="Redline Electric" width="400" height="188">
+    </a>
+
+    <nav class="main-nav" id="main-nav">
+      <button type="button" class="nav-close" id="nav-close" aria-label="Close menu">&times;</button>
+      <ul>
+        <li><a href="index.html#home" class="nav-link" data-i18n="nav_home">Home</a></li>
+        <li class="nav-dropdown" id="nav-services-dropdown">
+          <div class="nav-dropdown-inner">
+            <a href="index.html#services" class="nav-link" data-i18n="nav_services">Services</a>
+            <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-label="Toggle services menu">&#9662;</button>
+          </div>
+          <ul class="nav-dropdown-menu">
+            <li><a href="services/new-construction.html" data-i18n="service_1_title">New Construction</a></li>
+            <li><a href="services/remodels.html" data-i18n="service_2_title">Remodels</a></li>
+            <li><a href="services/retrofits.html" data-i18n="service_3_title">Retrofits</a></li>
+            <li><a href="services/art-lighting.html" data-i18n="service_4_title">Art Lighting</a></li>
+            <li><a href="services/ev-chargers.html" data-i18n="service_5_title">EV Chargers</a></li>
+            <li><a href="services/service-calls.html" data-i18n="service_6_title">Service Calls</a></li>
+          </ul>
+        </li>
+        <li><a href="index.html#why-us" class="nav-link" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" class="nav-link" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+        <li class="nav-lang-item">
+          <div class="lang-switch" role="group" aria-label="Language / Idioma">
+            <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+            <button type="button" class="lang-btn" data-lang-btn="es">ES</button>
+          </div>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <a href="tel:+16197480662" class="btn-primary btn-header-cta" data-phone-link data-i18n="cta_call_now">Call Now</a>
+      <button type="button" class="hamburger" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main-content">
+
+<!--
+  TERMS OF SERVICE
+
+  Scoped to the WEBSITE. Everything about the work itself — payment, change
+  orders, workmanship warranty, cancellation, mechanics lien notices — lives in
+  the signed work agreement, and terms_s3_p3 says the agreement controls where
+  the two differ. That split is deliberate: a website terms page is the wrong
+  instrument for construction contract terms, and California's home improvement
+  contract rules (B&P Code 7159) prescribe things a web page cannot satisfy.
+
+  Deliberately absent: any mention of an AI chat assistant. None exists yet.
+  When one ships, this page needs an acceptable-use and no-reliance section for
+  it, and legal_updated moves.
+
+  Uncertainties are flagged inline with UNCERTAIN comments rather than papered
+  over with confident boilerplate.
+-->
+<section class="legal">
+  <div class="wrap">
+    <h1 class="display" data-i18n="terms_page_title">Terms of Service</h1>
+    <p class="legal-updated" data-i18n="legal_updated">Last updated: September 7, 2026</p>
+    <p class="legal-intro" data-i18n="terms_intro">These terms govern your use of redlinesd.com. By using the site, you accept them. If you do not accept them, please do not use the site. They are about the website — the work we perform for you is governed by the written agreement you sign for that work.</p>
+
+    <!--
+      UNCERTAIN — CSLB notice text. California requires the license number in
+      advertising, which the site carries everywhere. It ALSO requires specific
+      statutory notices (the CSLB contact block, the mechanics lien warning, the
+      $500 down-payment limit) in home improvement CONTRACTS. Those belong in
+      the work agreement, not here, so they are not reproduced below. Confirm
+      with a lawyer that nothing on a contractor's website triggers the contract
+      notice requirements on its own.
+    -->
+    <h2 data-i18n="terms_s1_h">Contractor License Disclosure</h2>
+    <p data-i18n="terms_s1_p">Redline Electric is a licensed electrical contractor in the State of California, holding CSLB license C-10 #1153394. The license, its current status, its classification, and any disciplinary history are public record and can be checked directly with the Contractors State License Board at cslb.ca.gov. We encourage you to check it before hiring anyone, ourselves included.</p>
+
+    <h2 data-i18n="terms_s2_h">This Site Is Information, Not Electrical Advice</h2>
+    <p data-i18n="terms_s2_p1">Everything published here — service descriptions, the explanations of what a job typically involves, the answers in the FAQ — is general information written to help you understand the kind of work we do and what to expect. It is not professional advice about your property, your panel, or your wiring, and it is not a substitute for having a licensed electrician look at the actual system in front of you.</p>
+    <p data-i18n="terms_s2_p2">Electrical work is dangerous, and conditions vary enormously from one building to the next. Do not use anything on this site to decide whether something in your home or business is safe, and do not use it as instructions for doing the work yourself. If you think you have an active hazard — sparking, a burning smell, exposed conductors, heat at an outlet or panel — stop using the circuit and call a licensed electrician, your utility, or emergency services.</p>
+
+    <h2 data-i18n="terms_s3_h">Quotes and Estimates</h2>
+    <p data-i18n="terms_s3_p1">Any figure we give you through this site, by phone, or by text before we have seen the property is a preliminary estimate based on what you described. It is not a fixed price, it is not an offer you can accept to form a contract, and it does not obligate either of us.</p>
+    <p data-i18n="terms_s3_p2">The price is set after an on-site assessment, because that is the first point at which the job is actually knowable. Panel capacity, the condition and type of existing wiring, what is behind a wall, access, material costs, and what the permit and inspection require can each move a number substantially, and some of it is not visible until work begins. If the scope changes once we are underway, we tell you before we proceed rather than after.</p>
+    <p data-i18n="terms_s3_p3">Work is performed under a separate written agreement. Where that agreement and anything on this site differ, the agreement controls.</p>
+
+    <!--
+      UNCERTAIN — TCPA. This section describes what the site does today: the
+      visitor volunteers a number on a quote form, and a person calls or texts
+      back about that request. Transactional contact of that kind is the easy
+      case. Two things would change the analysis and are therefore NOT claimed
+      below:
+
+        1. Marketing texts, or any autodialer / prerecorded voice, need prior
+           express WRITTEN consent with specific disclosures placed next to the
+           form's submit button — not buried on a terms page. The quote form
+           carries no such checkbox or disclosure today.
+        2. STOP and HELP are stated because they are the required keywords and
+           because the number is answered by a person, who can honor them. If
+           the business ever texts through a platform, verify the platform
+           actually handles both keywords automatically.
+
+      A lawyer should decide whether a short consent line belongs under the
+      phone field on the quote form itself. That is a form change, not a copy
+      change, so it was not made here.
+    -->
+    <h2 data-i18n="terms_s4_h">Calls and Text Messages</h2>
+    <p data-i18n="terms_s4_p1">When you give us your phone number through this site, you are asking us to get back to you, and you agree that we may contact you at that number by phone call and by text message about your request and the work related to it. That is the purpose of the number and the only thing we use it for.</p>
+    <p data-i18n="terms_s4_p2">Message and data rates may apply, depending on your plan. Message frequency depends entirely on your job — there is no campaign and no recurring series. Reply STOP to any text to stop texts, or HELP for help. Opting out of texts does not stop us from returning your call about a request you sent, and it does not withdraw or change a quote.</p>
+    <p data-i18n="terms_s4_p3">We do not use your number for marketing campaigns, we do not add it to a promotional list, and we do not sell or rent it to anyone.</p>
+
+    <h2 data-i18n="terms_s5_h">Using the Site</h2>
+    <p data-i18n="terms_s5_intro">Ordinary use is welcome. What is not:</p>
+    <ul class="legal-list">
+      <li data-i18n="terms_s5_i1">Attempting to reach any part of the site, database, or account that is not public</li>
+      <li data-i18n="terms_s5_i2">Automated scraping, bulk copying, or commercial reuse of the content or photographs</li>
+      <li data-i18n="terms_s5_i3">Submitting false information, or someone else’s contact details without their permission</li>
+      <li data-i18n="terms_s5_i4">Using the forms to send unsolicited commercial messages, or to interfere with the operation of the site</li>
+    </ul>
+
+    <h2 data-i18n="terms_s6_h">Content and Ownership</h2>
+    <p data-i18n="terms_s6_p">The text, photographs, logo, and layout of this site belong to Redline Electric. The project photographs are of our own completed work. You are welcome to link to any page here. You may not republish, redistribute, or present this content as your own, and you may not use our name, logo, or license number in a way that suggests we performed work we did not perform or endorse something we do not.</p>
+
+    <h2 data-i18n="terms_s7_h">Third-Party Content</h2>
+    <p data-i18n="terms_s7_p">The rating, review count, and review text shown on this site originate with Google and were written by our customers. We display them as published: we do not control them, we cannot edit them, and they change over time independently of us. Any link from this site to another site is a convenience, and we are not responsible for what is on the other end of it.</p>
+
+    <h2 data-i18n="terms_s8_h">No Warranty About the Site</h2>
+    <p data-i18n="terms_s8_p1">We work to keep this site accurate and available, but we provide it as it is. We do not warrant that it will be uninterrupted or error-free, that every description reflects current code or current pricing, or that it will meet a particular need of yours.</p>
+    <p data-i18n="terms_s8_p2">This section is about the website only. It has nothing to do with the workmanship warranty on electrical work we perform, which is set out in your work agreement and is not limited by anything on this page.</p>
+
+    <!--
+      UNCERTAIN — the $100 cap and the carve-outs. Two known pressure points:
+
+        1. California Civil Code 1668 voids contract terms exempting a party
+           from responsibility for its own fraud, willful injury, or violation
+           of law, and a liability cap in a non-negotiated consumer form can be
+           attacked as unconscionable. The second paragraph carves out anything
+           that cannot be limited, which is the standard hedge, but a lawyer
+           should decide whether $100 is the right number here or whether the
+           cap should simply be dropped for a small local contractor.
+        2. The carve-out for the work agreement and workmanship warranty is
+           there on purpose. A liability cap on a WEBSITE must not read as a cap
+           on liability for electrical work — that would be both wrong and, for
+           bodily injury, unenforceable.
+    -->
+    <h2 data-i18n="terms_s9_h">Limitation of Liability</h2>
+    <p data-i18n="terms_s9_p1">To the fullest extent California law allows, Redline Electric is not liable for indirect, incidental, special, consequential, or punitive damages arising from your use of this website or from reliance on information published on it. Our total liability arising from the website is limited to one hundred dollars.</p>
+    <p data-i18n="terms_s9_p2">Nothing in this section limits liability that cannot be limited under California law, and nothing in it limits or affects our obligations under a signed work agreement, our workmanship warranty, our license, or our insurance.</p>
+
+    <!--
+      No arbitration clause and no class action waiver here, deliberately. Both
+      are common in terms of this kind, both are consequential, and neither
+      should be added by a web developer on a hunch — it is a business decision
+      with real trade-offs. Flagged in the handoff list instead.
+
+      Also absent, deliberately: an indemnification clause. See the handoff list.
+    -->
+    <h2 data-i18n="terms_s10_h">Governing Law</h2>
+    <p data-i18n="terms_s10_p">These terms are governed by the laws of the State of California, without regard to its conflict-of-law rules. Any dispute about this website is to be brought in the state or federal courts located in San Diego County, California, and both of us consent to the jurisdiction of those courts.</p>
+
+    <h2 data-i18n="terms_s11_h">Changes to These Terms</h2>
+    <p data-i18n="terms_s11_p">We may update these terms as the site changes. The date at the top of the page is the date of the most recent version, and that version applies to your use of the site from the moment it is posted.</p>
+
+    <h2 data-i18n="terms_s12_h">Language and Severability</h2>
+    <p data-i18n="terms_s12_p">This site is published in English and Spanish. The Spanish version is provided so these terms can be read and understood; if the two versions ever conflict, the English version controls. If any provision here is held unenforceable, the rest stays in force and the unenforceable provision is narrowed only as far as necessary.</p>
+
+    <h2 data-i18n="legal_contact_heading">How to Reach Us</h2>
+    <p data-i18n="terms_s13_p">Questions about these terms, or about a quote you received:</p>
+    <ul class="legal-contact">
+      <li><a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a></li>
+      <li><a href="sms:+16197480662" data-sms-link data-i18n="cta_text_us">Text Us</a></li>
+      <li><a href="index.html#contact" data-i18n="nav_contact">Contact</a></li>
+    </ul>
+
+    <p class="legal-crosslink"><a href="privacy.html" data-i18n="nav_privacy">Privacy Policy</a></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <p class="footer-tagline" data-i18n="footer_tagline">Licensed and insured electrical contractor serving San Diego County.</p>
+      <div class="footer-contact">
+        <a href="tel:+16197480662" data-phone-link data-phone-text>(619) 748-0662</a>
+        <a href="sms:+16197480662" data-sms-link data-i18n="cta_text_us">Text Us</a>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <h2 class="footer-heading" data-i18n="footer_quick_links">Quick Links</h2>
+      <ul>
+        <li><a href="index.html#home" data-i18n="nav_home">Home</a></li>
+        <li><a href="index.html#services" data-i18n="nav_services">Services</a></li>
+        <li><a href="index.html#why-us" data-i18n="nav_why_us">Why Choose Us</a></li>
+        <li><a href="work.html" data-i18n="nav_work">Our Work</a></li>
+        <li><a href="index.html#contact" data-i18n="nav_contact">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-info">
+      <h2 class="footer-heading" data-i18n="footer_credentials">Credentials</h2>
+      <p data-i18n="footer_license">C-10 License #1153394</p>
+    </div>
+  </div>
+
+  <div class="footer-areas">
+    <div class="wrap">
+      <h2 class="footer-heading" data-i18n="areas_served_heading">Areas We Serve</h2>
+      <p class="footer-areas-list" data-service-areas-text>San Diego, La Jolla, Pacific Beach, Point Loma, Mission Valley, Clairemont, Kearny Mesa, Chula Vista, National City, Coronado, La Mesa, El Cajon, Santee, Poway, Rancho Bernardo, Del Mar, Encinitas, Carlsbad, Oceanside, Escondido</p>
+    </div>
+  </div>
+
+  <div class="footer-wordmark" aria-hidden="true">Redline Electric</div>
+
+  <div class="footer-bottom">
+    <div class="wrap">
+      <p>&copy; <span id="footer-year"></span> Redline Electric. <span data-i18n="footer_rights">All rights reserved.</span></p>
+      <ul class="footer-legal" aria-label="Legal">
+        <li><a href="privacy.html" data-i18n="nav_privacy">Privacy Policy</a></li>
+        <li><a href="terms.html" aria-current="page" data-i18n="nav_terms">Terms of Service</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+})();
+</script>
+
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/analytics.js"></script>
+
+<script>
+(function () {
+  var header = document.getElementById('site-header');
+  var toggle = document.getElementById('nav-toggle');
+  var closeBtn = document.getElementById('nav-close');
+  var nav = document.getElementById('main-nav');
+  var navLinks = nav.querySelectorAll('a');
+
+  function updateScrolledState() {
+    if (window.scrollY > 40) {
+      header.classList.add('is-scrolled');
+    } else {
+      header.classList.remove('is-scrolled');
+    }
+  }
+  window.addEventListener('scroll', updateScrolledState, { passive: true });
+  updateScrolledState();
+
+  function closeNav() {
+    nav.classList.remove('is-open');
+    toggle.classList.remove('is-active');
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('nav-locked');
+  }
+  function openNav() {
+    nav.classList.add('is-open');
+    toggle.classList.add('is-active');
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('nav-locked');
+  }
+
+  toggle.addEventListener('click', function () {
+    if (nav.classList.contains('is-open')) {
+      closeNav();
+    } else {
+      openNav();
+    }
+  });
+  closeBtn.addEventListener('click', closeNav);
+  navLinks.forEach(function (link) {
+    link.addEventListener('click', closeNav);
+  });
+
+  var dropdown = document.getElementById('nav-services-dropdown');
+  var dropdownToggle = dropdown && dropdown.querySelector('.nav-dropdown-toggle');
+  if (dropdownToggle) {
+    dropdownToggle.addEventListener('click', function () {
+      var isOpen = dropdown.classList.toggle('is-open');
+      dropdownToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/business-info.js"></script>
+
+</body>
+</html>
