@@ -44,7 +44,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=8">
+<link rel="stylesheet" href="css/styles.css?v=9">
 </head>
 <body>
 <a class="skip-link" href="#main-content" data-i18n="skip_to_content">Skip to main content</a>
@@ -162,27 +162,38 @@
     <p data-i18n="terms_s3_p3">Work is performed under a separate written agreement. Where that agreement and anything on this site differ, the agreement controls.</p>
 
     <!--
-      UNCERTAIN — TCPA. This section describes what the site does today: the
-      visitor volunteers a number on a quote form, and a person calls or texts
-      back about that request. Transactional contact of that kind is the easy
-      case. Two things would change the analysis and are therefore NOT claimed
-      below:
+      TCPA. As of 2026-09-07 consent is collected at the form, not asserted
+      here: an unchecked-by-default checkbox sits immediately above the submit
+      button, is required to submit, and is stored on the lead row as
+      sms_consent with a server-stamped sms_consent_at. The admin dashboard
+      hides its one-tap Text button for any lead lacking it. The earlier gap
+      — this page describing consent that was never actually obtained — is
+      closed.
 
-        1. Marketing texts, or any autodialer / prerecorded voice, need prior
-           express WRITTEN consent with specific disclosures placed next to the
-           form's submit button — not buried on a terms page. The quote form
-           carries no such checkbox or disclosure today.
-        2. STOP and HELP are stated because they are the required keywords and
-           because the number is answered by a person, who can honor them. If
-           the business ever texts through a platform, verify the platform
-           actually handles both keywords automatically.
+      STILL UNCERTAIN, and the part worth a lawyer's time:
 
-      A lawyer should decide whether a short consent line belongs under the
-      phone field on the quote form itself. That is a form change, not a copy
-      change, so it was not made here.
+        1. The checkbox is REQUIRED to submit. That was the instruction and it
+           is implemented as asked, but it sits awkwardly against the FCC's
+           prior-express-written-consent rule, which expects the person to be
+           told they are not required to agree as a condition of purchasing
+           goods or services. The defence is that this consent is scoped to
+           contact ABOUT THE REQUEST — transactional, not telemarketing — and
+           a quote request cannot be serviced without calling back. That
+           defence is why the "not a condition of purchase" line is absent:
+           adding it while the box is mandatory would have the page contradict
+           its own form. If anything promotional is ever sent to these numbers,
+           the defence goes with it and the requirement itself needs rethinking,
+           not just the wording.
+        2. The label says "including by autodialer" because that is the
+           formulation the rule expects. Nothing dials automatically today.
+           Saying it is harmless and forward-compatible; doing it WITHOUT this
+           consent would not be.
+        3. STOP and HELP are honoured by a person reading the phone. If texting
+           ever moves to a platform, verify the platform handles both keywords
+           automatically — the claim is on this page either way.
     -->
     <h2 data-i18n="terms_s4_h">Calls and Text Messages</h2>
-    <p data-i18n="terms_s4_p1">When you give us your phone number through this site, you are asking us to get back to you, and you agree that we may contact you at that number by phone call and by text message about your request and the work related to it. That is the purpose of the number and the only thing we use it for.</p>
+    <p data-i18n="terms_s4_p1">The quote form will not submit until you tick the consent box above the submit button. Ticking it is your agreement that we may contact you at the number you gave us, by phone call and by text message, about your request and the work related to it. The box is never ticked for you, and we record both that you ticked it and when. That is the purpose of the number and the only thing we use it for.</p>
     <p data-i18n="terms_s4_p2">Message and data rates may apply, depending on your plan. Message frequency depends entirely on your job — there is no campaign and no recurring series. Reply STOP to any text to stop texts, or HELP for help. Opting out of texts does not stop us from returning your call about a request you sent, and it does not withdraw or change a quote.</p>
     <p data-i18n="terms_s4_p3">We do not use your number for marketing campaigns, we do not add it to a promotional list, and we do not sell or rent it to anyone.</p>
 

@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/styles.css?v=8">
+<link rel="stylesheet" href="../css/styles.css?v=9">
 
 <script type="application/ld+json">
 {
@@ -274,6 +274,23 @@
       <label class="quote-form-message"><span data-i18n="form_label_message">Message</span>
         <textarea id="lead-message" rows="4"></textarea>
       </label>
+      <!--
+        TCPA consent. Sits immediately above the submit button because the
+        disclosure has to be next to the action it authorises, and it is the
+        last thing read before submitting.
+
+        NEVER pre-check this, and never carry a checked state across a reset:
+        consent has to be an affirmative act by the visitor. `required` matches
+        how name and phone are marked, so the browser blocks submission first;
+        the handler re-checks because native validation is skippable and the
+        stored record has to mean something.
+      -->
+      <div class="quote-form-consent">
+        <label class="quote-consent-label">
+          <input type="checkbox" id="lead-sms-consent" name="sms_consent" required>
+          <span data-i18n="form_label_sms_consent">I agree to receive calls and text messages from Redline Electric about my request, including by autodialer. Message and data rates may apply. Reply STOP to opt out.</span>
+        </label>
+      </div>
       <button type="submit" class="btn-primary" id="quote-submit-btn" data-i18n="form_submit">Request a Quote</button>
       <p id="quote-error" class="quote-error" role="alert" hidden></p>
       <p id="quote-success" class="quote-success" role="status" data-i18n="form_success" hidden>Thanks — we've got your request and will be in touch soon.</p>
@@ -582,9 +599,25 @@
     var email = document.getElementById('lead-email').value.trim();
     var service = document.getElementById('lead-service').value;
     var message = document.getElementById('lead-message').value.trim();
+    var consentEl = document.getElementById('lead-sms-consent');
+    var smsConsent = !!(consentEl && consentEl.checked);
 
     if (!name || !phone) {
       showError('form_error_required', 'Name and phone are required.');
+      return;
+    }
+
+    // TCPA consent is a legal precondition for contacting this person, not a
+    // preference to be nudged past. Blocked here rather than submitted as
+    // false, so every lead arriving through this form carries consent.
+    //
+    // The column still defaults to false, and the dashboard still checks it:
+    // a request crafted outside this form can reach the table, and it is
+    // recorded honestly as non-consenting rather than rejected. Losing the
+    // lead would be worse than knowing not to text it.
+    if (!smsConsent) {
+      showError('form_error_sms_consent', 'Please check the box agreeing to be contacted by call and text.');
+      if (consentEl) consentEl.focus();
       return;
     }
 
@@ -602,7 +635,12 @@
         phone: phone,
         email: email || null,
         service_interest: service || null,
-        message: message || null
+        message: message || null,
+        // sms_consent_at is deliberately not sent. A BEFORE INSERT trigger
+        // stamps it server-side, because the public INSERT policy is
+        // WITH CHECK (true) and a client-supplied time would be forgeable —
+        // worthless as the evidence it exists to be.
+        sms_consent: smsConsent
       });
     } catch (err) {
       // A rejection here (token refresh failure, patched fetch, aborted request)

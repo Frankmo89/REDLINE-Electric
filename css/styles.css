@@ -1065,6 +1065,57 @@ a.contact-info-value:hover { text-decoration: underline; }
    to read. #F1808A is the red the admin already uses for error text (5.90:1),
    so this reuses an existing project colour rather than inventing one. */
 .quote-error { color: #F1808A; font-size: var(--fs-micro); }
+
+/* ---- Quote form: TCPA consent ---- */
+/* .quote-form label above is a stacked, 12px, uppercase Oswald field label.
+   None of that suits a legal disclosure, so this overrides all of it: a row
+   rather than a column, sentence case, body font at readable size.
+
+   Colour is --ink, not the --ink-dim used for field labels. --ink-dim would
+   pass AA here (6.1:1 on --bg2), so this is not a contrast fix -- it is that
+   styling a consent disclosure as quiet chrome is exactly what gets one
+   challenged as insufficiently conspicuous. Full --ink is 12.4:1.
+
+   The whole label is the click target, so the 22px box is not the target size
+   for WCAG 2.5.8 -- the label block is, and it clears 24px comfortably. */
+.quote-form-consent { margin-bottom: 2px; }
+.quote-form .quote-consent-label {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  font-family: 'Inter', sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--ink);
+  cursor: pointer;
+}
+.quote-form .quote-consent-label input[type="checkbox"] {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  /* The generic .quote-form input rule sets a --bg fill, a 1px --ink-dim
+     border, a radius and 12px padding, all aimed at text fields. Applied to a
+     checkbox that suppresses the native control in Chrome and leaves a blank
+     box with no visible tick. Reset back to the native widget, which
+     accent-color then tints. */
+  appearance: auto;
+  background: none;
+  border: none;
+  border-radius: 0;
+  margin: 1px 0 0;
+  padding: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+/* The generic .quote-form input:focus rule strips the UA outline, which would
+   leave a checkbox with no visible focus at all. Restore the site ring. */
+.quote-form .quote-consent-label input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--bg);
+}
 .quote-success { color: #4CAF6D; font-size: var(--fs-micro); }
 
 /* ---- Emergency band ---- */

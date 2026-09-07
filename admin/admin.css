@@ -417,6 +417,22 @@
 .admin-contact-btn.is-secondary:hover { background: rgba(245, 245, 240, 0.08); border-color: var(--accent); }
 .admin-contact-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .admin-contact-none { color: var(--ink-dim); }
+/* Shown in place of the Text button when a lead did not consent to SMS.
+   Deliberately not a disabled button: there is no action to re-enable, and a
+   greyed-out control invites clicking at it. This reads as a status, because
+   that is what it is. Same min-height as .admin-contact-btn so the row does
+   not change height between consenting and non-consenting leads.
+   Reuses --ink-dim, the same token .admin-contact-none already uses here. */
+.admin-contact-noconsent {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink-dim);
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-micro);
+}
 .admin-lead-phone-text {
   margin-bottom: 8px;
   color: var(--ink);

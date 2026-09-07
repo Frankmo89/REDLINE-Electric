@@ -39,6 +39,12 @@ interface LeadPayload {
   email?: string;
   service_interest?: string;
   message?: string;
+  // TCPA consent, captured by the checkbox on the quote form. Surfaced in
+  // the internal email because this is where Joe decides how to respond,
+  // and "may I text this person back" has to be answerable without opening
+  // the dashboard. Absent or false means CALL ONLY.
+  sms_consent?: boolean;
+  sms_consent_at?: string;
 }
 
 function escapeHtml(str: string): string {
@@ -161,6 +167,15 @@ Deno.serve(async (req: Request) => {
   const serviceInterest = lead.service_interest || "Not specified";
   const message = lead.message || "(no message)";
 
+  // Stated explicitly in both directions. Omitting the line when consent is
+  // absent would read as "this email predates the consent field" rather
+  // than "this person did not consent", and that is the one ambiguity this
+  // must not have.
+  const smsConsent = lead.sms_consent === true;
+  const consentText = smsConsent
+    ? `Yes -- consented ${lead.sms_consent_at || "(time not recorded)"}`
+    : "NO -- DO NOT TEXT. Call only.";
+
   const subject = `New quote request from ${name}`;
 
   const text =
@@ -169,6 +184,7 @@ Deno.serve(async (req: Request) => {
     `Phone: ${phone}\n` +
     `Email: ${email || "Not provided"}\n` +
     `Service Interested In: ${serviceInterest}\n` +
+    `Call/text consent: ${consentText}\n` +
     `Message: ${message}\n`;
 
   const html =
@@ -177,6 +193,7 @@ Deno.serve(async (req: Request) => {
     `<p><strong>Phone:</strong> ${escapeHtml(phone)}</p>` +
     `<p><strong>Email:</strong> ${escapeHtml(email || "Not provided")}</p>` +
     `<p><strong>Service Interested In:</strong> ${escapeHtml(serviceInterest)}</p>` +
+    `<p><strong>Call/text consent:</strong> <span style="color:${smsConsent ? "#1B7F3B" : "#B3161F"}; font-weight:700;">${escapeHtml(consentText)}</span></p>` +
     `<p><strong>Message:</strong><br>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`;
 
   const internalResult = await sendEmail(NOTIFY_TO, subject, text, html);

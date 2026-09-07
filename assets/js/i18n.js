@@ -172,6 +172,21 @@
     form_label_service: { en: 'Service Interested In', es: 'Servicio de Interés' },
     form_option_select: { en: 'Select a service', es: 'Seleccione un servicio' },
     form_label_message: { en: 'Message', es: 'Mensaje' },
+
+    // TCPA consent, shown beside the checkbox immediately above the submit
+    // button. Wording is fixed legal copy, not marketing copy -- if it changes,
+    // it changes because a lawyer said so. Rendered at full --ink on --bg2
+    // (12.4:1) at body size rather than the dim 12px uppercase used for field
+    // labels: a consent disclosure has to be conspicuous, and styling it like
+    // chrome is the thing that gets these challenged.
+    form_label_sms_consent: {
+      en: 'I agree to receive calls and text messages from Redline Electric about my request, including by autodialer. Message and data rates may apply. Reply STOP to opt out.',
+      es: 'Acepto recibir llamadas y mensajes de texto de Redline Electric sobre mi solicitud, incluso mediante marcación automática. Pueden aplicar tarifas de mensajes y datos. Responda STOP para darse de baja.'
+    },
+    form_error_sms_consent: {
+      en: 'Please check the box agreeing to be contacted by call and text.',
+      es: 'Marque la casilla para aceptar ser contactado por llamada y mensaje de texto.'
+    },
     form_submit: { en: 'Request a Quote', es: 'Solicitar Cotización' },
     form_error_required: { en: 'Name and phone are required.', es: 'El nombre y el teléfono son obligatorios.' },
     form_error_generic: {
@@ -550,12 +565,12 @@
     privacy_s2_h: { en: 'What We Collect', es: 'Qué Recopilamos' },
     privacy_s2a_h: { en: 'What you send us', es: 'Lo que usted nos envía' },
     privacy_s2a_p1: {
-      en: 'The quote form asks for your name and phone number, and optionally your email address, the service you are interested in, and a description of the job. That is the whole list. No field is pre-filled from another source, and nothing on this site asks for payment details, account numbers, a Social Security number, or any other government identifier.',
-      es: 'El formulario de cotización pide su nombre y número de teléfono, y de forma opcional su correo electrónico, el servicio que le interesa y una descripción del trabajo. Esa es la lista completa. Ningún campo se llena previamente desde otra fuente, y en este sitio no se pide información de pago, números de cuenta, número de Seguro Social ni ningún otro identificador gubernamental.'
+      en: 'The quote form asks for your name and phone number, and optionally your email address, the service you are interested in, and a description of the job. It also asks you to tick a box agreeing that we may call and text you about the request; the box is never ticked for you, and the form will not submit without it. That is the whole list. No field is pre-filled from another source, and nothing on this site asks for payment details, account numbers, a Social Security number, or any other government identifier.',
+      es: 'El formulario de cotización pide su nombre y número de teléfono, y de forma opcional su correo electrónico, el servicio que le interesa y una descripción del trabajo. También le pide marcar una casilla aceptando que podemos llamarle y enviarle mensajes de texto sobre su solicitud; la casilla nunca viene marcada, y el formulario no se envía sin ella. Esa es la lista completa. Ningún campo se llena previamente desde otra fuente, y en este sitio no se pide información de pago, números de cuenta, número de Seguro Social ni ningún otro identificador gubernamental.'
     },
     privacy_s2a_p2: {
-      en: 'What you submit is stored in our database, which is hosted by Supabase, and a copy is emailed to us so we can respond. If you gave an email address, an automatic confirmation is also sent back to you.',
-      es: 'Lo que usted envía se guarda en nuestra base de datos, alojada por Supabase, y se nos envía una copia por correo electrónico para poder responderle. Si proporcionó un correo electrónico, también se le envía una confirmación automática.'
+      en: 'What you submit is stored in our database, which is hosted by Supabase, and a copy is emailed to us so we can respond. Stored alongside it is the fact that you ticked the consent box and the time you did, because that record is what shows the call or text you get from us was authorised. If you gave an email address, an automatic confirmation is also sent back to you.',
+      es: 'Lo que usted envía se guarda en nuestra base de datos, alojada por Supabase, y se nos envía una copia por correo electrónico para poder responderle. Junto con eso se guarda el hecho de que usted marcó la casilla de consentimiento y el momento en que lo hizo, porque ese registro es lo que demuestra que la llamada o el mensaje que reciba de nosotros estaba autorizado. Si proporcionó un correo electrónico, también se le envía una confirmación automática.'
     },
     privacy_s2b_h: { en: 'What is collected automatically', es: 'Lo que se recopila automáticamente' },
     privacy_s2b_p1: {
@@ -706,8 +721,8 @@
 
     terms_s4_h: { en: 'Calls and Text Messages', es: 'Llamadas y Mensajes de Texto' },
     terms_s4_p1: {
-      en: 'When you give us your phone number through this site, you are asking us to get back to you, and you agree that we may contact you at that number by phone call and by text message about your request and the work related to it. That is the purpose of the number and the only thing we use it for.',
-      es: 'Cuando usted nos da su número de teléfono a través de este sitio, nos está pidiendo que le respondamos, y acepta que podamos contactarlo a ese número por llamada telefónica y por mensaje de texto sobre su solicitud y el trabajo relacionado. Ese es el propósito del número y lo único para lo que lo usamos.'
+      en: 'The quote form will not submit until you tick the consent box above the submit button. Ticking it is your agreement that we may contact you at the number you gave us, by phone call and by text message, about your request and the work related to it. The box is never ticked for you, and we record both that you ticked it and when. That is the purpose of the number and the only thing we use it for.',
+      es: 'El formulario de cotización no se envía hasta que usted marque la casilla de consentimiento que está sobre el botón de envío. Marcarla es su acuerdo de que podemos contactarlo al número que nos dio, por llamada telefónica y por mensaje de texto, sobre su solicitud y el trabajo relacionado. La casilla nunca viene marcada, y registramos tanto que usted la marcó como el momento en que lo hizo. Ese es el propósito del número y lo único para lo que lo usamos.'
     },
     terms_s4_p2: {
       en: 'Message and data rates may apply, depending on your plan. Message frequency depends entirely on your job — there is no campaign and no recurring series. Reply STOP to any text to stop texts, or HELP for help. Opting out of texts does not stop us from returning your call about a request you sent, and it does not withdraw or change a quote.',

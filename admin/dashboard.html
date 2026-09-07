@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://hvesaitxkwlufbljnupy.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/styles.css?v=8">
+<link rel="stylesheet" href="../css/styles.css?v=9">
 <link rel="stylesheet" href="admin.css">
 </head>
 <body class="admin-body">
@@ -1333,11 +1333,26 @@
       // Calling a new lead back is the most common action in this whole
       // dashboard, and the number used to be plain text Joe had to copy by
       // hand off a sideways-scrolling table.
+      // TCPA: the Text button is the one control here that can create
+      // liability, so it is rendered only when the lead actually consented.
+      // leads.sms_consent defaults to false, so a row from before the consent
+      // checkbox shipped -- or one crafted outside the form -- gets no Text
+      // button, which is the correct default in both cases.
+      //
+      // Call is deliberately still offered. The visitor typed the number into
+      // a form asking us to get back to them, and returning that call by hand
+      // is the established easy case; texting is not. If that judgement is
+      // ever revisited, this is the line to change.
+      var canText = lead.sms_consent === true;
+      var textControl = canText
+        ? '<a class="admin-contact-btn is-secondary" href="' + escapeHtml(toSmsHref(lead.phone)) + '">Text</a>'
+        : '<span class="admin-contact-noconsent" title="This lead did not consent to text messages. Do not text this number.">No SMS consent</span>';
+
       var phoneCell = lead.phone
         ? '<div class="admin-lead-phone-text">' + escapeHtml(formatPhoneDisplay(lead.phone)) + '</div>'
           + '<div class="admin-contact-actions">'
             + '<a class="admin-contact-btn" href="' + escapeHtml(toTelHref(lead.phone)) + '">Call</a>'
-            + '<a class="admin-contact-btn is-secondary" href="' + escapeHtml(toSmsHref(lead.phone)) + '">Text</a>'
+            + textControl
           + '</div>'
         : '<span class="admin-contact-none">—</span>';
 
