@@ -1787,3 +1787,291 @@ a.contact-info-value:hover { text-decoration: underline; }
   .footer-areas { padding: 0 24px 40px; }
   .footer-wordmark { padding: 8px 24px 0; }
 }
+
+/* ==========================================================================
+   Chat assistant widget  (assets/js/chat-widget.js)
+   Markup is built in JS, so the class names here are the contract with that
+   file rather than with any HTML.
+
+   COLOUR: red on dark uses --accent-bright, never --accent. Measured, --accent
+   is 2.74:1 on --bg and fails the 3:1 that WCAG 1.4.11 asks of a graphical
+   object; --accent-bright is 3.86:1 on --bg and 3.46:1 on --bg2. Where red
+   would have to carry TEXT it is not used at all -- the emergency badge label
+   is --ink (13.8:1 on --bg2) and only its icon and rail are red, because
+   #E5484D on --bg2 is 3.46:1 and text needs 4.5:1.
+
+   CLEARANCE: --chat-stack-h is written by the widget from the measured height
+   of #bottom-stack (the Call Now bar, plus the cookie banner while it shows).
+   The launcher sits above whatever that currently is. The fallback below is
+   the bar alone, for the moment before the first measurement lands.
+   ========================================================================== */
+
+:root { --chat-stack-h: 56px; }
+
+/* ---- Launcher ---- */
+.chat-launcher {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--chat-stack-h) + 16px + env(safe-area-inset-bottom, 0px));
+  z-index: 401;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-bright);
+  color: var(--bg);
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.chat-launcher:hover { background: #F05257; transform: translateY(-2px); }
+.chat-launcher[aria-expanded="true"] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-launcher { transition: none; }
+  .chat-launcher:hover { transform: none; }
+}
+
+/* ---- Panel ----
+   Full screen on mobile. 100dvh rather than 100vh so the on-screen keyboard
+   shrinks the panel instead of pushing the composer under it -- the input has
+   to stay reachable one-handed with the keyboard up, which is the whole point
+   of the layout. */
+.chat-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: var(--bg);
+  border: 0;
+}
+/* html.chat-open stops the page behind from scrolling under the panel on
+   mobile, where the panel is full-bleed. */
+.chat-open, .chat-open body { overflow: hidden; }
+
+/* ---- Header ---- */
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 12px 14px 16px;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+}
+.chat-head-title {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Oswald', sans-serif;
+  font-size: var(--fs-h4);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+.chat-head-call,
+.chat-head-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  /* 44x44 minimum target, WCAG 2.5.5. */
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+}
+/* The phone is the escape hatch and should read as the live action in the
+   header, so it carries the accent while close stays neutral. */
+.chat-head-call { color: var(--accent-bright); }
+.chat-head-call:hover,
+.chat-head-close:hover { background: rgba(245, 245, 240, 0.08); }
+
+/* ---- Log ---- */
+.chat-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-msg { display: flex; }
+.chat-msg-user { justify-content: flex-end; }
+.chat-msg-assistant { justify-content: flex-start; }
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+.chat-bubble-text { margin: 0; overflow-wrap: anywhere; }
+
+.chat-msg-assistant .chat-bubble {
+  background: var(--bg2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 4px;
+}
+.chat-msg-user .chat-bubble {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-bottom-right-radius: 4px;
+}
+
+/* Rate limit and network fallbacks. Visually quieter than a normal reply --
+   it is the system talking, not the assistant. */
+.chat-msg-notice .chat-bubble {
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--ink-dim);
+}
+
+/* ---- Emergency ----
+   Must not read as an ordinary bubble: full width, red rail, badge. */
+.chat-msg-emergency { justify-content: stretch; }
+.chat-msg-emergency .chat-bubble {
+  max-width: 100%;
+  width: 100%;
+  background: rgba(229, 72, 77, 0.12);
+  border: 1px solid var(--accent-bright);
+  border-left: 4px solid var(--accent-bright);
+  border-radius: 8px;
+  color: var(--ink);
+}
+.chat-emergency-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-family: 'Oswald', sans-serif;
+  font-size: var(--fs-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.chat-emergency-badge svg { color: var(--accent-bright); flex: 0 0 auto; }
+
+/* ---- Typing indicator ---- */
+.chat-dots { display: inline-flex; gap: 4px; align-items: center; height: 18px; }
+.chat-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  animation: chat-dot 1.2s infinite ease-in-out;
+}
+.chat-dots i:nth-child(2) { animation-delay: 0.15s; }
+.chat-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chat-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-dots i { animation: none; opacity: 0.6; }
+}
+
+/* ---- Suggested chips ---- */
+.chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+.chat-chip {
+  padding: 9px 14px;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg2);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  font-size: var(--fs-micro);
+  cursor: pointer;
+}
+.chat-chip:hover { border-color: var(--accent-bright); }
+
+/* ---- Composer ---- */
+.chat-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 16px 0;
+  border-top: 1px solid var(--line);
+}
+.chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--bg2);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  /* 16px minimum: anything smaller makes iOS Safari zoom the page on focus,
+     which on a full-bleed panel leaves the visitor scrolled sideways. */
+  font-size: var(--fs-body);
+}
+.chat-input::placeholder { color: var(--ink-dim); }
+.chat-input:disabled { opacity: 0.6; }
+.chat-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+.chat-send:hover { background: var(--accent-hover); }
+.chat-send:disabled { opacity: 0.5; cursor: default; }
+
+/* ---- Disclaimer ---- */
+.chat-disclaimer {
+  padding: 8px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  font-size: var(--fs-label);
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+.chat-disclaimer a { color: var(--ink); text-decoration: underline; }
+.chat-disclaimer a:hover { color: var(--accent-bright); }
+
+/* ---- Desktop ----
+   Anchored card rather than full screen, sharing the launcher clearance so the
+   two never disagree about where the bottom of the viewport is. */
+@media (min-width: 760px) {
+  .chat-panel {
+    inset: auto 20px calc(var(--chat-stack-h) + 16px) auto;
+    width: 380px;
+    height: min(560px, calc(100dvh - var(--chat-stack-h) - 48px));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+  }
+  .chat-launcher { right: 20px; }
+  /* The page behind stays scrollable on desktop: the panel is a card in the
+     corner, not a takeover, and locking the page would be wrong. */
+  .chat-open, .chat-open body { overflow: visible; }
+}

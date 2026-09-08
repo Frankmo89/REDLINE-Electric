@@ -793,6 +793,42 @@
     terms_s13_p: {
       en: 'Questions about these terms, or about a quote you received:',
       es: 'Preguntas sobre estos términos o sobre una cotización que recibió:'
+    },
+
+    // ---- Chat assistant widget (assets/js/chat-widget.js) ----
+    // UI chrome ONLY. The assistant's own replies are NOT translated here:
+    // they come back from the chat-assistant Edge Function already written in
+    // the language the visitor typed in, which is why the backend reads the
+    // message rather than trusting a language flag. Passing a reply through
+    // this table would be the same mistake as translating Supabase content.
+    chat_launcher: { en: 'Chat with us', es: 'Chatee con nosotros' },
+    chat_title: { en: 'Ask Redline', es: 'Pregunte a Redline' },
+    chat_close: { en: 'Close chat', es: 'Cerrar chat' },
+    chat_call: { en: 'Call us now', es: 'Llámenos ahora' },
+    chat_intro: {
+      en: 'Hi! Ask about our services or scheduling and I will help. For anything urgent, call us.',
+      es: '¡Hola! Pregunte sobre nuestros servicios u horarios y le ayudo. Para algo urgente, llámenos.'
+    },
+    chat_chip_panel: { en: 'Panel upgrade', es: 'Actualizar panel' },
+    chat_chip_ev: { en: 'EV charger', es: 'Cargador para auto eléctrico' },
+    chat_chip_lights: { en: 'Lights not working', es: 'Las luces no funcionan' },
+    chat_chip_quote: { en: 'Get a quote', es: 'Pedir cotización' },
+    chat_placeholder: { en: 'Type your question…', es: 'Escriba su pregunta…' },
+    chat_send: { en: 'Send', es: 'Enviar' },
+    chat_thinking: { en: 'Typing…', es: 'Escribiendo…' },
+    chat_log_label: { en: 'Conversation', es: 'Conversación' },
+    // Marks the assistant's fixed emergency reply for screen readers. The
+    // visual treatment alone (red rail, warning icon) would not carry.
+    chat_emergency_label: { en: 'Urgent', es: 'Urgente' },
+    chat_disclaimer: {
+      en: 'AI assistant — it can be wrong and does not give electrical advice or prices. Do not send sensitive information. <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>',
+      es: 'Asistente de IA — puede equivocarse y no da consejos eléctricos ni precios. No envíe información sensible. <a href="/privacy">Privacidad</a> · <a href="/terms">Términos</a>'
+    },
+    // Shown when the network fails or the request times out. Deliberately not
+    // an error message: the visitor needs the phone number, not a status code.
+    chat_error_network: {
+      en: 'Sorry, I could not reach our system. Call or text us at (619) 748-0662 and we will help you directly.',
+      es: 'Perdón, no pude conectar con nuestro sistema. Llámenos o mande un mensaje al (619) 748-0662 y le atendemos directamente.'
     }
   };
 
