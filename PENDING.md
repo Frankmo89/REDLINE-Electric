@@ -55,9 +55,100 @@ list changes.
 Suspended-profile issue, being handled in a **different conversation**. Not
 part of this codebase — listed here only so it isn't forgotten.
 
+
+### 15. Chat assistant knowledge base has no content
+
+The assistant went live in phase 2 (below) against an **empty** `kb_entries`
+table, and it is still empty. This is not a half-finished state that will
+announce itself: the function works, returns 200, and answers every specific
+question with a polite "I don't have that information, call (619) 748-0662".
+That is the correct and deliberate behaviour on an empty KB — rule 4 forbids
+guessing — but it means the assistant is currently a phone-number dispenser.
+
+Joe has to supply the content. It cannot be generated: an entry here is
+something the business is willing to have said on its behalf, and the whole
+liability design rests on that. Each entry needs an English **and** a Spanish
+answer (both NOT NULL) and one of five categories — services, scheduling,
+coverage, policy, general. There is no pricing category and that is on purpose.
+
+Two traps for whoever loads it:
+
+- Rows land as **drafts**. `is_published` defaults to false, so bulk-loading
+  answers and expecting the assistant to use them will silently do nothing.
+  Plan for a publish step.
+- Four provisional entries (service areas, hours, licence, who does the work)
+  were written during phase 2 testing, drawn only from `business_info`, and
+  **deleted afterwards**. They are not in the database. They can be restored as
+  a starting point if that is useful, but they were never reviewed by Joe.
+
+Until this is filled, there is no point shipping the widget.
+
 ---
 
 ## Resolved
+
+### 2026-09-07 — Chat assistant phase 2: the Anthropic Edge Function
+
+`supabase/functions/chat-assistant/` plus the `chat_assistant_rate_limits`
+migration. Model is `claude-haiku-4-5-20251001`. No UI — this is the endpoint a
+widget will call in phase 3.
+
+**Design decisions worth not re-deriving:**
+
+- **Rate limiting lives in a table, not in the function.** Supabase hands each
+  request a fresh isolate, so module-level state never survives — google-reviews
+  measured this (8 consecutive requests, 8 cache misses). An in-memory counter
+  would have looked correct and limited nothing. The check-and-increment is one
+  SQL statement per key so a burst cannot slip two requests past the cap, and
+  `chat_rate_limit_hit` is revoked from `anon` so a browser cannot call it and
+  burn another session's quota. Caps: 10/min and 60/day per session, 20/min and
+  200/day per IP, the IP stored only as a SHA-256 hash.
+- **Two keys, deliberately.** The anon key plus the visitor's `x-session-id` for
+  all conversation reads and writes, so the function is bound by the same RLS as
+  the browser and can only touch the one conversation it is serving. The service
+  role only for the rate-limit RPC. Service role everywhere would work and would
+  be worse: a session-handling bug would become a cross-visitor transcript leak
+  instead of an empty result.
+- **Emergencies are detected in code, before the model is called**, and answered
+  with a fixed string. The prompt carries the same rule as a second layer, but
+  the highest-stakes path must not depend on the model choosing to comply. 26
+  patterns across English and Spanish, with exclusions so "install a smoke
+  detector" does not trigger. Side effect: that reply is free and instant.
+- **`maxRetries: 0` explicitly.** The SDK default of 2 would silently triple the
+  billed cost of one visitor message on a timeout.
+
+**A real failure found and fixed during testing.** Asked "Do you install EV
+chargers for Teslas, and do you handle the permit?" — nothing in the KB — the
+first version answered *"Yes, we handle EV charger installations and manage the
+permitting for you."* It invented a service and a permit claim. The old rule 4
+said "do not guess", but the model did not read "do you do X?" as a knowledge
+question. The rule now forbids confirming **or denying** that the business does
+a kind of job, pulls permits, or covers an area without a KB entry saying so:
+"do you do X?" is neither a yes nor a no. Worth remembering as a shape — a
+prompt rule against guessing does not automatically cover guessing about
+yourself.
+
+Two smaller fixes in the same pass: replies were running to four sentences
+across two paragraphs, and `business_info.phone` was reaching customers raw as
+"6197480662" because the site formats it at render time and the assistant is the
+one place that string ships unstyled.
+
+**Verified against the deployed function**, all ten required cases plus the
+safeguards: KB hit and KB miss, direct advice request, the "my cousin is an
+electrician" reframing, price under pressure, emergency, two injection attempts
+(instruction override and owner impersonation), a Spanish message answered in
+Spanish while `language: "en"` was passed on purpose, and history round-tripping
+across two messages. Separately: body/header session mismatch → 400, 1001-char
+message → 413, disallowed origin gets no CORS headers, session rate limit fires
+exactly on the 11th message, and the emergency regexes pass 25/25 including the
+false-positive traps.
+
+**Measured cost:** 1,622 input and 54 output tokens on average, ≈ **$0.0019 per
+message**; a conversation reaching the 30-message cap costs ≈ $0.036. Prompt
+caching is configured on the system block but **did not engage** — `cache_read`
+was 0 on all ten calls, because the system prompt is ~1,600 tokens and Haiku 4.5
+does not cache a prefix below 2,048. Correct as written; it starts paying off
+once the KB grows past that. Do not go looking for a bug there.
 
 ### 2026-09-07 — Chat assistant phase 1 data layer, and the append policy it shipped broken (closes item 14)
 
