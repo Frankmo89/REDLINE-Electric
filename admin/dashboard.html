@@ -28,6 +28,7 @@
     <button type="button" class="admin-tab-btn" data-tab="leads">Leads <span class="admin-tab-badge" id="leads-new-badge" aria-hidden="true" hidden>0</span></button>
     <button type="button" class="admin-tab-btn" data-tab="business">Business Info</button>
     <button type="button" class="admin-tab-btn" data-tab="reviews">Reviews</button>
+    <button type="button" class="admin-tab-btn" data-tab="kb">Knowledge Base</button>
   </div>
 
   <div id="tab-photos" class="admin-tab-panel">
@@ -191,6 +192,62 @@
       </div>
       <div id="reviews-grid" class="admin-grid"></div>
       <p id="reviews-empty-msg" class="admin-empty" hidden></p>
+    </section>
+  </div>
+
+  <!--
+    Knowledge Base — the answers the chat assistant is allowed to give.
+
+    Draft/publish works like reviews and photos, with ONE deliberate difference
+    documented at the insert below: this form does not send is_published at all,
+    because kb_entries.is_published already defaults to false. The reviews and
+    photos forms DO send false explicitly, and that is not an inconsistency to
+    tidy up — their columns default to true and the explicit false is what makes
+    them drafts. Copying that line down here would be harmless today and wrong
+    the moment someone reads it as the pattern.
+  -->
+  <div id="tab-kb" class="admin-tab-panel" hidden>
+    <section class="admin-upload">
+      <h2 class="display">Add Knowledge Base Entry</h2>
+      <form id="kb-form" class="admin-form">
+        <label>Question
+          <input type="text" id="kb-question" required placeholder="e.g. Do you pull permits?">
+        </label>
+        <label>Answer (English)
+          <textarea id="kb-answer-en" rows="4" required></textarea>
+        </label>
+        <!--
+          Spanish is required, not optional. kb_entries.answer_es is NOT NULL,
+          so leaving it blank fails at the database with an opaque error; more
+          importantly a half-translated KB makes the assistant answer a Spanish
+          visitor in English, which is the exact failure the site's i18n layer
+          exists to prevent.
+        -->
+        <label>Answer (Spanish)
+          <textarea id="kb-answer-es" rows="4" required></textarea>
+        </label>
+        <label>Category
+          <select id="kb-category" required></select>
+        </label>
+        <button type="submit" class="btn-primary" id="kb-submit-btn">Add Entry</button>
+        <p id="kb-form-error" class="admin-error" hidden></p>
+        <p id="kb-form-success" class="admin-success" hidden>Added.</p>
+      </form>
+    </section>
+
+    <section class="admin-list">
+      <h2 class="display">Knowledge Base <button type="button" class="admin-refresh-btn" data-refresh="kb">Refresh</button></h2>
+      <div class="admin-filter-bar">
+        <label class="admin-filter-label">Category
+          <select id="kb-filter-category"></select>
+        </label>
+        <span class="admin-filter-count" id="kb-filter-count" role="status"></span>
+      </div>
+      <div id="kb-loading" class="admin-loading" role="status">
+        <span class="admin-spinner" aria-hidden="true"></span> Loading knowledge base…
+      </div>
+      <div id="kb-grid" class="admin-grid"></div>
+      <p id="kb-empty-msg" class="admin-empty" hidden></p>
     </section>
   </div>
 </main>
@@ -1031,7 +1088,8 @@
     photos: document.getElementById('tab-photos'),
     leads: document.getElementById('tab-leads'),
     business: document.getElementById('tab-business'),
-    reviews: document.getElementById('tab-reviews')
+    reviews: document.getElementById('tab-reviews'),
+    kb: document.getElementById('tab-kb')
   };
   // ---- Unsaved-edit guard -------------------------------------------------
   // Three things count as an edit in progress: a photo or review card sitting
@@ -1115,7 +1173,8 @@
     photos: loadProjects,
     leads: loadLeads,
     business: loadBusinessInfo,
-    reviews: loadReviews
+    reviews: loadReviews,
+    kb: loadKbEntries
   };
   var tabLoaded = {};
 
@@ -1180,7 +1239,7 @@
     }
   });
 
-  var REFRESH_LABELS = { photos: 'Photos', leads: 'Leads', business: 'Business info', reviews: 'Reviews' };
+  var REFRESH_LABELS = { photos: 'Photos', leads: 'Leads', business: 'Business info', reviews: 'Reviews', kb: 'Knowledge base' };
 
   // ---- Leads ----
   var leadsTbody = document.getElementById('leads-tbody');
@@ -1987,6 +2046,394 @@
 
     showToast('Review deleted.', 'success');
     loadReviews();
+  });
+
+  // ---- Knowledge Base ----------------------------------------------------
+  // The answers the chat assistant is allowed to give. Same card/draft/publish
+  // shape as reviews, with the differences called out where they occur.
+  //
+  // No bulk-delete bar here, unlike photos and reviews. Deliberate: this is the
+  // assistant's source of truth, and a mis-aimed Select All would silently take
+  // the bot's whole vocabulary offline. One entry at a time, each confirmed.
+
+  // MUST match kb_entries_category_check in the database. A value not in this
+  // list is rejected at write time with a constraint error, so adding one here
+  // alone will not work -- the CHECK has to move too.
+  //
+  // No 'pricing': the client has not supplied price ranges and this version of
+  // the assistant does not quote prices.
+  var KB_CATEGORIES = ['services', 'scheduling', 'coverage', 'policy', 'general'];
+
+  function kbCategoryLabel(value) {
+    if (!value) return '';
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  var kbForm = document.getElementById('kb-form');
+  var kbGrid = document.getElementById('kb-grid');
+  var kbEmptyMsg = document.getElementById('kb-empty-msg');
+  var kbLoading = document.getElementById('kb-loading');
+  var kbFormError = document.getElementById('kb-form-error');
+  var kbFormSuccess = document.getElementById('kb-form-success');
+  var kbSubmitBtn = document.getElementById('kb-submit-btn');
+  var kbCategorySelect = document.getElementById('kb-category');
+  var kbFilterSelect = document.getElementById('kb-filter-category');
+  var kbFilterCount = document.getElementById('kb-filter-count');
+
+  function kbCategoryOptions(selected) {
+    return KB_CATEGORIES.map(function (c) {
+      return '<option value="' + c + '"' + (c === selected ? ' selected' : '') + '>' +
+        kbCategoryLabel(c) + '</option>';
+    }).join('');
+  }
+
+  kbCategorySelect.innerHTML = kbCategoryOptions('general');
+  kbFilterSelect.innerHTML = '<option value="">All categories</option>' + kbCategoryOptions(null);
+
+  var kbById = Object.create(null);
+  var kbAll = [];
+  var kbFilter = '';
+
+  // Names the field that is actually missing rather than listing all three.
+  // answer_es gets the longer sentence because "why is Spanish mandatory" is
+  // the question someone will otherwise ask by leaving it blank.
+  function kbValidationMessage(question, answerEn, answerEs) {
+    if (!question) return 'A question is required.';
+    if (!answerEn) return 'The English answer is required.';
+    if (!answerEs) {
+      return 'The Spanish answer is required. The assistant answers Spanish-speaking visitors from this field, and an entry without it cannot be saved.';
+    }
+    return null;
+  }
+
+  function kbViewInner(entry) {
+    var published = !!entry.is_published;
+    return '' +
+      (published ? '' : '<span class="admin-card-draft">Draft — the assistant will not use it</span>') +
+      '<span class="admin-card-category">' + escapeHtml(kbCategoryLabel(entry.category)) + '</span>' +
+      '<h3>' + escapeHtml(entry.question) + '</h3>' +
+      '<div class="admin-kb-answer"><span class="admin-kb-lang">EN</span>' +
+        '<p>' + escapeHtml(entry.answer_en) + '</p></div>' +
+      '<div class="admin-kb-answer"><span class="admin-kb-lang">ES</span>' +
+        '<p>' + escapeHtml(entry.answer_es) + '</p></div>' +
+      '<div class="admin-card-actions">' +
+        '<button type="button" class="admin-publish-btn' + (published ? '' : ' is-draft') + '" data-id="' + entry.id + '" data-published="' + published + '">' +
+          (published ? 'Unpublish' : 'Publish') +
+        '</button>' +
+        '<button type="button" class="admin-edit-btn" data-id="' + entry.id + '">Edit</button>' +
+        '<button type="button" class="admin-delete-btn" data-id="' + entry.id + '">Delete</button>' +
+      '</div>';
+  }
+
+  // Class name admin-card-edit is load-bearing, not cosmetic: pendingEditCount()
+  // counts these to decide whether Refresh or a tab switch needs to ask before
+  // throwing the form away. Rename it and the unsaved-changes guard stops
+  // seeing knowledge base edits.
+  function kbEditInner(entry) {
+    return '' +
+      '<form class="admin-form admin-card-edit" data-id="' + entry.id + '">' +
+        (entry.is_published ? '' : '<span class="admin-card-draft">Draft — the assistant will not use it</span>') +
+        '<label>Question' +
+          '<input type="text" class="admin-edit-question" value="' + escapeHtml(entry.question) + '" required>' +
+        '</label>' +
+        '<label>Answer (English)' +
+          '<textarea class="admin-edit-answer-en" rows="4" required>' + escapeHtml(entry.answer_en || '') + '</textarea>' +
+        '</label>' +
+        '<label>Answer (Spanish)' +
+          '<textarea class="admin-edit-answer-es" rows="4" required>' + escapeHtml(entry.answer_es || '') + '</textarea>' +
+        '</label>' +
+        '<label>Category' +
+          '<select class="admin-edit-category">' + kbCategoryOptions(entry.category) + '</select>' +
+        '</label>' +
+        '<p class="admin-error admin-edit-error" hidden></p>' +
+        '<div class="admin-card-actions">' +
+          '<button type="submit" class="admin-save-btn">Save</button>' +
+          '<button type="button" class="admin-cancel-btn">Cancel</button>' +
+        '</div>' +
+      '</form>';
+  }
+
+  function buildKbCard(entry) {
+    var card = document.createElement('div');
+    card.className = 'admin-card' + (entry.is_published ? '' : ' is-draft');
+    card.setAttribute('data-id', entry.id);
+    card.innerHTML = '<div class="admin-card-body">' + kbViewInner(entry) + '</div>';
+    return card;
+  }
+
+  function replaceKbCard(entry) {
+    kbById[entry.id] = entry;
+    for (var i = 0; i < kbAll.length; i++) {
+      if (kbAll[i].id === entry.id) { kbAll[i] = entry; break; }
+    }
+    var old = kbGrid.querySelector('.admin-card[data-id="' + entry.id + '"]');
+    if (!old) { renderKbGrid(); return; }
+    // A category edit can move a row out of the active filter. Re-render rather
+    // than swap in place, or the card would sit under a filter it no longer
+    // matches until the next refresh.
+    if (kbFilter && entry.category !== kbFilter) { renderKbGrid(); return; }
+    old.parentNode.replaceChild(buildKbCard(entry), old);
+    updateKbCount();
+  }
+
+  function kbVisibleRows() {
+    return kbFilter
+      ? kbAll.filter(function (e) { return e.category === kbFilter; })
+      : kbAll;
+  }
+
+  // Separate from renderKbGrid because publishing an entry swaps ONE card in
+  // place without re-rendering the grid. When this lived inside renderKbGrid
+  // the count kept reporting the draft total from the last full render, so
+  // publishing left a live region confidently stating the opposite of what the
+  // cards showed.
+  function updateKbCount() {
+    var rows = kbVisibleRows();
+    var drafts = rows.filter(function (e) { return !e.is_published; }).length;
+    // Announced via role="status": filtering swaps the list with no other
+    // visible confirmation, which is silent to a screen reader.
+    if (rows.length === 0) {
+      // With no filter on, an empty list is already explained by the empty
+      // message; saying "none in this category" would invent a category.
+      kbFilterCount.textContent = kbFilter ? 'No entries in this category.' : '';
+      return;
+    }
+    kbFilterCount.textContent = rows.length + (rows.length === 1 ? ' entry' : ' entries') +
+      (drafts ? ', ' + drafts + ' unpublished' : '');
+  }
+
+  function renderKbGrid() {
+    var rows = kbVisibleRows();
+
+    kbGrid.innerHTML = '';
+    rows.forEach(function (entry) { kbGrid.appendChild(buildKbCard(entry)); });
+    updateKbCount();
+
+    if (kbAll.length === 0) {
+      kbEmptyMsg.textContent = 'No knowledge base entries yet. Add the first one above.';
+      kbEmptyMsg.hidden = false;
+    } else {
+      kbEmptyMsg.hidden = true;
+    }
+  }
+
+  kbFilterSelect.addEventListener('change', async function () {
+    // Re-rendering discards any open editor, so it asks first -- same reason
+    // Refresh does.
+    if (!(await confirmDiscard(tabPanels.kb))) {
+      kbFilterSelect.value = kbFilter;
+      return;
+    }
+    discardPendingEdits(tabPanels.kb);
+    kbFilter = kbFilterSelect.value;
+    renderKbGrid();
+  });
+
+  async function loadKbEntries() {
+    setLoading(kbLoading, true);
+    kbEmptyMsg.hidden = true;
+
+    var res = await supabaseClient
+      .from('kb_entries')
+      .select('*')
+      // sort_order first, then created_at, then id. The id tiebreak is not
+      // decoration: entries loaded in one batch share a created_at and a
+      // sort_order of 0, and without it their order is undefined -- the same
+      // bug the reviews grid hit once a limit was applied.
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true });
+
+    setLoading(kbLoading, false);
+
+    if (res.error) {
+      kbGrid.innerHTML = '';
+      kbFilterCount.textContent = '';
+      kbEmptyMsg.textContent = 'Could not load the knowledge base: ' + res.error.message;
+      kbEmptyMsg.hidden = false;
+      return;
+    }
+
+    kbAll = res.data || [];
+    kbById = Object.create(null);
+    kbAll.forEach(function (entry) { kbById[entry.id] = entry; });
+    renderKbGrid();
+  }
+
+  kbForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    kbFormError.hidden = true;
+    kbFormSuccess.hidden = true;
+
+    var questionEl = document.getElementById('kb-question');
+    var answerEnEl = document.getElementById('kb-answer-en');
+    var answerEsEl = document.getElementById('kb-answer-es');
+    var question = questionEl.value.trim();
+    var answerEn = answerEnEl.value.trim();
+    var answerEs = answerEsEl.value.trim();
+
+    var problem = kbValidationMessage(question, answerEn, answerEs);
+    if (problem) {
+      flashInline(kbFormError, problem, false);
+      (!question ? questionEl : !answerEn ? answerEnEl : answerEsEl).focus();
+      return;
+    }
+
+    kbSubmitBtn.disabled = true;
+
+    // is_published is deliberately ABSENT. kb_entries.is_published already
+    // defaults to false, so the row lands as a draft on its own.
+    //
+    // Do not "fix" this by adding is_published: false to match the reviews and
+    // photos inserts above. Those columns default to TRUE -- the explicit false
+    // is what makes them drafts. Here the default already does the right thing,
+    // and restating it would hide the fact that the guarantee lives in the
+    // schema, where it also protects any other path that ever inserts a row.
+    var res = await supabaseClient.from('kb_entries').insert({
+      question: question,
+      answer_en: answerEn,
+      answer_es: answerEs,
+      category: document.getElementById('kb-category').value
+    });
+
+    kbSubmitBtn.disabled = false;
+
+    if (res.error) {
+      flashInline(kbFormError, 'Could not add the entry. ' + res.error.message, false);
+      return;
+    }
+
+    flashInline(kbFormSuccess, 'Added as a draft — tap Publish below before the assistant can use it.');
+    showToast('Entry added as a draft.', 'success');
+    kbForm.reset();
+    kbCategorySelect.value = 'general';
+    loadKbEntries();
+  });
+
+  kbGrid.addEventListener('click', function (e) {
+    var editBtn = e.target.closest('.admin-edit-btn');
+    if (editBtn) {
+      var editCard = editBtn.closest('.admin-card');
+      var editEntry = kbById[editBtn.getAttribute('data-id')];
+      if (!editEntry) return;
+      editCard.querySelector('.admin-card-body').innerHTML = kbEditInner(editEntry);
+      var firstField = editCard.querySelector('.admin-edit-question');
+      if (firstField) firstField.focus();
+      return;
+    }
+
+    var cancelBtn = e.target.closest('.admin-cancel-btn');
+    if (cancelBtn) {
+      var cancelCard = cancelBtn.closest('.admin-card');
+      var cancelEntry = kbById[cancelCard.getAttribute('data-id')];
+      if (!cancelEntry) return;
+      cancelCard.querySelector('.admin-card-body').innerHTML = kbViewInner(cancelEntry);
+      return;
+    }
+  });
+
+  kbGrid.addEventListener('submit', async function (e) {
+    var form = e.target.closest('.admin-card-edit');
+    if (!form) return;
+    e.preventDefault();
+
+    var id = form.getAttribute('data-id');
+    var questionEl = form.querySelector('.admin-edit-question');
+    var answerEnEl = form.querySelector('.admin-edit-answer-en');
+    var answerEsEl = form.querySelector('.admin-edit-answer-es');
+    var errEl = form.querySelector('.admin-edit-error');
+    var question = questionEl.value.trim();
+    var answerEn = answerEnEl.value.trim();
+    var answerEs = answerEsEl.value.trim();
+
+    // Same three requirements the Add form enforces, same wording.
+    var problem = kbValidationMessage(question, answerEn, answerEs);
+    if (problem) {
+      flashInline(errEl, problem, false);
+      (!question ? questionEl : !answerEn ? answerEnEl : answerEsEl).focus();
+      return;
+    }
+    errEl.hidden = true;
+
+    var saveBtn = form.querySelector('.admin-save-btn');
+    var cancelSaveBtn = form.querySelector('.admin-cancel-btn');
+    saveBtn.disabled = true;
+    cancelSaveBtn.disabled = true;
+
+    // is_published is not sent: publishing is the toggle's job, and including
+    // it here would let a Save silently re-publish an entry someone had just
+    // taken down.
+    var saveRes = await runMutation(
+      supabaseClient.from('kb_entries').update({
+        question: question,
+        answer_en: answerEn,
+        answer_es: answerEs,
+        category: form.querySelector('.admin-edit-category').value
+      }).eq('id', id)
+    );
+
+    saveBtn.disabled = false;
+    cancelSaveBtn.disabled = false;
+
+    if (!saveRes.ok) {
+      showToast('Could not save the changes. ' + saveRes.message, 'error');
+      return;
+    }
+
+    showToast('Entry saved.', 'success');
+    replaceKbCard(saveRes.data[0]);
+  });
+
+  kbGrid.addEventListener('click', async function (e) {
+    var toggleBtn = e.target.closest('.admin-publish-btn');
+    if (toggleBtn) {
+      var toggleId = toggleBtn.getAttribute('data-id');
+      var wasPublished = toggleBtn.getAttribute('data-published') === 'true';
+      toggleBtn.disabled = true;
+
+      var toggleRes = await runMutation(
+        supabaseClient.from('kb_entries').update({ is_published: !wasPublished }).eq('id', toggleId)
+      );
+
+      toggleBtn.disabled = false;
+
+      if (!toggleRes.ok) {
+        showToast('Could not update the entry. ' + toggleRes.message, 'error');
+        return;
+      }
+
+      showToast(
+        wasPublished ? 'Entry unpublished — the assistant will stop using it.'
+                     : 'Entry published — the assistant can now use it.',
+        'success'
+      );
+      replaceKbCard(toggleRes.data[0]);
+      return;
+    }
+
+    var delBtn = e.target.closest('.admin-delete-btn');
+    if (!delBtn) return;
+    var entryForDelete = kbById[delBtn.getAttribute('data-id')];
+    var okKb = await confirmDialog({
+      title: 'Delete this entry?',
+      body: entryForDelete
+        ? '"' + entryForDelete.question + '" will be deleted. This cannot be undone.'
+        : 'This entry will be deleted. This cannot be undone.'
+    });
+    if (!okKb) return;
+
+    var delId = delBtn.getAttribute('data-id');
+    delBtn.disabled = true;
+
+    var delRes = await runMutation(supabaseClient.from('kb_entries').delete().eq('id', delId));
+    if (!delRes.ok) {
+      showToast('Could not delete the entry. ' + delRes.message, 'error');
+      delBtn.disabled = false;
+      return;
+    }
+
+    showToast('Entry deleted.', 'success');
+    loadKbEntries();
   });
 
   reviewsBulkDeleteBtn.addEventListener('click', async function () {
