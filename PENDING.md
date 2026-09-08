@@ -7,7 +7,7 @@ single sitting belongs here so it doesn't get lost.
 bottom with the date it closed — don't delete it. Add new open items as they
 come up.
 
-Last updated: 2026-08-18
+Last updated: 2026-09-07
 
 ---
 
@@ -58,6 +58,55 @@ part of this codebase — listed here only so it isn't forgotten.
 ---
 
 ## Resolved
+
+### 2026-09-07 — Chat assistant phase 1 data layer, and the append policy it shipped broken (closes item 14)
+
+Two migrations. `chat_assistant_phase1_data_layer` created `kb_entries` and
+`chat_conversations` — storage only, no UI and no API calls, nothing reads them
+yet. `chat_conversations_own_session_select` then fixed a policy the first one
+shipped as dead code.
+
+**The bug.** `"Public can append to its own conversation"` could not fire from a
+browser. A visitor PATCHing its own conversation with the right `x-session-id`
+got `HTTP 204` and wrote nothing — no error anywhere. The `USING` expression was
+fine; the problem was that PostgREST turns a URL filter into a SQL `WHERE`, that
+`WHERE` reads `session_id`, reading a column requires SELECT, and phase 1
+deliberately gave `anon` no SELECT policy. The row was invisible to the `WHERE`.
+Measured as `anon` in a rolled-back transaction: `UPDATE ... WHERE session_id =
+'<own id>'` touched 0 rows, the same `UPDATE` with no `WHERE` touched 1.
+
+Worth remembering as a shape, not just an incident: **an RLS write policy that
+looks correct can still be unreachable if the client cannot SELECT the row it
+names.** Nothing about the phase 1 migration was wrong to read.
+
+**The fix.** A SELECT policy scoped to the same header, so a session reaches
+exactly its own row and no other. This also retired the phase 1 claim that a
+client-side append must overwrite from local state — it can now read the array
+back. The `messages` and `session_id` column comments were rewritten in the same
+migration rather than left asserting things that had stopped being true.
+
+**Verified over HTTP with the site's own anon key**, not a harness:
+
+- A session reads and appends to its own conversation ✅
+- It cannot read or write another session's ✅
+- With no header at all, listing returns `[]` ✅
+- Renaming its own `session_id` onto another's is refused — and now fails loudly
+  with `401` instead of the silent `204` it returned before, because the row is
+  found and `WITH CHECK` actually evaluates
+- `kb_entries`: `anon` sees only published rows, and cannot see a draft even
+  asking for it by exact `question`; insert, update and delete all refused
+- Constraint checks, the `updated_at` trigger, and the `is_published` default
+  landing `false` on a real insert were all confirmed against the live database
+- Security advisors: no new findings
+
+**Still open, needs a login:** the admin Knowledge Base tab has never written to
+the real table — its verification ran against a stubbed client — and the
+`authenticated` policies are still untested against a real session.
+
+**Not fixed, deliberately:** browser read-modify-write on `messages` has no
+locking, so concurrent appends to one conversation will lose a write. Harmless
+for one visitor in one tab. If phase 2 appends from more than one place, that
+belongs in an Edge Function using the service role.
 
 ### 2026-08-21 — Contrast decisions implemented (closes item 8)
 
