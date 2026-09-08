@@ -81,11 +81,72 @@ Two traps for whoever loads it:
   **deleted afterwards**. They are not in the database. They can be restored as
   a starting point if that is useful, but they were never reviewed by Joe.
 
-Until this is filled, there is no point shipping the widget.
+The widget (phase 3, below) is built and works correctly against the empty
+table — it needs no change when content arrives. But until this is filled, the
+assistant is a phone-number dispenser, so filling it is the gate on putting the
+widget in front of visitors, not any remaining code.
 
 ---
 
 ## Resolved
+
+### 2026-09-07 — Chat assistant phase 3: the widget
+
+`assets/js/chat-widget.js`, the chat block at the end of `css/styles.css`, and
+one script tag on each of the eleven public pages. Launcher bubble, panel with a
+permanent phone escape hatch in the header, suggested chips on first open, and
+the composer with the disclaimer under it.
+
+**The DOM is built in JS, not written into each page.** Eleven copies at two
+directory depths would be eleven places to keep in step, each with its own
+`data-i18n` fallbacks for the pre-commit checker to police. One script tag per
+page is the smaller surface. The cost is that the widget needs JS — acceptable,
+because the sticky Call Now bar is always present and is the real fallback.
+
+**Things that were measured rather than assumed:**
+
+- The launcher clears `.bottom-stack` by measuring it with a ResizeObserver, not
+  by hardcoding the 56px Call Now bar. That element also holds the cookie banner
+  while it shows: measured 120px with the banner up, 68px without. A fixed
+  offset would have been wrong on the first visit of every visitor — precisely
+  when the banner is there.
+- Red on dark is `--accent-bright` everywhere, and where red would have to carry
+  **text** it is not used at all. `#E5484D` is 3.46:1 on `--bg2` — fine for a
+  graphical object, short of the 4.5:1 text needs — so the emergency badge label
+  is `--ink` and only its icon and rail are red.
+- `100dvh`, not `100vh`, so the on-screen keyboard shrinks the panel instead of
+  pushing the composer underneath it.
+- `sessionStorage` for the session id, never `localStorage`: a transcript
+  belongs to one visit, and that id is a bearer secret for its row. A shared or
+  family device must not reopen a stranger's conversation.
+
+**Failure states are visually distinct on purpose.** The emergency reply renders
+as a full-width alert with a rail and an URGENT badge, not a chat bubble. Rate
+limit and network fallbacks render as quiet dashed notices — the system talking,
+not the assistant. A 429 is displayed and **not** retried: retrying is what a
+rate limit is asking you not to do, and it would spend the visitor's own
+remaining quota on their behalf.
+
+**Verified against the deployed endpoint**, not a stub, on desktop and at a
+390px viewport: a real round trip; the emergency path; a real 429 after crossing
+the per-minute cap; network failure (forced by rejecting `fetch`), which cleared
+the typing indicator, re-enabled the input and restored focus; Escape closing
+the panel and returning focus to the launcher; focus staying trapped across nine
+consecutive tabs; Spanish chrome switching while an already-received reply
+stayed untouched; and GA4 firing `chat_open` and `chat_message_sent`.
+
+Testing also tripped the phase 2 conversation cap — 30 messages in and the
+assistant handed off to the phone. Confirmation, for free, that the cap works
+from the widget and not only from curl.
+
+`styles.css` went to `?v=10` across all **thirteen** HTML files. The admin pages
+carry no widget but do link the same stylesheet, and check 2 of the pre-commit
+hook requires one version everywhere — this is the "sed that missed a directory"
+case the hook exists to catch.
+
+**Not done here:** the commit is local, nothing is deployed, and no UI links to
+the widget from anywhere but its own launcher. See item 15 — the knowledge base
+is the gate, not any remaining code.
 
 ### 2026-09-07 — Chat assistant phase 2: the Anthropic Edge Function
 
