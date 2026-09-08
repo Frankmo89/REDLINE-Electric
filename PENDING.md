@@ -99,9 +99,20 @@ migration rather than left asserting things that had stopped being true.
   landing `false` on a real insert were all confirmed against the live database
 - Security advisors: no new findings
 
-**Still open, needs a login:** the admin Knowledge Base tab has never written to
-the real table — its verification ran against a stubbed client — and the
-`authenticated` policies are still untested against a real session.
+**Closed out the same day with a real login.** The admin Knowledge Base tab was
+driven against the live table: an entry was created, landed as a draft, and
+published. The `authenticated` policies were then checked *directly*, not only
+through the UI — by assuming the role inside a rolled-back transaction, because
+`execute_sql` runs as service role and would bypass RLS entirely, proving
+nothing. All pass: authenticated sees drafts as well as published rows, inserts
+(landing `false`), publishes a draft, deletes, and reads a transcript with no
+`x-session-id` header at all.
+
+One asymmetry, recorded rather than fixed: **an authenticated admin cannot
+CREATE a `chat_conversations` row.** The only INSERT policy on that table is the
+header-scoped visitor one, so an insert carrying no header is refused. Almost
+certainly correct — conversations are started by visitors, never by the admin —
+but if phase 2 ever needs to seed one server-side, this is why it will fail.
 
 **Not fixed, deliberately:** browser read-modify-write on `messages` has no
 locking, so concurrent appends to one conversation will lose a write. Harmless
