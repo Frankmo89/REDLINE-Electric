@@ -42,8 +42,13 @@
 
 <link rel="canonical" href="https://redlinesd.com/services/remodels">
 
+<!-- Supabase serves the hero photo (the LCP element), business_info and the
+     reviews aggregate. Without this the connection is negotiated only when the
+     first query fires, adding DNS, TCP and TLS to the critical path. -->
+<link rel="preconnect" href="https://hvesaitxkwlufbljnupy.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script async src="../assets/js/hero-preload.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/styles.css?v=10">
 
@@ -478,6 +483,7 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../assets/js/image-url.js"></script>
 <script src="../assets/js/supabase-client.js"></script>
 <script src="../assets/js/business-info.js"></script>
 <script src="../assets/js/chat-widget.js"></script>
@@ -536,13 +542,14 @@
       var item = document.createElement('div');
       item.className = 'work-photo';
       item.innerHTML =
-        '<img src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '" loading="lazy">' +
+        '<img src="' + escapeHtml(RedlineImageUrl.gallery(project.image_url)) + '" data-original-src="' + escapeHtml(project.image_url) + '" alt="' + escapeHtml(project.title) + '" loading="lazy">' +
         '<div class="work-caption">' +
           '<strong>' + escapeHtml(project.title) + '</strong>' +
           (project.category ? '<span>' + escapeHtml(project.category) + '</span>' : '') +
         '</div>';
       grid.appendChild(item);
     });
+    RedlineImageUrl.attachFallbacks(grid);
   }
 
   document.addEventListener('redline:languagechange', function () {

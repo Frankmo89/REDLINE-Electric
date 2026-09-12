@@ -16,6 +16,29 @@
 (function () {
   var HERO_CYCLE_MS = 6000;
 
+  // The hero box, in CSS pixels, measured on the rendered page. The two
+  // shapes are genuinely different crops, not one image at two scales: the
+  // mobile box is portrait and the desktop box is a wide band, and the
+  // sources are 3:4 portrait phone photos. Cropping to the box on the CDN
+  // rather than in CSS is where most of the saving comes from — on the LCP
+  // photo, 1600x730 is 41 KB where an uncropped 1200-wide render is 210 KB.
+  //
+  // Safe against the Ken Burns drift because that animation only ever zooms
+  // IN (scale 1 -> 1.08), so it cannot reach past the cropped frame.
+  var NARROW_MAX_WIDTH = 700;
+  var BOX_NARROW = { w: 375, h: 555 };
+  var BOX_WIDE = { w: 1600, h: 730 };
+
+  function heroBox() {
+    return window.innerWidth <= NARROW_MAX_WIDTH ? BOX_NARROW : BOX_WIDE;
+  }
+
+  function heroUrl(rawUrl) {
+    if (!window.RedlineImageUrl) return rawUrl;
+    var box = heroBox();
+    return window.RedlineImageUrl.sized(rawUrl, box.w, box.h);
+  }
+
   // Matches the normalize() used by the service pages' photo grids, so the
   // hero and the gallery below it agree on what counts as a category match.
   function normalize(str) {
@@ -40,15 +63,30 @@
 
     var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    supabaseClient
-      .from('projects')
-      .select('image_url, title, category, is_featured')
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .then(function (res) {
-        if (res.error || !res.data || res.data.length === 0) return;
+    // hero-preload.js fired this query from <head>, before supabase-js was
+    // even requested. Fall back to querying through the client if that file
+    // is absent or its fetch failed, so the hero never depends on it.
+    var rows = window.RedlineHeroQuery
+      ? window.RedlineHeroQuery.then(function (data) {
+          if (data) return data;
+          return queryViaClient();
+        })
+      : queryViaClient();
 
-        var photos = pick(res.data, opts.category).slice(0, 10);
+    function queryViaClient() {
+      return supabaseClient
+        .from('projects')
+        .select('image_url, title, category, is_featured')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .then(function (res) { return res.error ? null : res.data; });
+    }
+
+    rows
+      .then(function (data) {
+        if (!data || data.length === 0) return;
+
+        var photos = pick(data, opts.category).slice(0, 10);
         if (photos.length === 0) return;
 
         var bgWrap = document.createElement('div');
@@ -61,25 +99,31 @@
 
         var slides = photos.map(function (photo, i) {
           var img = document.createElement('img');
+          var url = heroUrl(photo.image_url);
           img.className = 'hero-bg-img';
           img.alt = '';
           img.decoding = 'async';
+          // If the render endpoint errors, fall back to the original file
+          // rather than leaving a gap where the hero photo should be.
+          img.setAttribute('data-original-src', photo.image_url);
           if (i === 0) {
             // First frame is the LCP candidate — load it eagerly and at
             // priority. The rest are lazy until preloaded one step ahead.
             img.loading = 'eager';
             img.setAttribute('fetchpriority', 'high');
-            img.src = photo.image_url;
+            img.src = url;
           } else {
             img.loading = 'lazy';
           }
           bgWrap.appendChild(img);
-          return { el: img, url: photo.image_url, loaded: i === 0 };
+          return { el: img, url: url, loaded: i === 0 };
         });
 
         hero.insertBefore(bgWrap, hero.firstChild);
         hero.insertBefore(overlay, bgWrap.nextSibling);
         hero.classList.add('has-hero-bg');
+
+        if (window.RedlineImageUrl) window.RedlineImageUrl.attachFallbacks(bgWrap);
 
         slides[0].el.classList.add('is-active');
 

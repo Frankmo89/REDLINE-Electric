@@ -76,9 +76,18 @@
       var hasAbout = !!info.about_text;
 
       if (hasPhoto) {
+        // .about-us-photo is a 4:5 box capped at 420px wide. The stored file is
+        // 370 KB; the render endpoint serves the same crop at a fraction of it.
+        var photoUrl = window.RedlineImageUrl
+          ? window.RedlineImageUrl.sized(info.profile_photo_url, 420, 525)
+          : info.profile_photo_url;
         document.querySelectorAll('[data-profile-photo]').forEach(function (el) {
-          el.src = info.profile_photo_url;
+          el.src = photoUrl;
+          el.setAttribute('data-original-src', info.profile_photo_url);
           el.hidden = false;
+          if (window.RedlineImageUrl) {
+            window.RedlineImageUrl.attachFallbacks(el.parentNode || document);
+          }
         });
       }
       if (hasAbout) {
