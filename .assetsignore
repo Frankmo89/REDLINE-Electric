@@ -13,6 +13,15 @@ PENDING.md
 **/.claude
 **/node_modules
 **/.DS_Store
+# Wrangler's own working directory. It is in .gitignore, which is NOT enough:
+# assets.directory is "./", so deploy publishes what is on disk rather than
+# what is tracked. Running `wrangler dev` creates .wrangler/state and
+# .wrangler/tmp, and the next deploy then served all of it -- including
+# .wrangler/cache/wrangler-account.json, which returned 200 carrying the
+# Cloudflare account id and an account name built from a personal email
+# address. That is the same address item 2 deliberately removed from the
+# public site on 2026-08-17. Caught and closed on 2026-09-12.
+.wrangler/
 assets/photos/TODO.txt
 # Developer tooling. Neither is needed to SERVE the site, but both were being
 # served: assets.directory is "./", so a directory is published unless it is
