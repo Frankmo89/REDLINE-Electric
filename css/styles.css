@@ -69,6 +69,59 @@
    changes, admin.css needs this treatment too.
    ========================================================================== */
 
+/* ---- Self-hosted fonts ----
+   Previously a synchronous <link rel="stylesheet"> to fonts.googleapis.com,
+   itself pointing at font files on a second origin, fonts.gstatic.com.
+   Lighthouse measured that stylesheet as render-blocking at 957ms: a page
+   cannot paint anything until every synchronous <head> stylesheet has been
+   fetched, and this one needed a DNS lookup, TCP handshake and TLS
+   negotiation to a third party before its ~2KB response even arrived — the
+   font FILES were a separate, later fetch again, chained behind that.
+
+   Both families are requested as four discrete weights each --
+   Oswald:wght@400;500;600;700 and Inter:wght@400;500;600;700 -- but Google
+   serves both as VARIABLE fonts: inspecting the actual files a real page
+   load downloads (via fonttools) shows ONE physical file per family
+   backing all four requested weights, not four separate static files.
+   Oswald's own weight axis is 400-700, an exact match for what this site
+   uses; Inter's is wider (100-900) but the @font-face below narrows the
+   declared range to 400-700, since that's what's actually used.
+
+   VERIFIED, not assumed, before shipping:
+     - grepped every font-family/font-weight pairing in this file, including
+       <strong> (browser default bold=700, not overridden anywhere) and
+       elements that inherit Inter from body with no font-family of their
+       own -- all four weights are genuinely rendered in both families, none
+       of the four is dead weight.
+     - both files' cmap tables were checked for the accented characters and
+       punctuation the Spanish translations use (ñ, ü, ¿, ¡, the U+0000-00FF
+       block) and for em dash (U+2014) -- all present. One subset, not the
+       cyrillic/greek/vietnamese ones Google's API also offers, is enough
+       for this bilingual EN/ES site.
+     - real weight: 68KB combined (48KB Inter + 21KB Oswald), matching what
+       Chrome already downloaded per page load before this change -- this
+       is not new weight, only a shorter path to the same two files.
+
+   font-display: swap carries over unchanged: text renders in the fallback
+   sans-serif immediately and swaps in without a flash of invisible text,
+   exactly as Google's own stylesheet already declared. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-variable.woff2') format('woff2-variations'),
+       url('../assets/fonts/inter-variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/oswald-variable.woff2') format('woff2-variations'),
+       url('../assets/fonts/oswald-variable.woff2') format('woff2');
+}
+
 :root {
   --bg: #23262F;
   --bg2: #2B2E38;
