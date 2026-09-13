@@ -588,17 +588,40 @@
     if (matchedProjects.length === 0) showEmpty();
   });
 
-  supabaseClient
-    .from('projects')
-    .select('*')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .then(function (res) {
-      if (res.error || !res.data) {
+  // hero-preload.js already fires this exact query from <head>, before this
+  // script has even loaded -- selecting image_url, title, category and
+  // is_featured. This grid only ever reads image_url, title and category
+  // (is_featured is unused here: unlike the hero, this grid does not fall
+  // back to a featured/full-list set when the category has zero photos --
+  // it hides the section instead, via renderGrid()'s own empty check).
+  // Reusing that one promise removes a second, identical round trip to
+  // Supabase that was firing a few hundred ms later purely because this
+  // script sits further down the page. Falls back to querying through the
+  // client directly if the global is missing or its fetch failed -- the
+  // same fallback hero-bg.js uses, for the same reason.
+  function queryViaClient() {
+    return supabaseClient
+      .from('projects')
+      .select('image_url, title, category, is_featured')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .then(function (res) { return res.error ? null : res.data; });
+  }
+
+  var rows = window.RedlineHeroQuery
+    ? window.RedlineHeroQuery.then(function (data) {
+        if (data) return data;
+        return queryViaClient();
+      })
+    : queryViaClient();
+
+  rows
+    .then(function (data) {
+      if (!data) {
         showEmpty();
         return;
       }
-      matchedProjects = res.data.filter(function (p) {
+      matchedProjects = data.filter(function (p) {
         return normalize(p.category) === normalize(CATEGORY);
       });
       renderGrid();
