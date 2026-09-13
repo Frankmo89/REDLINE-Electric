@@ -50,6 +50,25 @@
       '&quality=' + (quality || 68);
   }
 
+  // Fixed-pixel variant of sized(): the caller states the exact render
+  // dimensions and no devicePixelRatio multiplication happens. Needed
+  // wherever a URL has to come out byte-identical across visitors rather
+  // than sharpest-per-visitor — specifically the mobile hero's first slide,
+  // which scripts/bake-hero-preload.py bakes as a static <link rel=preload>
+  // in the HTML. A preload only helps if the browser can match it against
+  // the <img> src hero-bg.js sets later; a continuous devicePixelRatio
+  // multiplier makes that URL different on nearly every real device (1x,
+  // 1.5x, 2x, 2.625x, 3x...), so nothing baked ahead of time could ever
+  // match it and the preload would just be a second, wasted fetch.
+  function sizedFixed(url, pixelWidth, pixelHeight, quality) {
+    if (!url || url.indexOf(PUBLIC_MARKER) === -1) return url;
+    return url.replace(PUBLIC_MARKER, RENDER_MARKER) +
+      '?width=' + pixelWidth +
+      '&height=' + pixelHeight +
+      '&resize=cover' +
+      '&quality=' + (quality || 68);
+  }
+
   // Wires the render-endpoint fallback for every image under `root` that
   // carries data-original-src. Called after innerHTML rather than baked into
   // the markup so no inline onerror handler is needed.
@@ -76,6 +95,7 @@
 
   window.RedlineImageUrl = {
     sized: sized,
+    sizedFixed: sizedFixed,
     gallery: gallery,
     attachFallbacks: attachFallbacks
   };

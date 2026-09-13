@@ -4,8 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-QEQXZJNNBB"></script>
+<!-- Google tag (gtag.js). The library itself is 164 KB, roughly 70 KB of
+     which this site never executes, and it used to load via a plain async
+     <script src>: the preload scanner starts that fetch during HTML parse,
+     and once it arrives it competes for main-thread time against the hero
+     photo and gallery rendering. Measured on this page as two of the
+     largest long tasks in the whole trace -- 909 ms and 643 ms -- sitting
+     inside the LCP window. The library load is now deferred to
+     requestIdleCallback, so both the fetch and the execution wait for the
+     browser to report the main thread genuinely free, which in practice is
+     after the page's own render-critical work has settled.
+
+     The stub below still runs immediately and synchronously -- Consent
+     Mode v2 requires the default to be set before anything else -- because
+     every gtag() call here just pushes onto dataLayer. gtag.js reads that
+     array in full whenever it does load, so no consent signal or event
+     queued before then is lost by the library arriving late. -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -29,6 +43,20 @@
 
   gtag('js', new Date());
   gtag('config', 'G-QEQXZJNNBB');
+
+  function loadGtagLibrary() {
+    var s = document.createElement('script');
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QEQXZJNNBB';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadGtagLibrary, { timeout: 4000 });
+  } else {
+    // Safari has no requestIdleCallback. window.load already fires after
+    // every eager resource on the page, so it is a reasonable stand-in.
+    window.addEventListener('load', loadGtagLibrary);
+  }
 </script>
 
 <title>Privacy Policy | Redline Electric</title>
@@ -44,7 +72,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=10">
+<link rel="stylesheet" href="css/styles.css?v=11">
 </head>
 <body>
 <a class="skip-link" href="#main-content" data-i18n="skip_to_content">Skip to main content</a>

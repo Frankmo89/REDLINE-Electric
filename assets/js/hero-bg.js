@@ -26,17 +26,24 @@
   // Safe against the Ken Burns drift because that animation only ever zooms
   // IN (scale 1 -> 1.08), so it cannot reach past the cropped frame.
   var NARROW_MAX_WIDTH = 700;
-  var BOX_NARROW = { w: 375, h: 555 };
-  var BOX_WIDE = { w: 1600, h: 730 };
 
-  function heroBox() {
-    return window.innerWidth <= NARROW_MAX_WIDTH ? BOX_NARROW : BOX_WIDE;
-  }
+  // Fixed pixel target for mobile, not a CSS box multiplied by the visitor's
+  // real devicePixelRatio. This is what scripts/bake-hero-preload.py bakes
+  // into a static <link rel=preload> in the HTML, so the mobile slides have
+  // to resolve to this SAME url on every device for that preload to ever be
+  // reused rather than wasted — see the note on sizedFixed() in
+  // image-url.js. The trade is a touch soft on 3x-DPR phones and a few
+  // unneeded bytes on 1x, in exchange for the LCP photo's bytes already
+  // being in flight before hero-bg.js itself has even run.
+  var NARROW_FIXED_PX = { w: 750, h: 1110 };
+  var BOX_WIDE = { w: 1600, h: 730 };
 
   function heroUrl(rawUrl) {
     if (!window.RedlineImageUrl) return rawUrl;
-    var box = heroBox();
-    return window.RedlineImageUrl.sized(rawUrl, box.w, box.h);
+    if (window.innerWidth <= NARROW_MAX_WIDTH) {
+      return window.RedlineImageUrl.sizedFixed(rawUrl, NARROW_FIXED_PX.w, NARROW_FIXED_PX.h);
+    }
+    return window.RedlineImageUrl.sized(rawUrl, BOX_WIDE.w, BOX_WIDE.h);
   }
 
   // Matches the normalize() used by the service pages' photo grids, so the

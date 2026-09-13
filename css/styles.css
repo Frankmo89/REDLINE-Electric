@@ -353,9 +353,17 @@ section {
      position:absolute so they never become grid items. */
   display: grid;
   align-items: center;
-  min-height: 480px;
+  /* Reserved unconditionally, at the size .has-hero-bg used to grow into once
+     hero-bg.js's query returned. That query starts during HTML parse but
+     still can't resolve before first paint, so the old two-step (480px, then
+     a jump to min(78svh, 620px) when photos arrived) was a guaranteed shift
+     on every load -- measured as CLS 0.171, almost entirely one culprit:
+     main#main-content moving 0.1279 of the way down the viewport. Sizing the
+     hero for the photo state from the start costs a taller solid/striped
+     placeholder for the ~1-2s before photos land (or permanently, in the rare
+     case the query fails outright) -- a fixed box beats a box that moves. */
+  min-height: min(78svh, 620px);
 }
-.hero.has-hero-bg { min-height: min(78svh, 620px); }
 .hero::before {
   content: "";
   position: absolute; inset: 0;
@@ -1685,8 +1693,9 @@ a.contact-info-value:hover { text-decoration: underline; }
   .site-header.is-scrolled { padding-top: 14px; padding-bottom: 14px; }
   .site-header.is-scrolled img { max-height: 48px; }
 
-  .hero { padding-top: 120px; padding-bottom: 100px; min-height: 420px; }
-  .hero.has-hero-bg { min-height: clamp(560px, calc(100svh - var(--header-h)), 820px); }
+  /* min-height matches what .has-hero-bg used to add on top of this rule --
+     see the base .hero rule for why the two were merged. */
+  .hero { padding-top: 120px; padding-bottom: 100px; min-height: clamp(560px, calc(100svh - var(--header-h)), 820px); }
   /* Scoped to #home — an id selector outranks `.hero h1` at any position in
      the file, so a generic rule here would be overridden by the #home block
      above and silently do nothing. Interior heroes keep the looser 1.04,
