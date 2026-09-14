@@ -275,36 +275,19 @@
     return lines.join('\n');
   }
 
-  // Best-effort link from the conversation row back to the lead it produced,
-  // so the admin dashboard can find the full transcript from either side.
-  // The lead itself does not depend on this succeeding -- see createLead --
-  // it already carries its own copy of the transcript in leads.message.
-  function linkConversationToLead(sid, leadId) {
-    fetch(SUPABASE_URL + '/rest/v1/chat_conversations?session_id=eq.' + encodeURIComponent(sid), {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-        'apikey': SUPABASE_ANON_KEY,
-        // Required: the UPDATE policy on chat_conversations compares
-        // session_id to this header, same as every call to the Edge
-        // Function already does. Without it this PATCH matches zero rows.
-        'x-session-id': sid,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ lead_id: leadId })
-    }).catch(function () {
-      // Logged nowhere visible to the visitor on purpose: the lead already
-      // exists and Joe already has the transcript in leads.message. Losing
-      // this cross-link is a minor dashboard convenience, not a lost lead.
-    });
-  }
-
-  // Writes the lead FIRST, exactly like the quote form does, so the lead
-  // survives even if the best-effort conversation link above fails. The
-  // notification email fires automatically from the same AFTER INSERT
-  // trigger the quote form already relies on -- nothing here calls
-  // lead-notification directly.
+  // Writes the lead and links the conversation to it via a single RPC,
+  // create_chat_lead(). A plain client-side insert().select() won't work
+  // here: anon can INSERT into leads (the same open policy the quote form
+  // uses) but deliberately has no SELECT grant on it, and PostgREST's
+  // RETURNING is itself subject to the SELECT policy -- so asking for the
+  // new row back raises the same RLS error a blocked insert would. The RPC
+  // is SECURITY DEFINER (table owner, exempt from RLS by default, same
+  // reasoning as notify_new_lead() and stamp_sms_consent()), so it can
+  // return the new id without widening anon's read access to other leads.
+  //
+  // sms_consent_at is not sent because there's nowhere to send it -- same
+  // reason as the quote form: a BEFORE INSERT trigger stamps it server-side
+  // so a client-supplied time can never be forged.
   function createLead(offer, consentGiven) {
     var sid = getSessionId();
     var transcript = buildTranscript();
@@ -312,23 +295,16 @@
       (transcript ? '\n\nConversation:\n' + transcript : '');
 
     return supabaseClient
-      .from('leads')
-      .insert({
-        name: offer.name,
-        phone: offer.phone,
-        service_interest: offer.service_interest || null,
-        message: messageBody,
-        source: 'chat',
-        // sms_consent_at is deliberately not sent -- same reason as the quote
-        // form: a BEFORE INSERT trigger stamps it server-side so a
-        // client-supplied time can never be forged.
-        sms_consent: consentGiven
+      .rpc('create_chat_lead', {
+        p_session_id: sid,
+        p_name: offer.name,
+        p_phone: offer.phone,
+        p_service_interest: offer.service_interest || null,
+        p_message: messageBody,
+        p_sms_consent: consentGiven
       })
-      .select('id')
-      .single()
       .then(function (res) {
         if (res.error) throw res.error;
-        if (res.data && res.data.id) linkConversationToLead(sid, res.data.id);
         addMessage('assistant', t(consentGiven ? 'chat_lead_created_with_consent' : 'chat_lead_created_call_only'));
         track('chat_lead_created', { sms_consent: consentGiven });
       })
