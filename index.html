@@ -536,18 +536,28 @@
         </label>
       </div>
       <!--
-        Cloudflare Turnstile, invisible mode -- no checkbox, no visible
-        challenge for a real visitor. data-execution="execute" holds it idle
-        until the submit handler calls turnstile.execute() explicitly, so a
-        token is generated for THIS submission rather than silently on page
-        load for every visitor who never submits at all.
+        Cloudflare Turnstile. Whether a real visitor sees anything at all is
+        controlled by the widget's MODE, set when the site was created in the
+        Cloudflare dashboard (Managed, here) -- NOT by anything client-side.
+        "invisible" is a widget mode, not a valid data-size value, and was
+        wrongly used as one here originally: Turnstile only accepts "normal",
+        "compact", or "flexible" for size, and rejecting "invisible" crashed
+        the widget's render() before it could ever produce a token, so the
+        form had nothing to submit and never called submit-quote-lead at all.
+        "normal" is the size actually used on the rare case Managed mode
+        decides to show something.
 
-        Real production site key (Invisible widget, redlinesd.com), paired
-        with the real TURNSTILE_SECRET_KEY set on submit-quote-lead.
+        data-execution="execute" holds the widget idle until the submit
+        handler calls turnstile.execute() explicitly, so a token is generated
+        for THIS submission rather than on page load for every visitor who
+        never submits at all.
+
+        Real production site key (redlinesd.com), paired with the real
+        TURNSTILE_SECRET_KEY set on submit-quote-lead.
       -->
       <div id="quote-turnstile" class="cf-turnstile"
         data-sitekey="0x4AAAAAAE0qjWvEIjaurh2I"
-        data-size="invisible"
+        data-size="normal"
         data-execution="execute"
         data-callback="redlineTurnstileSuccess"
         data-error-callback="redlineTurnstileError"></div>
