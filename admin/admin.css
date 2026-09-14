@@ -683,6 +683,83 @@
   outline-offset: 2px;
 }
 
+/* ---- Chat transcript modal ----
+   Same overlay/panel as the confirm dialog above, widened for a scrolling
+   transcript instead of a couple of lines of prompt text. */
+.admin-modal.is-wide {
+  max-width: 640px;
+  text-align: left;
+}
+.admin-modal.is-wide .admin-modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+.admin-chat-message {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--line);
+  border-radius: 2px;
+}
+/* Visitor turns get the accent rail and a faint fill; assistant turns stay
+   flush with the panel background so the two roles read apart at a glance
+   without resorting to left/right chat bubbles, which nothing else in this
+   dashboard uses. */
+.admin-chat-message.is-user {
+  border-left-color: var(--accent);
+  background: rgba(245, 245, 240, 0.05);
+}
+.admin-chat-message-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.admin-chat-message-role {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-label);
+  color: var(--ink-dim);
+}
+.admin-chat-message.is-user .admin-chat-message-role { color: var(--accent); }
+.admin-chat-message-time {
+  flex: none;
+  font-size: var(--fs-micro);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.admin-chat-message-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Preview column doubles as the open-transcript control. .admin-link-btn is
+   sized for a short inline phrase like "Forgot password?"; here it needs to
+   behave like a block so a long, wrapped preview still reads left-aligned. */
+.admin-chat-preview-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+}
+
+/* Brief highlight when "View lead" jumps to a row already on screen in the
+   Leads tab, so the destination is obvious even when the scroll distance is
+   short enough to go unnoticed. */
+.admin-row-highlight { animation: admin-row-flash 2s ease; }
+@keyframes admin-row-flash {
+  0%, 100% { background: transparent; }
+  15%, 60% { background: rgba(204, 32, 41, 0.14); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-row-highlight { animation: none; background: rgba(204, 32, 41, 0.14); }
+}
+
 /* ---- Refresh control ----
    Sits inside the section <h2>, so it has to opt out of the display heading's
    font and case rather than inherit them. */

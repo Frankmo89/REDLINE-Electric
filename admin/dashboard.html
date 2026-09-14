@@ -26,6 +26,7 @@
     <button type="button" class="admin-tab-btn" data-tab="business">Business Info</button>
     <button type="button" class="admin-tab-btn" data-tab="reviews">Reviews</button>
     <button type="button" class="admin-tab-btn" data-tab="kb">Knowledge Base</button>
+    <button type="button" class="admin-tab-btn" data-tab="chat">Chat</button>
   </div>
 
   <div id="tab-photos" class="admin-tab-panel">
@@ -246,6 +247,45 @@
       </div>
       <div id="kb-grid" class="admin-grid"></div>
       <p id="kb-empty-msg" class="admin-empty" hidden></p>
+    </section>
+  </div>
+
+  <!--
+    Chat — read-only viewer for chat_conversations (Phase 5). Joe can look,
+    not reply from here; there is no write path in this tab at all, so it
+    does not participate in the unsaved-edit guard above.
+  -->
+  <div id="tab-chat" class="admin-tab-panel" hidden>
+    <section class="admin-list">
+      <h2 class="display">Chat Conversations <button type="button" class="admin-refresh-btn" data-refresh="chat">Refresh</button></h2>
+      <div class="admin-filter-bar">
+        <label class="admin-filter-label">Show
+          <select id="chat-filter">
+            <option value="">All conversations</option>
+            <option value="lead">Led to a lead</option>
+            <option value="no-lead">No lead yet</option>
+          </select>
+        </label>
+        <span class="admin-filter-count" id="chat-filter-count" role="status"></span>
+      </div>
+      <div id="chat-loading" class="admin-loading" role="status">
+        <span class="admin-spinner" aria-hidden="true"></span> Loading conversations…
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Preview</th>
+              <th>Language</th>
+              <th>Messages</th>
+              <th>Lead</th>
+              <th>Last Message</th>
+            </tr>
+          </thead>
+          <tbody id="chat-tbody"></tbody>
+        </table>
+      </div>
+      <p id="chat-empty-msg" class="admin-empty" hidden></p>
     </section>
   </div>
 </main>
@@ -1087,7 +1127,8 @@
     leads: document.getElementById('tab-leads'),
     business: document.getElementById('tab-business'),
     reviews: document.getElementById('tab-reviews'),
-    kb: document.getElementById('tab-kb')
+    kb: document.getElementById('tab-kb'),
+    chat: document.getElementById('tab-chat')
   };
   // ---- Unsaved-edit guard -------------------------------------------------
   // Three things count as an edit in progress: a photo or review card sitting
@@ -1172,7 +1213,8 @@
     leads: loadLeads,
     business: loadBusinessInfo,
     reviews: loadReviews,
-    kb: loadKbEntries
+    kb: loadKbEntries,
+    chat: loadChatConversations
   };
   var tabLoaded = {};
 
@@ -1237,7 +1279,7 @@
     }
   });
 
-  var REFRESH_LABELS = { photos: 'Photos', leads: 'Leads', business: 'Business info', reviews: 'Reviews', kb: 'Knowledge base' };
+  var REFRESH_LABELS = { photos: 'Photos', leads: 'Leads', business: 'Business info', reviews: 'Reviews', kb: 'Knowledge base', chat: 'Chat conversations' };
 
   // ---- Leads ----
   var leadsTbody = document.getElementById('leads-tbody');
@@ -2463,6 +2505,229 @@
     var removed = bulkDelRes.data.length;
     showToast(removed + (removed === 1 ? ' review deleted.' : ' reviews deleted.'), 'success');
     loadReviews();
+  });
+
+  // ---- Chat ----
+  // Read-only viewer over chat_conversations. RLS grants "authenticated" an
+  // unrestricted SELECT on this table (see "Authenticated users can view all
+  // conversations" -- re-verified live against pg_policies before writing
+  // this, the same audit-before-assuming discipline Phase 4 used on
+  // notify_new_lead()), so a single unfiltered select() is all this needs;
+  // there is no per-session header to forward the way the widget itself must.
+  var chatTbody = document.getElementById('chat-tbody');
+  var chatEmptyMsg = document.getElementById('chat-empty-msg');
+  var chatLoading = document.getElementById('chat-loading');
+  var chatFilterSelect = document.getElementById('chat-filter');
+  var chatFilterCount = document.getElementById('chat-filter-count');
+  var chatAll = [];
+  var chatById = Object.create(null);
+  var chatFilter = '';
+
+  function truncateText(str, maxLen) {
+    var s = String(str == null ? '' : str);
+    if (s.length <= maxLen) return s;
+    return s.slice(0, maxLen).replace(/\s+$/, '') + '…';
+  }
+
+  function chatVisibleRows() {
+    if (chatFilter === 'lead') return chatAll.filter(function (c) { return !!c.lead_id; });
+    if (chatFilter === 'no-lead') return chatAll.filter(function (c) { return !c.lead_id; });
+    return chatAll;
+  }
+
+  // Mirrors updateKbCount: only speaks when a filter has actually narrowed the
+  // list, since an unfiltered empty table is already explained by chatEmptyMsg.
+  function updateChatCount() {
+    var rows = chatVisibleRows();
+    if (rows.length === 0) {
+      chatFilterCount.textContent = chatFilter ? 'No conversations match this filter.' : '';
+      return;
+    }
+    var withLead = rows.filter(function (c) { return !!c.lead_id; }).length;
+    chatFilterCount.textContent = rows.length + (rows.length === 1 ? ' conversation' : ' conversations') +
+      (chatFilter ? '' : ', ' + withLead + ' led to a lead');
+  }
+
+  function buildChatRow(convo) {
+    var tr = document.createElement('tr');
+    tr.className = 'admin-chat-row';
+    tr.setAttribute('data-id', convo.id);
+
+    var messages = Array.isArray(convo.messages) ? convo.messages : [];
+    var firstUser = messages.filter(function (m) { return m && m.role === 'user'; })[0];
+    var previewText = firstUser && firstUser.content ? truncateText(firstUser.content, 90) : '(no visitor message)';
+    var langLabel = convo.language === 'es' ? 'ES' : 'EN';
+
+    var leadCell = convo.lead_id
+      ? '<button type="button" class="admin-link-btn admin-chat-lead-link" data-lead-id="' + escapeHtml(convo.lead_id) + '">View lead →</button>'
+      : '<span class="admin-contact-none">No lead yet</span>';
+
+    tr.innerHTML =
+      '<td data-label="Preview"><button type="button" class="admin-link-btn admin-chat-preview-btn" data-id="' + escapeHtml(convo.id) + '">' + escapeHtml(previewText) + '</button></td>' +
+      '<td data-label="Language"><span class="admin-kb-lang">' + langLabel + '</span></td>' +
+      '<td data-label="Messages">' + messages.length + '</td>' +
+      '<td data-label="Lead">' + leadCell + '</td>' +
+      '<td data-label="Last Message"><span class="admin-lead-time" title="' + escapeHtml(formatAbsoluteTime(convo.last_message_at)) + '">' + escapeHtml(formatRelativeTime(convo.last_message_at)) + '</span></td>';
+    return tr;
+  }
+
+  function renderChatTable() {
+    var rows = chatVisibleRows();
+    chatTbody.innerHTML = '';
+    rows.forEach(function (convo) { chatTbody.appendChild(buildChatRow(convo)); });
+    updateChatCount();
+
+    // Only the truly-empty-table case renders here, matching renderKbGrid: a
+    // filter that matches nothing is reported by chatFilterCount instead, so
+    // the two messages never say overlapping things at once.
+    if (chatAll.length === 0) {
+      chatEmptyMsg.textContent = "No chat conversations yet. They'll show up here once a visitor uses the chat widget.";
+      chatEmptyMsg.hidden = false;
+    } else {
+      chatEmptyMsg.hidden = true;
+    }
+  }
+
+  chatFilterSelect.addEventListener('change', function () {
+    chatFilter = chatFilterSelect.value;
+    renderChatTable();
+  });
+
+  async function loadChatConversations() {
+    setLoading(chatLoading, true);
+    chatEmptyMsg.hidden = true;
+
+    var res = await supabaseClient
+      .from('chat_conversations')
+      .select('*')
+      .order('last_message_at', { ascending: false });
+
+    setLoading(chatLoading, false);
+
+    if (res.error) {
+      chatTbody.innerHTML = '';
+      chatFilterCount.textContent = '';
+      chatAll = [];
+      chatEmptyMsg.textContent = 'Could not load conversations: ' + res.error.message;
+      chatEmptyMsg.hidden = false;
+      return;
+    }
+
+    chatAll = res.data || [];
+    chatById = Object.create(null);
+    chatAll.forEach(function (c) { chatById[c.id] = c; });
+    renderChatTable();
+  }
+
+  // Jumps to a lead from either the row's "View lead" link or the transcript
+  // modal's own button. Loads the Leads tab's data first if it has never been
+  // opened yet, so the row actually exists in the DOM to scroll to.
+  async function goToLead(leadId) {
+    if (!tabLoaded.leads) {
+      tabLoaded.leads = true;
+      await loadLeads();
+    }
+    activateTab('leads');
+    window.requestAnimationFrame(function () {
+      var row = leadsTbody.querySelector('.admin-lead-row[data-id="' + leadId + '"]');
+      if (!row) return;
+      row.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      row.classList.add('admin-row-highlight');
+      window.setTimeout(function () { row.classList.remove('admin-row-highlight'); }, 2000);
+    });
+  }
+
+  function chatMessageBlock(msg) {
+    var isUser = msg && msg.role === 'user';
+    return '<div class="admin-chat-message' + (isUser ? ' is-user' : '') + '">' +
+      '<div class="admin-chat-message-head">' +
+        '<span class="admin-chat-message-role">' + (isUser ? 'Visitor' : 'Assistant') + '</span>' +
+        '<span class="admin-chat-message-time">' + escapeHtml(formatAbsoluteTime(msg && msg.at)) + '</span>' +
+      '</div>' +
+      '<p class="admin-chat-message-text">' + escapeHtml(msg && msg.content) + '</p>' +
+    '</div>';
+  }
+
+  // A dedicated modal rather than a call to confirmDialog(): confirmDialog's
+  // contract is a fixed Cancel/Confirm pair returning a boolean, which fits a
+  // destructive-action prompt, not a scrolling read-only transcript with an
+  // optional third "View Lead" action. Same accessibility shape throughout
+  // (focus trap, Escape, backdrop-click, restore focus on close) so it feels
+  // like the same dialog system rather than a one-off.
+  function openTranscriptModal(convo) {
+    var titleId = 'admin-chat-modal-title';
+    var previouslyFocused = document.activeElement;
+    var messages = Array.isArray(convo.messages) ? convo.messages : [];
+
+    var overlay = document.createElement('div');
+    overlay.className = 'admin-modal-overlay';
+
+    var bodyHtml = messages.length
+      ? messages.map(chatMessageBlock).join('')
+      : '<p>This conversation has no messages yet.</p>';
+
+    var leadBtnHtml = convo.lead_id
+      ? '<button type="button" class="admin-modal-confirm admin-chat-modal-lead-btn" data-lead-id="' + escapeHtml(convo.lead_id) + '">View Lead</button>'
+      : '';
+
+    overlay.innerHTML =
+      '<div class="admin-modal is-wide" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '">' +
+        '<h2 class="admin-modal-title" id="' + titleId + '">Conversation Transcript</h2>' +
+        '<div class="admin-modal-body admin-chat-transcript">' + bodyHtml + '</div>' +
+        '<div class="admin-modal-actions">' +
+          leadBtnHtml +
+          '<button type="button" class="admin-modal-cancel admin-chat-modal-close">Close</button>' +
+        '</div>' +
+      '</div>';
+
+    var closeBtn = overlay.querySelector('.admin-chat-modal-close');
+    var leadBtn = overlay.querySelector('.admin-chat-modal-lead-btn');
+    var focusables = leadBtn ? [leadBtn, closeBtn] : [closeBtn];
+
+    function close() {
+      document.removeEventListener('keydown', onKeydown, true);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      // With only Close in the trap (no lead on this conversation), every Tab
+      // just refocuses it -- still a trap, not a no-op that lets focus leak
+      // into the page behind the overlay.
+      e.preventDefault();
+      var idx = focusables.indexOf(document.activeElement);
+      var next = focusables[(idx + (e.shiftKey ? -1 : 1) + focusables.length) % focusables.length];
+      next.focus();
+    }
+
+    closeBtn.addEventListener('click', close);
+    if (leadBtn) {
+      leadBtn.addEventListener('click', function () {
+        var leadId = leadBtn.getAttribute('data-lead-id');
+        close();
+        goToLead(leadId);
+      });
+    }
+    overlay.addEventListener('mousedown', function (e) {
+      if (e.target === overlay) close();
+    });
+    document.addEventListener('keydown', onKeydown, true);
+
+    document.body.appendChild(overlay);
+    closeBtn.focus();
+  }
+
+  chatTbody.addEventListener('click', function (e) {
+    var previewBtn = e.target.closest('.admin-chat-preview-btn');
+    if (previewBtn) {
+      var convo = chatById[previewBtn.getAttribute('data-id')];
+      if (convo) openTranscriptModal(convo);
+      return;
+    }
+    var leadLink = e.target.closest('.admin-chat-lead-link');
+    if (leadLink) goToLead(leadLink.getAttribute('data-lead-id'));
   });
 
   (async function init() {
