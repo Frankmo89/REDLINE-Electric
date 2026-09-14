@@ -79,7 +79,7 @@
      first query fires, adding DNS, TCP and TLS to the critical path. -->
 <link rel="preconnect" href="https://hvesaitxkwlufbljnupy.supabase.co" crossorigin>
 <script async src="assets/js/hero-preload.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=15">
+<link rel="stylesheet" href="css/styles.css?v=16">
 
 <script type="application/ld+json">
 {
@@ -481,6 +481,18 @@
     <p class="sub" data-i18n="quote_subheading">Tell us about the job and we'll get back to you.</p>
 
     <form id="quote-form" class="quote-form">
+      <!--
+        Honeypot. Off-screen, not display:none -- see .form-honeypot-field in
+        styles.css for why. tabindex="-1" and aria-hidden keep a keyboard or
+        screen-reader visitor from ever reaching it; a real person never fills
+        this in, so anything here on submit is silently discarded server-side
+        (index.html's submit handler still sends it -- the rejection happens
+        in the submit-quote-lead Edge Function, not in this page).
+      -->
+      <div class="form-honeypot-field" aria-hidden="true">
+        <label for="lead-website">Leave this field blank</label>
+        <input type="text" id="lead-website" name="website" tabindex="-1" autocomplete="off">
+      </div>
       <div class="quote-form-grid">
         <label><span data-i18n="form_label_name">Name*</span>
           <input type="text" id="lead-name" name="name" autocomplete="name" required>
@@ -523,6 +535,26 @@
           <span data-i18n="form_label_sms_consent">I agree to receive calls and text messages from Redline Electric about my request, including by autodialer. Message and data rates may apply. Reply STOP to opt out.</span>
         </label>
       </div>
+      <!--
+        Cloudflare Turnstile, invisible mode -- no checkbox, no visible
+        challenge for a real visitor. data-execution="execute" holds it idle
+        until the submit handler calls turnstile.execute() explicitly, so a
+        token is generated for THIS submission rather than silently on page
+        load for every visitor who never submits at all.
+
+        TEST SITE KEY -- 1x00000000000000000000BB always passes and proves
+        nothing about a real visitor. Swap for a real site key from the
+        Cloudflare dashboard (Turnstile > Add site, widget type Invisible or
+        Managed) before this offers any actual protection, and set the
+        matching secret via:
+          supabase secrets set TURNSTILE_SECRET_KEY=<secret> --project-ref hvesaitxkwlufbljnupy
+      -->
+      <div id="quote-turnstile" class="cf-turnstile"
+        data-sitekey="1x00000000000000000000BB"
+        data-size="invisible"
+        data-execution="execute"
+        data-callback="redlineTurnstileSuccess"
+        data-error-callback="redlineTurnstileError"></div>
       <button type="submit" class="btn-primary" id="quote-submit-btn" data-i18n="form_submit">Request a Quote</button>
       <p id="quote-error" class="quote-error" role="alert" hidden></p>
       <p id="quote-success" class="quote-success" role="status" data-i18n="form_success" hidden>Thanks — we've got your request and will be in touch soon.</p>
@@ -681,6 +713,10 @@
 <script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/business-info.js"></script>
 <script src="assets/js/chat-widget.js"></script>
+<!-- Quote form spam protection. async/defer: nothing on the page depends on
+     it being ready immediately, and the widget itself waits idle
+     (data-execution="execute") until the quote form is actually submitted. -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 (function () {
   var grid = document.getElementById('work-grid');
@@ -1066,6 +1102,7 @@
   var submitBtn = document.getElementById('quote-submit-btn');
   var errorMsg = document.getElementById('quote-error');
   var successMsg = document.getElementById('quote-success');
+  var TURNSTILE_WIDGET_ID = 'quote-turnstile';
 
   function showError(key, fallback) {
     errorMsg.textContent = (window.i18n && window.i18n.t(key)) || fallback;
@@ -1074,7 +1111,28 @@
 
   var GENERIC_ERROR = 'Something went wrong submitting your request. Please try calling us instead.';
 
-  form.addEventListener('submit', async function (e) {
+  // Holds the fields from the submit that is currently waiting on a Turnstile
+  // token, so the two global callbacks below (which Turnstile calls by name,
+  // per data-callback/data-error-callback on the widget) know what to do with
+  // the result. Only ever one submission in flight at a time: submitBtn is
+  // disabled for the duration.
+  var pendingFields = null;
+
+  window.redlineTurnstileSuccess = function (token) {
+    if (!pendingFields) return;
+    var fields = pendingFields;
+    pendingFields = null;
+    submitQuoteLead(token, fields);
+  };
+
+  window.redlineTurnstileError = function () {
+    if (!pendingFields) return;
+    pendingFields = null;
+    submitBtn.disabled = false;
+    showError('form_error_generic', GENERIC_ERROR);
+  };
+
+  form.addEventListener('submit', function (e) {
     // preventDefault unconditionally. This listener used to be skipped entirely
     // when supabaseClient was undefined (blocked CDN, offline, ad blocker), so
     // the browser performed a native GET submit: the page reloaded blank and the
@@ -1090,6 +1148,11 @@
     var message = document.getElementById('lead-message').value.trim();
     var consentEl = document.getElementById('lead-sms-consent');
     var smsConsent = !!(consentEl && consentEl.checked);
+    // Honeypot -- sent through as-is, untrimmed and unvalidated here. Rejecting
+    // it in THIS page would be a client-side-only check a direct API call
+    // skips entirely; the real rejection happens server-side, in
+    // submit-quote-lead.
+    var website = document.getElementById('lead-website').value;
 
     if (!name || !phone) {
       showError('form_error_required', 'Name and phone are required.');
@@ -1115,21 +1178,39 @@
       return;
     }
 
-    submitBtn.disabled = true;
+    // Blocked script, offline, ad blocker: without this check the submit would
+    // disable the button and then wait forever on a callback Turnstile can
+    // never fire, exactly the silent-hang failure mode the supabaseClient
+    // check above already guards against.
+    if (typeof turnstile === 'undefined') {
+      showError('form_error_generic', GENERIC_ERROR);
+      return;
+    }
 
+    submitBtn.disabled = true;
+    pendingFields = { name: name, phone: phone, email: email, service: service, message: message, smsConsent: smsConsent, website: website };
+
+    // Reset before every attempt, including the first: a retry after a prior
+    // error or an expired token otherwise leaves the widget in whatever state
+    // that attempt left it in, rather than generating a fresh token for this one.
+    turnstile.reset(TURNSTILE_WIDGET_ID);
+    turnstile.execute('#' + TURNSTILE_WIDGET_ID);
+  });
+
+  async function submitQuoteLead(turnstileToken, fields) {
     var res;
     try {
-      res = await supabaseClient.from('leads').insert({
-        name: name,
-        phone: phone,
-        email: email || null,
-        service_interest: service || null,
-        message: message || null,
-        // sms_consent_at is deliberately not sent. A BEFORE INSERT trigger
-        // stamps it server-side, because the public INSERT policy is
-        // WITH CHECK (true) and a client-supplied time would be forgeable —
-        // worthless as the evidence it exists to be.
-        sms_consent: smsConsent
+      res = await supabaseClient.functions.invoke('submit-quote-lead', {
+        body: {
+          name: fields.name,
+          phone: fields.phone,
+          email: fields.email || null,
+          service_interest: fields.service || null,
+          message: fields.message || null,
+          sms_consent: fields.smsConsent,
+          website: fields.website,
+          turnstile_token: turnstileToken
+        }
       });
     } catch (err) {
       // A rejection here (token refresh failure, patched fetch, aborted request)
@@ -1139,22 +1220,25 @@
       submitBtn.disabled = false;
     }
 
-    if (res.error) {
+    // Covers both a transport-level error and a 200 whose body does not
+    // actually say success -- the honeypot path returns a success-shaped body
+    // on purpose (see submit-quote-lead), but nothing else should.
+    if (res.error || !res.data || res.data.success !== true) {
       showError('form_error_generic', GENERIC_ERROR);
       return;
     }
 
     if (window.RedlineAnalytics) {
-      window.RedlineAnalytics.track('quote_form_submit', { service_interest: service || 'not specified' });
+      window.RedlineAnalytics.track('quote_form_submit', { service_interest: fields.service || 'not specified' });
     }
 
-    var successKey = email ? 'form_success_with_email' : 'form_success';
-    successMsg.textContent = (window.i18n && window.i18n.t(successKey)) || (email
+    var successKey = fields.email ? 'form_success_with_email' : 'form_success';
+    successMsg.textContent = (window.i18n && window.i18n.t(successKey)) || (fields.email
       ? "Thanks — we've got your request and will be in touch soon. Check your email for confirmation."
       : "Thanks — we've got your request and will be in touch soon.");
     successMsg.hidden = false;
     form.reset();
-  });
+  }
 })();
 </script>
 

@@ -1263,6 +1263,23 @@ a.contact-info-value:hover { text-decoration: underline; }
 }
 .quote-success { color: #4CAF6D; font-size: var(--fs-micro); }
 
+/* Honeypot for the quote form -- a field real visitors never see or reach,
+   so anything arriving in it server-side is filled it in blind. Off-screen
+   positioning rather than display:none or visibility:hidden: both of those
+   are trivially detected by a bot that checks computed style before deciding
+   what to fill, where moving the field a long way off the visible canvas
+   still reads as "there" to that kind of naive check. Kept out of tab order
+   and off screen readers too (tabindex=-1, aria-hidden on the wrapper) so a
+   keyboard or screen-reader visitor can never stumble into it either. */
+.form-honeypot-field {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 /* ---- Emergency band ---- */
 .emergency-band { background: var(--accent); padding: 24px 20px; }
 .emergency-band-inner {
