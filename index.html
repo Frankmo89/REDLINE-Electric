@@ -542,15 +542,11 @@
         token is generated for THIS submission rather than silently on page
         load for every visitor who never submits at all.
 
-        TEST SITE KEY -- 1x00000000000000000000BB always passes and proves
-        nothing about a real visitor. Swap for a real site key from the
-        Cloudflare dashboard (Turnstile > Add site, widget type Invisible or
-        Managed) before this offers any actual protection, and set the
-        matching secret via:
-          supabase secrets set TURNSTILE_SECRET_KEY=<secret> --project-ref hvesaitxkwlufbljnupy
+        Real production site key (Invisible widget, redlinesd.com), paired
+        with the real TURNSTILE_SECRET_KEY set on submit-quote-lead.
       -->
       <div id="quote-turnstile" class="cf-turnstile"
-        data-sitekey="1x00000000000000000000BB"
+        data-sitekey="0x4AAAAAAE0qjWvEIjaurh2I"
         data-size="invisible"
         data-execution="execute"
         data-callback="redlineTurnstileSuccess"
