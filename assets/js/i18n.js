@@ -875,17 +875,17 @@
     });
   }
 
+  // The reveal decision itself now runs in a tiny inline script right after
+  // #lang-banner's own markup in the HTML, so it resolves before there is
+  // anything painted yet for it to shift -- this file is 103KB and loads
+  // only after the whole page has already been parsed, which is what made
+  // the old reveal-here approach a real, measured CLS source. This function
+  // now only wires the switch/dismiss button clicks; both already exist in
+  // the banner's static markup regardless of which state it's in, so
+  // wiring their listeners late costs nothing visible.
   function initSuggestionBanner() {
     var banner = document.getElementById('lang-banner');
     if (!banner) return;
-
-    var storedLang = localStorage.getItem(LANG_KEY);
-    var alreadySuggested = localStorage.getItem(SUGGESTED_KEY);
-    var browserIsSpanish = (navigator.language || '').toLowerCase().indexOf('es') === 0;
-
-    if (!storedLang && !alreadySuggested && browserIsSpanish) {
-      banner.hidden = false;
-    }
 
     var switchBtn = banner.querySelector('[data-lang-banner-switch]');
     var dismissBtn = banner.querySelector('[data-lang-banner-dismiss]');

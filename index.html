@@ -208,6 +208,35 @@
   </div>
 </div>
 
+<!-- Resolves the Spanish-suggestion reveal immediately after this banner's
+     own markup, instead of waiting for i18n.js at the end of the document.
+     i18n.js is 103KB and loads after the entire page has already been
+     parsed -- by the time its own initSuggestionBanner() used to run this
+     exact check, the browser had already painted everything above it, so
+     revealing the banner then pushed main#main-content down after the
+     fact. Verified via Lighthouse with an explicit es-ES override before
+     this fix: a real, reproducible 0.131-score shift, the same magnitude
+     as the wrap-count issue fixed earlier today.
+     Keys are duplicated from i18n.js's LANG_KEY/SUGGESTED_KEY -- that
+     file's IIFE scope isn't available yet at this point in the document.
+     Keep the two in sync if either changes. i18n.js's own
+     initSuggestionBanner() still wires the switch/dismiss button clicks;
+     only the reveal decision moved here. -->
+<script>
+(function () {
+  var banner = document.getElementById('lang-banner');
+  if (!banner) return;
+  try {
+    var storedLang = localStorage.getItem('redline-lang');
+    var alreadySuggested = localStorage.getItem('redline-lang-suggested');
+    var browserIsSpanish = (navigator.language || '').toLowerCase().indexOf('es') === 0;
+    if (!storedLang && !alreadySuggested && browserIsSpanish) {
+      banner.hidden = false;
+    }
+  } catch (e) { /* localStorage blocked (private mode) -- stay hidden */ }
+})();
+</script>
+
 <div class="bottom-stack" id="bottom-stack">
   <div class="cookie-banner" id="cookie-banner" hidden>
     <div class="wrap cookie-banner-inner">
