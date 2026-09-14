@@ -539,28 +539,18 @@
         Cloudflare Turnstile. Whether a real visitor sees anything at all is
         controlled by the widget's MODE, set when the site was created in the
         Cloudflare dashboard (Managed, here) -- NOT by anything client-side.
-        "invisible" is a widget mode, not a valid data-size value, and was
-        wrongly used as one here originally: Turnstile only accepts "normal",
-        "compact", or "flexible" for size, and rejecting "invisible" crashed
-        the widget's render() before it could ever produce a token, so the
-        form had nothing to submit and never called submit-quote-lead at all.
-        "normal" is the size actually used on the rare case Managed mode
-        decides to show something.
 
-        data-execution="execute" holds the widget idle until the submit
-        handler calls turnstile.execute() explicitly, so a token is generated
-        for THIS submission rather than on page load for every visitor who
-        never submits at all.
-
-        Real production site key (redlinesd.com), paired with the real
-        TURNSTILE_SECRET_KEY set on submit-quote-lead.
+        Rendered explicitly in JS (turnstile.render(), see the quote-form
+        script below) rather than via data-attributes: reset()/execute()/
+        getResponse() all take the opaque widgetId render() returns, NOT the
+        container's id= attribute and NOT a CSS selector -- confirmed against
+        Cloudflare's own docs after guessing wrong here twice already today
+        (an invalid data-size="invisible" crashing render(), then a bare id
+        string passed to reset() throwing "Nothing to reset found"). Explicit
+        rendering means the real widgetId is just a variable in scope, so
+        there is nothing left to guess.
       -->
-      <div id="quote-turnstile" class="cf-turnstile"
-        data-sitekey="0x4AAAAAAE0qjWvEIjaurh2I"
-        data-size="normal"
-        data-execution="execute"
-        data-callback="redlineTurnstileSuccess"
-        data-error-callback="redlineTurnstileError"></div>
+      <div id="quote-turnstile"></div>
       <button type="submit" class="btn-primary" id="quote-submit-btn" data-i18n="form_submit">Request a Quote</button>
       <p id="quote-error" class="quote-error" role="alert" hidden></p>
       <p id="quote-success" class="quote-success" role="status" data-i18n="form_success" hidden>Thanks — we've got your request and will be in touch soon.</p>
@@ -721,8 +711,12 @@
 <script src="assets/js/chat-widget.js"></script>
 <!-- Quote form spam protection. async/defer: nothing on the page depends on
      it being ready immediately, and the widget itself waits idle
-     (data-execution="execute") until the quote form is actually submitted. -->
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+     (execution: "execute") until the quote form is actually submitted.
+     ?onload names a global function this script calls once it's actually
+     ready to render -- see redlineTurnstileOnload in the quote-form script
+     below -- rather than the page guessing readiness by polling
+     `typeof turnstile`, which says nothing about whether render() has run. -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=redlineTurnstileOnload" async defer></script>
 <script>
 (function () {
   var grid = document.getElementById('work-grid');
@@ -1108,7 +1102,6 @@
   var submitBtn = document.getElementById('quote-submit-btn');
   var errorMsg = document.getElementById('quote-error');
   var successMsg = document.getElementById('quote-success');
-  var TURNSTILE_WIDGET_ID = 'quote-turnstile';
 
   function showError(key, fallback) {
     errorMsg.textContent = (window.i18n && window.i18n.t(key)) || fallback;
@@ -1118,24 +1111,52 @@
   var GENERIC_ERROR = 'Something went wrong submitting your request. Please try calling us instead.';
 
   // Holds the fields from the submit that is currently waiting on a Turnstile
-  // token, so the two global callbacks below (which Turnstile calls by name,
-  // per data-callback/data-error-callback on the widget) know what to do with
-  // the result. Only ever one submission in flight at a time: submitBtn is
-  // disabled for the duration.
+  // token, so the two callbacks below know what to do with the result. Only
+  // ever one submission in flight at a time: submitBtn is disabled for the
+  // duration.
   var pendingFields = null;
 
-  window.redlineTurnstileSuccess = function (token) {
+  // The value turnstile.render() actually returns -- an opaque id, NOT this
+  // container's own id="quote-turnstile" attribute and NOT a CSS selector.
+  // reset()/execute()/getResponse() all require exactly this value; passing
+  // anything else throws (learned the hard way: an id string thrown at
+  // reset() produced "Nothing to reset found for provided container").
+  // null until redlineTurnstileOnload below has actually run.
+  var turnstileWidgetId = null;
+
+  function turnstileSuccess(token) {
     if (!pendingFields) return;
     var fields = pendingFields;
     pendingFields = null;
     submitQuoteLead(token, fields);
-  };
+  }
 
-  window.redlineTurnstileError = function () {
+  function turnstileError() {
     if (!pendingFields) return;
     pendingFields = null;
     submitBtn.disabled = false;
     showError('form_error_generic', GENERIC_ERROR);
+    // The widget may be left in a state that can't be executed again as-is
+    // (an expired or already-consumed token, an interactive challenge the
+    // visitor abandoned) -- reset it so a retry gets a clean attempt instead
+    // of repeating whatever just failed. Distinct from the render crash this
+    // page hit earlier: reset() here always receives the real widgetId
+    // render() returned, never a guessed string.
+    if (turnstileWidgetId !== null) turnstile.reset(turnstileWidgetId);
+  }
+
+  // Named (not anonymous) because the script tag's ?onload= names it by
+  // string -- see the <script src="...api.js?onload=..."> tag above.
+  // Explicit render() rather than the data-attribute/implicit form: this is
+  // what actually hands back the widgetId every other Turnstile call needs.
+  window.redlineTurnstileOnload = function () {
+    turnstileWidgetId = turnstile.render('#quote-turnstile', {
+      sitekey: '0x4AAAAAAE0qjWvEIjaurh2I',
+      size: 'normal',
+      execution: 'execute',
+      callback: turnstileSuccess,
+      'error-callback': turnstileError
+    });
   };
 
   form.addEventListener('submit', function (e) {
@@ -1184,23 +1205,21 @@
       return;
     }
 
-    // Blocked script, offline, ad blocker: without this check the submit would
-    // disable the button and then wait forever on a callback Turnstile can
-    // never fire, exactly the silent-hang failure mode the supabaseClient
-    // check above already guards against.
-    if (typeof turnstile === 'undefined') {
+    // Blocked script, offline, ad blocker, or api.js simply hasn't finished
+    // loading yet: without this check the submit would disable the button
+    // and then wait forever on a callback that can never fire, exactly the
+    // silent-hang failure mode the supabaseClient check above already
+    // guards against. turnstileWidgetId (not `typeof turnstile`) is the
+    // right test here -- the global can exist before render() has actually
+    // produced a usable widget.
+    if (turnstileWidgetId === null) {
       showError('form_error_generic', GENERIC_ERROR);
       return;
     }
 
     submitBtn.disabled = true;
     pendingFields = { name: name, phone: phone, email: email, service: service, message: message, smsConsent: smsConsent, website: website };
-
-    // Reset before every attempt, including the first: a retry after a prior
-    // error or an expired token otherwise leaves the widget in whatever state
-    // that attempt left it in, rather than generating a fresh token for this one.
-    turnstile.reset(TURNSTILE_WIDGET_ID);
-    turnstile.execute('#' + TURNSTILE_WIDGET_ID);
+    turnstile.execute(turnstileWidgetId);
   });
 
   async function submitQuoteLead(turnstileToken, fields) {
