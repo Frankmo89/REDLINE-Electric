@@ -829,6 +829,45 @@
     chat_error_network: {
       en: 'Sorry, I could not reach our system. Call or text us at (619) 748-0662 and we will help you directly.',
       es: 'Perdón, no pude conectar con nuestro sistema. Llámenos o mande un mensaje al (619) 748-0662 y le atendemos directamente.'
+    },
+
+    // ---- Chat lead capture (Phase 4) ----
+    // These are explicit UI controls, not chat bubbles the assistant writes --
+    // see chat-widget.js. Two buttons: offering to pass details to Joe, which
+    // creates no lead by itself, and (only after "yes" there) a separate
+    // explicit SMS-consent step, which is what leads.sms_consent is actually
+    // allowed to depend on. A phone number typed into the conversation, or a
+    // "yes" typed as a chat message, is neither of these.
+    chat_offer_yes: { en: 'Yes, pass this to Joe', es: 'Sí, páseselo a Joe' },
+    chat_offer_no: { en: 'No thanks', es: 'No, gracias' },
+    // Shown after declining the offer above. No lead is created on this path.
+    chat_offer_declined: {
+      en: 'No problem — reach out anytime by call or text.',
+      es: 'No hay problema — contáctenos cuando quiera por llamada o mensaje.'
+    },
+    // The consent DISCLOSURE text itself is not duplicated here -- it reuses
+    // form_label_sms_consent, the same legal wording the quote form's
+    // checkbox already shows, so there is exactly one copy of that language
+    // to keep current. These are just the two buttons under it.
+    chat_consent_agree: { en: 'I agree', es: 'Acepto' },
+    chat_consent_decline: { en: 'No, call only', es: 'No, solo llámeme' },
+    // The lead is created either way once the offer above was accepted; only
+    // which of these two shows differs, matching whether sms_consent ended
+    // up true or false.
+    chat_lead_created_with_consent: {
+      en: "Thanks! I've passed your info to Joe — he'll call or text you soon.",
+      es: '¡Gracias! Le pasé su información a Joe — él le llamará o enviará un mensaje pronto.'
+    },
+    chat_lead_created_call_only: {
+      en: "Thanks! I've passed your info to Joe — he'll give you a call soon.",
+      es: '¡Gracias! Le pasé su información a Joe — él le llamará pronto.'
+    },
+    // The database write itself failed (not a network hiccup on the chat
+    // reply -- that path already has chat_error_network). Same posture as
+    // that key: the visitor needs the phone number, not a status code.
+    chat_lead_error: {
+      en: 'Sorry, something went wrong passing your info along. Please call or text us directly at (619) 748-0662.',
+      es: 'Perdón, algo salió mal al pasar su información. Por favor llámenos o mándenos un mensaje directamente al (619) 748-0662.'
     }
   };
 

@@ -235,6 +235,166 @@
     if (n) n.remove();
   }
 
+  // --------------------------------------------------- Phase 4: lead capture
+  // Renders a row of real <button>s in the log (not a chat bubble the
+  // assistant "wrote") for a yes/no decision the visitor has to make
+  // explicitly. Used for both the initial offer to pass details to Joe and,
+  // separately, the SMS-consent step -- two different explicit decisions,
+  // never inferred from anything typed in the conversation itself.
+  function addActionRow(buttonSpecs) {
+    var row = el('div', 'chat-msg chat-msg-assistant');
+    var bubble = el('div', 'chat-bubble chat-bubble-actions');
+    var actions = el('div', 'chat-actions');
+    buttonSpecs.forEach(function (spec) {
+      var btn = el('button', 'chat-chip' + (spec.primary ? ' chat-chip-primary' : ''), spec.label);
+      btn.type = 'button';
+      btn.addEventListener('click', spec.onClick);
+      actions.appendChild(btn);
+    });
+    bubble.appendChild(actions);
+    row.appendChild(bubble);
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+    return row;
+  }
+
+  // Builds a plain-text transcript from what is actually in the log right
+  // now -- the same visible history a screen reader or a copy-paste would
+  // see -- rather than re-fetching chat_conversations. The widget already
+  // has this in the DOM; a second read would just be a slower way to get
+  // the same text, and one more thing that can fail between the offer and
+  // the lead actually being written.
+  function buildTranscript() {
+    var lines = [];
+    Array.prototype.forEach.call(log.querySelectorAll('.chat-msg'), function (row) {
+      var textEl = row.querySelector('.chat-bubble-text');
+      if (!textEl || !textEl.textContent) return;
+      var who = row.classList.contains('chat-msg-user') ? 'Visitor' : 'Assistant';
+      lines.push(who + ': ' + textEl.textContent.trim());
+    });
+    return lines.join('\n');
+  }
+
+  // Best-effort link from the conversation row back to the lead it produced,
+  // so the admin dashboard can find the full transcript from either side.
+  // The lead itself does not depend on this succeeding -- see createLead --
+  // it already carries its own copy of the transcript in leads.message.
+  function linkConversationToLead(sid, leadId) {
+    fetch(SUPABASE_URL + '/rest/v1/chat_conversations?session_id=eq.' + encodeURIComponent(sid), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'apikey': SUPABASE_ANON_KEY,
+        // Required: the UPDATE policy on chat_conversations compares
+        // session_id to this header, same as every call to the Edge
+        // Function already does. Without it this PATCH matches zero rows.
+        'x-session-id': sid,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ lead_id: leadId })
+    }).catch(function () {
+      // Logged nowhere visible to the visitor on purpose: the lead already
+      // exists and Joe already has the transcript in leads.message. Losing
+      // this cross-link is a minor dashboard convenience, not a lost lead.
+    });
+  }
+
+  // Writes the lead FIRST, exactly like the quote form does, so the lead
+  // survives even if the best-effort conversation link above fails. The
+  // notification email fires automatically from the same AFTER INSERT
+  // trigger the quote form already relies on -- nothing here calls
+  // lead-notification directly.
+  function createLead(offer, consentGiven) {
+    var sid = getSessionId();
+    var transcript = buildTranscript();
+    var messageBody = 'Via chat assistant.\n\nJob: ' + offer.summary +
+      (transcript ? '\n\nConversation:\n' + transcript : '');
+
+    return supabaseClient
+      .from('leads')
+      .insert({
+        name: offer.name,
+        phone: offer.phone,
+        service_interest: offer.service_interest || null,
+        message: messageBody,
+        source: 'chat',
+        // sms_consent_at is deliberately not sent -- same reason as the quote
+        // form: a BEFORE INSERT trigger stamps it server-side so a
+        // client-supplied time can never be forged.
+        sms_consent: consentGiven
+      })
+      .select('id')
+      .single()
+      .then(function (res) {
+        if (res.error) throw res.error;
+        if (res.data && res.data.id) linkConversationToLead(sid, res.data.id);
+        addMessage('assistant', t(consentGiven ? 'chat_lead_created_with_consent' : 'chat_lead_created_call_only'));
+        track('chat_lead_created', { sms_consent: consentGiven });
+      })
+      .catch(function () {
+        addMessage('assistant', t('chat_lead_error'), 'notice');
+      });
+  }
+
+  function showConsentStep(offer) {
+    var row = el('div', 'chat-msg chat-msg-assistant');
+    var bubble = el('div', 'chat-bubble chat-bubble-actions');
+    // Same legal wording the quote form's checkbox shows -- reused, not
+    // retyped, so there is exactly one copy of this disclosure to keep
+    // current across both surfaces.
+    bubble.appendChild(el('p', 'chat-consent-text', t('form_label_sms_consent')));
+    var actions = el('div', 'chat-actions');
+    bubble.appendChild(actions);
+    row.appendChild(bubble);
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+
+    function resolve(consentGiven, chosenLabel) {
+      row.remove();
+      addMessage('user', chosenLabel);
+      track('chat_sms_consent', { given: consentGiven });
+      createLead(offer, consentGiven);
+    }
+
+    [
+      { label: t('chat_consent_agree'), primary: true, onClick: function () { resolve(true, t('chat_consent_agree')); } },
+      { label: t('chat_consent_decline'), onClick: function () { resolve(false, t('chat_consent_decline')); } }
+    ].forEach(function (spec) {
+      var btn = el('button', 'chat-chip' + (spec.primary ? ' chat-chip-primary' : ''), spec.label);
+      btn.type = 'button';
+      btn.addEventListener('click', spec.onClick);
+      actions.appendChild(btn);
+    });
+  }
+
+  // Entry point: called once per assistant reply that carried a lead_offer.
+  // Offering is not consent to anything and creates no lead by itself --
+  // only reaching showConsentStep, and resolving it, does that.
+  function showLeadOffer(offer) {
+    var offerRow = addActionRow([
+      {
+        label: t('chat_offer_yes'),
+        primary: true,
+        onClick: function () {
+          offerRow.remove();
+          addMessage('user', t('chat_offer_yes'));
+          track('chat_lead_offer_accepted');
+          showConsentStep(offer);
+        }
+      },
+      {
+        label: t('chat_offer_no'),
+        onClick: function () {
+          offerRow.remove();
+          addMessage('user', t('chat_offer_no'));
+          addMessage('assistant', t('chat_offer_declined'));
+          track('chat_lead_offer_declined');
+        }
+      }
+    ]);
+  }
+
   function buildChips() {
     chips.innerHTML = '';
     CHIP_KEYS.forEach(function (key) {
@@ -304,6 +464,12 @@
         }
         if (r.data && r.data.reply) {
           addMessage('assistant', r.data.reply, r.data.emergency ? 'emergency' : null);
+          // The offer is a signal the assistant has enough to hand off, not
+          // consent to anything -- showLeadOffer only ever shows a yes/no
+          // control, the same standard the quote form's checkbox already
+          // set. Emergency replies never carry a lead_offer (the model is
+          // never called on that path), but the check costs nothing either way.
+          if (r.data.lead_offer) showLeadOffer(r.data.lead_offer);
           return;
         }
         // Any other shape -- a 4xx/5xx with only an error field, or an empty

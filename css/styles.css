@@ -2207,6 +2207,35 @@ a.contact-info-value:hover { text-decoration: underline; }
 .chat-disclaimer a { color: var(--ink); text-decoration: underline; }
 .chat-disclaimer a:hover { color: var(--accent-bright); }
 
+/* ---- Lead capture (Phase 4) ----
+   The offer and consent steps are real <button>s in their own row, not text
+   the assistant wrote -- wider than a normal reply bubble so two buttons (or
+   the consent paragraph plus two buttons) have room to sit comfortably
+   instead of wrapping onto their own lines inside an 85%-wide bubble. */
+.chat-bubble-actions { max-width: 100%; width: 100%; }
+.chat-consent-text {
+  margin: 0 0 10px;
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* The affirmative choice in each pair (offering to pass details along, then
+   agreeing to be texted) -- styled like .btn-primary rather than a plain
+   .chat-chip, so the two options in a yes/no pair are not visually
+   identical. Neither button is pre-selected or auto-focused: matching a
+   fresh checkbox, not a default answer. */
+.chat-chip-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.chat-chip-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
 /* ---- Desktop ----
    Anchored card rather than full screen, sharing the launcher clearance so the
    two never disagree about where the bottom of the viewport is. */

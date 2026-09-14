@@ -39,12 +39,23 @@ interface LeadPayload {
   email?: string;
   service_interest?: string;
   message?: string;
-  // TCPA consent, captured by the checkbox on the quote form. Surfaced in
+  // TCPA consent, captured by the checkbox on the quote form (or the chat
+  // widget's own explicit consent step -- see source below). Surfaced in
   // the internal email because this is where Joe decides how to respond,
   // and "may I text this person back" has to be answerable without opening
   // the dashboard. Absent or false means CALL ONLY.
   sms_consent?: boolean;
   sms_consent_at?: string;
+  // 'web_form' (default in the DB) or 'chat'. Shown in the internal email so
+  // Joe knows a lead with no email and a summarized message came from the
+  // chat widget, not a partially-filled form -- otherwise the two look the
+  // same in the inbox. Not sent to the customer confirmation email; the
+  // customer already knows how they contacted the business.
+  source?: string;
+}
+
+function sourceLabel(source: string | undefined): string {
+  return source === "chat" ? "Chat assistant" : "Website form";
 }
 
 function escapeHtml(str: string): string {
@@ -176,10 +187,20 @@ Deno.serve(async (req: Request) => {
     ? `Yes -- consented ${lead.sms_consent_at || "(time not recorded)"}`
     : "NO -- DO NOT TEXT. Call only.";
 
-  const subject = `New quote request from ${name}`;
+  // Shown in the inbox subject line too, not just the body: Joe triages by
+  // subject before opening anything, and a chat lead (often no email, a
+  // summarized message rather than the visitor's own words) looks enough
+  // like a partially-filled form that the distinction has to be visible
+  // without opening the email.
+  const source = lead.source;
+  const sourceText = sourceLabel(source);
+  const subject = source === "chat"
+    ? `New chat lead from ${name}`
+    : `New quote request from ${name}`;
 
   const text =
-    `New quote request from the Redline Electric website:\n\n` +
+    `New ${source === "chat" ? "chat lead" : "quote request"} from the Redline Electric website:\n\n` +
+    `Source: ${sourceText}\n` +
     `Name: ${name}\n` +
     `Phone: ${phone}\n` +
     `Email: ${email || "Not provided"}\n` +
@@ -188,7 +209,8 @@ Deno.serve(async (req: Request) => {
     `Message: ${message}\n`;
 
   const html =
-    `<h2>New quote request</h2>` +
+    `<h2>New ${source === "chat" ? "chat lead" : "quote request"}</h2>` +
+    `<p><strong>Source:</strong> ${escapeHtml(sourceText)}</p>` +
     `<p><strong>Name:</strong> ${escapeHtml(name)}</p>` +
     `<p><strong>Phone:</strong> ${escapeHtml(phone)}</p>` +
     `<p><strong>Email:</strong> ${escapeHtml(email || "Not provided")}</p>` +
