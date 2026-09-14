@@ -655,7 +655,21 @@ section {
   max-width: 15ch;
 }
 .hero h1 span { color: var(--accent); }
-.hero p { color: var(--ink-dim); font-size: var(--fs-lead); max-width: 46ch; margin-bottom: 32px; }
+/* min-height reserves this paragraph's worst-case line count on mobile.
+   font-display: swap means this text is set first in a fallback font, then
+   the real one -- and 'Inter Fallback' (calibrated in the block above for
+   average character width, not this specific sentence) measured at 5 lines
+   here (144px) against the real font's 4 (115px) and plain unscaled Arial's
+   3 (86px), all at the same 412px-wide mobile viewport. Confirmed directly
+   with a live in-page measurement (cloning would have dropped the .hero
+   ancestor context and produced wrong numbers) before picking a number, not
+   estimated: 144px is 5 * this rule's own 28.8px line-height, the largest of
+   the three, so the container never has to shrink no matter which of the
+   three is active when a layout is taken. Desktop resets this back to none
+   at 760px -- measured zero variance there across all three scenarios,
+   since 46ch leaves enough room at that width for the sentence to fit on
+   one line regardless of which font is currently active. */
+.hero p { color: var(--ink-dim); font-size: var(--fs-lead); max-width: 46ch; margin-bottom: 32px; min-height: 144px; }
 
 .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
 .btn-primary {
@@ -1819,6 +1833,10 @@ a.contact-info-value:hover { text-decoration: underline; }
   /* min-height matches what .has-hero-bg used to add on top of this rule --
      see the base .hero rule for why the two were merged. */
   .hero { padding-top: 120px; padding-bottom: 100px; min-height: clamp(560px, calc(100svh - var(--header-h)), 820px); }
+  /* Undoes the mobile-only reservation above .hero p — measured zero
+     wrap-count variance at this width, so the extra space would only
+     stretch the desktop hero for no reason. */
+  .hero p { min-height: 0; }
   /* Scoped to #home — an id selector outranks `.hero h1` at any position in
      the file, so a generic rule here would be overridden by the #home block
      above and silently do nothing. Interior heroes keep the looser 1.04,
